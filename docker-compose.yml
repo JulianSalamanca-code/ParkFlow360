@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: parkflow360-postgres
+    environment:
+      POSTGRES_DB: parkflow360
+      POSTGRES_USER: parkflow360
+      POSTGRES_PASSWORD: parkflow360
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - parkflow360-network
+
+volumes:
+  postgres_data:
+
+networks:
+  parkflow360-network:
+    driver: bridge

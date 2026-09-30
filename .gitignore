@@ -1,0 +1,43 @@
+# OpenCode (no subir al repo)
+.opencode/
+
+# Backend (Java/Maven)
+target/
+*.class
+*.jar
+*.war
+*.ear
+
+# Frontend (Angular/Node)
+node_modules/
+dist/
+.angular/
+coverage/
+
+# Entorno
+.env
+application-local.yml
+application-dev.yml
+
+# Logs
+*.log
+logs/
+
+# Sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDEs
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+*.swp
+*.swo
+
+# Temp
+tmp/
+temp/
+*.tmp

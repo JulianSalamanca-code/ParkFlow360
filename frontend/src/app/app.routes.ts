@@ -22,6 +22,11 @@ export const routes: Routes = [
       .then(m => m.PAGOS_ROUTES)
   },
   {
+    path: 'reportes',
+    loadChildren: () => import('./features/reportes/reportes.routes')
+      .then(m => m.REPORTES_ROUTES)
+  },
+  {
     path: '',
     redirectTo: 'vehiculos',
     pathMatch: 'full'

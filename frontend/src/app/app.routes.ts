@@ -12,6 +12,11 @@ export const routes: Routes = [
       .then(m => m.ESPACIOS_ROUTES)
   },
   {
+    path: 'tarifas',
+    loadChildren: () => import('./features/tarifas/tarifas.routes')
+      .then(m => m.TARIFAS_ROUTES)
+  },
+  {
     path: '',
     redirectTo: 'vehiculos',
     pathMatch: 'full'

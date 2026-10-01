@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 import { LoginRequest, LoginResponse } from '../models/auth.model';
 
 @Injectable({
@@ -15,6 +15,11 @@ export class AuthService {
   private isAuthenticatedSubject = new BehaviorSubject<boolean>(this.hasToken());
   public isAuthenticated$ = this.isAuthenticatedSubject.asObservable();
 
+  private rolSubject = new BehaviorSubject<string>(this.getRol());
+  public rol$ = this.rolSubject.asObservable();
+  public isAdmin$ = this.rolSubject.pipe(map(r => (r || '').toUpperCase() === 'ADMIN'));
+  public isUsuario$ = this.rolSubject.pipe(map(r => (r || '').toUpperCase() === 'USUARIO'));
+
   constructor(private http: HttpClient) {}
 
   login(credentials: LoginRequest): Observable<LoginResponse> {
@@ -23,6 +28,7 @@ export class AuthService {
         this.setToken(response.token);
         this.setUser(response);
         this.isAuthenticatedSubject.next(true);
+        this.rolSubject.next(response.rol);
       })
     );
   }
@@ -31,6 +37,7 @@ export class AuthService {
     localStorage.removeItem(this.tokenKey);
     localStorage.removeItem(this.userKey);
     this.isAuthenticatedSubject.next(false);
+    this.rolSubject.next('');
   }
 
   getToken(): string | null {
@@ -42,8 +49,20 @@ export class AuthService {
     return user ? JSON.parse(user) : null;
   }
 
+  getRol(): string {
+    return this.getUser()?.rol || '';
+  }
+
   isLoggedIn(): boolean {
     return this.hasToken();
+  }
+
+  isAdmin(): boolean {
+    return this.getRol().toUpperCase() === 'ADMIN';
+  }
+
+  isUsuario(): boolean {
+    return this.getRol().toUpperCase() === 'USUARIO';
   }
 
   private hasToken(): boolean {

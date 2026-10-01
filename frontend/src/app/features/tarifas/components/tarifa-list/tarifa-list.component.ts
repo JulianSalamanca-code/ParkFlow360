@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { TarifaService } from '../../services/tarifa.service';
 import { Tarifa } from '../../models/tarifa.model';
+import { ToastService } from '../../../../shared/services/toast.service';
 
 @Component({
   selector: 'app-tarifa-list',
@@ -69,7 +70,7 @@ import { Tarifa } from '../../models/tarifa.model';
 export class TarifaListComponent implements OnInit {
   tarifas: Tarifa[] = [];
 
-  constructor(private tarifaService: TarifaService) {}
+  constructor(private tarifaService: TarifaService, private toast: ToastService) {}
 
   ngOnInit(): void {
     this.cargarTarifas();
@@ -85,8 +86,11 @@ export class TarifaListComponent implements OnInit {
   eliminar(id: number): void {
     if (confirm('¿Está seguro de eliminar esta tarifa?')) {
       this.tarifaService.eliminar(id).subscribe({
-        next: () => this.cargarTarifas(),
-        error: (err) => console.error('Error al eliminar:', err)
+        next: () => {
+          this.toast.success('Tarifa eliminada correctamente.');
+          this.cargarTarifas();
+        },
+        error: (err) => this.toast.error(err.error?.message || 'No se pudo eliminar la tarifa.')
       });
     }
   }

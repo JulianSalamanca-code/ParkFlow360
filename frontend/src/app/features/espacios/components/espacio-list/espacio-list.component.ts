@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { EspacioService } from '../../services/espacio.service';
 import { Espacio } from '../../models/espacio.model';
+import { ToastService } from '../../../../shared/services/toast.service';
 
 @Component({
   selector: 'app-espacio-list',
@@ -85,7 +86,7 @@ import { Espacio } from '../../models/espacio.model';
 export class EspacioListComponent implements OnInit {
   espacios: Espacio[] = [];
 
-  constructor(private espacioService: EspacioService) {}
+  constructor(private espacioService: EspacioService, private toast: ToastService) {}
 
   ngOnInit(): void {
     this.cargarEspacios();
@@ -114,8 +115,11 @@ export class EspacioListComponent implements OnInit {
   eliminar(id: number): void {
     if (confirm('¿Está seguro de eliminar este espacio?')) {
       this.espacioService.eliminar(id).subscribe({
-        next: () => this.cargarEspacios(),
-        error: (err) => console.error('Error al eliminar:', err)
+        next: () => {
+          this.toast.success('Espacio eliminado correctamente.');
+          this.cargarEspacios();
+        },
+        error: (err) => this.toast.error(err.error?.message || 'No se pudo eliminar el espacio.')
       });
     }
   }

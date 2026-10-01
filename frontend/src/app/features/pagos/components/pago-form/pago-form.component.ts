@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { PagoService } from '../../services/pago.service';
 import { PagoRequest } from '../../models/pago.model';
+import { ToastService } from '../../../../shared/services/toast.service';
 
 @Component({
   selector: 'app-pago-form',
@@ -83,7 +84,8 @@ export class PagoFormComponent implements OnInit {
     private fb: FormBuilder,
     private pagoService: PagoService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -122,16 +124,23 @@ export class PagoFormComponent implements OnInit {
     if (this.form.invalid) return;
 
     const request: PagoRequest = this.form.value;
+    const accion = this.esEdicion ? 'actualizado' : 'registrado';
 
     if (this.esEdicion && this.pagoId) {
       this.pagoService.actualizar(this.pagoId, request).subscribe({
-        next: () => this.router.navigate(['/pagos']),
-        error: (err) => console.error('Error al actualizar:', err)
+        next: () => {
+          this.toast.success(`Pago ${accion} correctamente.`);
+          this.router.navigate(['/pagos']);
+        },
+        error: (err) => this.toast.error(err.error?.message || 'No se pudo guardar el pago.')
       });
     } else {
       this.pagoService.crear(request).subscribe({
-        next: () => this.router.navigate(['/pagos']),
-        error: (err) => console.error('Error al crear:', err)
+        next: () => {
+          this.toast.success(`Pago ${accion} correctamente.`);
+          this.router.navigate(['/pagos']);
+        },
+        error: (err) => this.toast.error(err.error?.message || 'No se pudo guardar el pago.')
       });
     }
   }

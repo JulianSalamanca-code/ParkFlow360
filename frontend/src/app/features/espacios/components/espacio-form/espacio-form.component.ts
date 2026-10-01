@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { EspacioService } from '../../services/espacio.service';
 import { EspacioRequest } from '../../models/espacio.model';
+import { ToastService } from '../../../../shared/services/toast.service';
 
 @Component({
   selector: 'app-espacio-form',
@@ -86,7 +87,8 @@ export class EspacioFormComponent implements OnInit {
     private fb: FormBuilder,
     private espacioService: EspacioService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -123,16 +125,23 @@ export class EspacioFormComponent implements OnInit {
     if (this.form.invalid) return;
 
     const request: EspacioRequest = this.form.value;
+    const accion = this.esEdicion ? 'actualizado' : 'creado';
 
     if (this.esEdicion && this.espacioId) {
       this.espacioService.actualizar(this.espacioId, request).subscribe({
-        next: () => this.router.navigate(['/espacios']),
-        error: (err) => console.error('Error al actualizar:', err)
+        next: () => {
+          this.toast.success(`Espacio ${accion} correctamente.`);
+          this.router.navigate(['/espacios']);
+        },
+        error: (err) => this.toast.error(err.error?.message || 'No se pudo guardar el espacio.')
       });
     } else {
       this.espacioService.crear(request).subscribe({
-        next: () => this.router.navigate(['/espacios']),
-        error: (err) => console.error('Error al crear:', err)
+        next: () => {
+          this.toast.success(`Espacio ${accion} correctamente.`);
+          this.router.navigate(['/espacios']);
+        },
+        error: (err) => this.toast.error(err.error?.message || 'No se pudo guardar el espacio.')
       });
     }
   }

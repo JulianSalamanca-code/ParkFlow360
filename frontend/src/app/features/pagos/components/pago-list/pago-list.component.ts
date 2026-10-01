@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { PagoService } from '../../services/pago.service';
 import { Pago } from '../../models/pago.model';
+import { ToastService } from '../../../../shared/services/toast.service';
 
 @Component({
   selector: 'app-pago-list',
@@ -79,7 +80,7 @@ import { Pago } from '../../models/pago.model';
 export class PagoListComponent implements OnInit {
   pagos: Pago[] = [];
 
-  constructor(private pagoService: PagoService) {}
+  constructor(private pagoService: PagoService, private toast: ToastService) {}
 
   get recaudoTotal(): number {
     return this.pagos.reduce((sum, p) => sum + (Number(p.valor) || 0), 0);
@@ -99,8 +100,11 @@ export class PagoListComponent implements OnInit {
   eliminar(id: number): void {
     if (confirm('¿Está seguro de eliminar este pago?')) {
       this.pagoService.eliminar(id).subscribe({
-        next: () => this.cargarPagos(),
-        error: (err) => console.error('Error al eliminar:', err)
+        next: () => {
+          this.toast.success('Pago eliminado correctamente.');
+          this.cargarPagos();
+        },
+        error: (err) => this.toast.error(err.error?.message || 'No se pudo eliminar el pago.')
       });
     }
   }

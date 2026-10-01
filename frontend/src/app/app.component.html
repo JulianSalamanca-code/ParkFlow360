@@ -1,7 +1,7 @@
 <div class="app-shell" [ngClass]="{ authed: isAuthenticated$ | async }">
   <aside class="sidebar" *ngIf="isAuthenticated$ | async">
     <div>
-      <div class="brand" routerLink="/vehiculos">
+      <div class="brand" [routerLink]="(isAdmin$ | async) ? '/vehiculos' : '/mis-parqueos'">
         <span class="brand-mark">P</span>
         <div>
           <div class="brand-name">ParkFlow</div>
@@ -9,30 +9,53 @@
         </div>
       </div>
 
-      <div class="nav-section-label">Operación Central</div>
+      <!-- Navegación ADMIN -->
+      <ng-container *ngIf="isAdmin$ | async">
+        <div class="nav-section-label">Operación Central</div>
+        <nav class="nav">
+          <a routerLink="/vehiculos" routerLinkActive="active">
+            <span class="material-symbols-outlined">directions_car</span> Vehículos
+          </a>
+          <a routerLink="/espacios" routerLinkActive="active">
+            <span class="material-symbols-outlined">local_parking</span> Espacios
+          </a>
+          <a routerLink="/tarifas" routerLinkActive="active">
+            <span class="material-symbols-outlined">sell</span> Tarifas
+          </a>
+          <a routerLink="/ingresos" routerLinkActive="active">
+            <span class="material-symbols-outlined">receipt_long</span> Ingresos
+          </a>
+          <a routerLink="/pagos" routerLinkActive="active">
+            <span class="material-symbols-outlined">point_of_sale</span> Pagos
+          </a>
+          <a routerLink="/reportes" routerLinkActive="active">
+            <span class="material-symbols-outlined">analytics</span> Reportes
+          </a>
+        </nav>
 
-      <nav class="nav">
-        <a routerLink="/vehiculos" routerLinkActive="active">
-          <span class="material-symbols-outlined">directions_car</span>
-          Vehículos
-        </a>
-        <a routerLink="/espacios" routerLinkActive="active">
-          <span class="material-symbols-outlined">local_parking</span>
-          Espacios
-        </a>
-        <a routerLink="/tarifas" routerLinkActive="active">
-          <span class="material-symbols-outlined">sell</span>
-          Tarifas
-        </a>
-        <a routerLink="/pagos" routerLinkActive="active">
-          <span class="material-symbols-outlined">point_of_sale</span>
-          Pagos
-        </a>
-        <a routerLink="/reportes" routerLinkActive="active">
-          <span class="material-symbols-outlined">analytics</span>
-          Reportes
-        </a>
-      </nav>
+        <div class="nav-section-label">Administración</div>
+        <nav class="nav">
+          <a routerLink="/usuarios" routerLinkActive="active">
+            <span class="material-symbols-outlined">manage_accounts</span> Usuarios
+          </a>
+        </nav>
+      </ng-container>
+
+      <!-- Navegación USUARIO -->
+      <ng-container *ngIf="isUsuario$ | async">
+        <div class="nav-section-label">Mi Cuenta</div>
+        <nav class="nav">
+          <a routerLink="/reservar" routerLinkActive="active">
+            <span class="material-symbols-outlined">add_circle</span> Reservar Parqueadero
+          </a>
+          <a routerLink="/mis-parqueos" routerLinkActive="active">
+            <span class="material-symbols-outlined">local_parking</span> Mis Parqueos
+          </a>
+          <a routerLink="/mis-vehiculos" routerLinkActive="active">
+            <span class="material-symbols-outlined">directions_car</span> Mis Vehículos
+          </a>
+        </nav>
+      </ng-container>
     </div>
 
     <div class="sidebar-footer">
@@ -45,7 +68,7 @@
           </span>
         </div>
         <div>
-          <div style="font-weight:700;font-size:13px">Sesión activa</div>
+          <div style="font-weight:700;font-size:13px">{{ userName }}</div>
           <div class="brand-sub" style="letter-spacing:0">{{ userRole }}</div>
         </div>
       </div>
@@ -77,3 +100,5 @@
     </main>
   </div>
 </div>
+
+<app-toast-container></app-toast-container>

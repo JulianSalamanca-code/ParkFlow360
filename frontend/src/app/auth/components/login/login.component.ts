@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { ToastService } from '../../../shared/services/toast.service';
 
 @Component({
   selector: 'app-login',
@@ -164,7 +165,8 @@ export class LoginComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -183,10 +185,14 @@ export class LoginComponent implements OnInit {
     this.authService.login(this.form.value).subscribe({
       next: () => {
         this.isLoading = false;
-        this.router.navigate(['/vehiculos']);
+        const nombre = this.authService.getUser()?.nombre || '';
+        this.toast.success(`¡Bienvenido${nombre ? ', ' + nombre : ''}!`);
+        const rol = this.authService.getRol().toUpperCase();
+        this.router.navigate([rol === 'ADMIN' ? '/vehiculos' : '/mis-parqueos']);
       },
       error: (err) => {
         this.errorMessage = err.error?.message || 'Error al iniciar sesión';
+        this.toast.error(this.errorMessage);
         this.isLoading = false;
       }
     });

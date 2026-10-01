@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TarifaService } from '../../services/tarifa.service';
 import { TarifaRequest } from '../../models/tarifa.model';
+import { ToastService } from '../../../../shared/services/toast.service';
 
 @Component({
   selector: 'app-tarifa-form',
@@ -76,7 +77,8 @@ export class TarifaFormComponent implements OnInit {
     private fb: FormBuilder,
     private tarifaService: TarifaService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -113,16 +115,23 @@ export class TarifaFormComponent implements OnInit {
     if (this.form.invalid) return;
 
     const request: TarifaRequest = this.form.value;
+    const accion = this.esEdicion ? 'actualizada' : 'creada';
 
     if (this.esEdicion && this.tarifaId) {
       this.tarifaService.actualizar(this.tarifaId, request).subscribe({
-        next: () => this.router.navigate(['/tarifas']),
-        error: (err) => console.error('Error al actualizar:', err)
+        next: () => {
+          this.toast.success(`Tarifa ${accion} correctamente.`);
+          this.router.navigate(['/tarifas']);
+        },
+        error: (err) => this.toast.error(err.error?.message || 'No se pudo guardar la tarifa.')
       });
     } else {
       this.tarifaService.crear(request).subscribe({
-        next: () => this.router.navigate(['/tarifas']),
-        error: (err) => console.error('Error al crear:', err)
+        next: () => {
+          this.toast.success(`Tarifa ${accion} correctamente.`);
+          this.router.navigate(['/tarifas']);
+        },
+        error: (err) => this.toast.error(err.error?.message || 'No se pudo guardar la tarifa.')
       });
     }
   }

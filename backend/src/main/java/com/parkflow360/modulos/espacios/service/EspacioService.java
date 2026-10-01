@@ -4,6 +4,8 @@ import com.parkflow360.modulos.espacios.dto.EspacioRequest;
 import com.parkflow360.modulos.espacios.dto.EspacioResponse;
 import com.parkflow360.modulos.espacios.entity.Espacio;
 import com.parkflow360.modulos.espacios.repository.EspacioRepository;
+import com.parkflow360.modulos.ingresos.repository.IngresoRepository;
+import com.parkflow360.modulos.pagos.repository.PagoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +19,8 @@ import java.util.stream.Collectors;
 public class EspacioService {
 
     private final EspacioRepository espacioRepository;
+    private final IngresoRepository ingresoRepository;
+    private final PagoRepository pagoRepository;
 
     @Transactional(readOnly = true)
     public List<EspacioResponse> listarTodos() {
@@ -75,6 +79,19 @@ public class EspacioService {
         if (!espacioRepository.existsById(id)) {
             throw new NoSuchElementException("Espacio no encontrado con id: " + id);
         }
+
+        // No eliminar si tiene una reserva o parqueo activo
+        if (ingresoRepository.existsByEspacioIdAndEstadoIn(id, List.of("RESERVADO", "ACTIVO"))) {
+            throw new IllegalArgumentException(
+                "El espacio tiene una reserva o parqueo activo. Libera la reserva antes de eliminarlo.");
+        }
+
+        // No eliminar si tiene pagos asociados (integridad referencial)
+        if (!pagoRepository.findByEspacioId(id).isEmpty()) {
+            throw new IllegalArgumentException(
+                "No se puede eliminar el espacio porque tiene pagos asociados en el historial.");
+        }
+
         espacioRepository.deleteById(id);
     }
 

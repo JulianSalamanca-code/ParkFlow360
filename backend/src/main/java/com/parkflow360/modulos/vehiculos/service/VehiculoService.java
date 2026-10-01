@@ -4,6 +4,8 @@ import com.parkflow360.modulos.vehiculos.dto.VehiculoRequest;
 import com.parkflow360.modulos.vehiculos.dto.VehiculoResponse;
 import com.parkflow360.modulos.vehiculos.entity.Vehiculo;
 import com.parkflow360.modulos.vehiculos.repository.VehiculoRepository;
+import com.parkflow360.security.entity.Usuario;
+import com.parkflow360.security.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +19,9 @@ import java.util.stream.Collectors;
 public class VehiculoService {
 
     private final VehiculoRepository vehiculoRepository;
+    private final UsuarioRepository usuarioRepository;
+
+    // ---------- Administrador ----------
 
     @Transactional(readOnly = true)
     public List<VehiculoResponse> listarTodos() {
@@ -45,8 +50,7 @@ public class VehiculoService {
                 .modelo(request.getModelo())
                 .build();
 
-        Vehiculo guardado = vehiculoRepository.save(vehiculo);
-        return mapToResponse(guardado);
+        return mapToResponse(vehiculoRepository.save(vehiculo));
     }
 
     @Transactional
@@ -59,8 +63,7 @@ public class VehiculoService {
         vehiculo.setColor(request.getColor());
         vehiculo.setModelo(request.getModelo());
 
-        Vehiculo actualizado = vehiculoRepository.save(vehiculo);
-        return mapToResponse(actualizado);
+        return mapToResponse(vehiculoRepository.save(vehiculo));
     }
 
     @Transactional
@@ -71,6 +74,40 @@ public class VehiculoService {
         vehiculoRepository.deleteById(id);
     }
 
+    // ---------- Usuario (cliente) ----------
+
+    @Transactional(readOnly = true)
+    public List<VehiculoResponse> listarPorUsuarioEmail(String email) {
+        Usuario usuario = requireUsuario(email);
+        return vehiculoRepository.findByUsuarioId(usuario.getId()).stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public VehiculoResponse crearParaUsuario(String email, VehiculoRequest request) {
+        Usuario usuario = requireUsuario(email);
+
+        if (vehiculoRepository.existsByPlaca(request.getPlaca())) {
+            throw new IllegalArgumentException("Ya existe un vehículo con la placa: " + request.getPlaca());
+        }
+
+        Vehiculo vehiculo = Vehiculo.builder()
+                .placa(request.getPlaca())
+                .tipo(request.getTipo())
+                .color(request.getColor())
+                .modelo(request.getModelo())
+                .usuarioId(usuario.getId())
+                .build();
+
+        return mapToResponse(vehiculoRepository.save(vehiculo));
+    }
+
+    private Usuario requireUsuario(String email) {
+        return usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new NoSuchElementException("Usuario no encontrado: " + email));
+    }
+
     private VehiculoResponse mapToResponse(Vehiculo vehiculo) {
         return VehiculoResponse.builder()
                 .id(vehiculo.getId())
@@ -78,6 +115,7 @@ public class VehiculoService {
                 .tipo(vehiculo.getTipo())
                 .color(vehiculo.getColor())
                 .modelo(vehiculo.getModelo())
+                .usuarioId(vehiculo.getUsuarioId())
                 .fechaCreacion(vehiculo.getFechaCreacion())
                 .build();
     }

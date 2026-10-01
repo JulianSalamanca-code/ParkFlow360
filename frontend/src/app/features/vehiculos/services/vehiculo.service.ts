@@ -11,6 +11,7 @@ export class VehiculoService {
 
   constructor(private http: HttpClient) {}
 
+  // Administrador
   listarTodos(): Observable<Vehiculo[]> {
     return this.http.get<Vehiculo[]>(this.apiUrl);
   }
@@ -29,5 +30,14 @@ export class VehiculoService {
 
   eliminar(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+  // Cliente (rol USUARIO)
+  misVehiculos(): Observable<Vehiculo[]> {
+    return this.http.get<Vehiculo[]>(`${this.apiUrl}/mios`);
+  }
+
+  crearMio(vehiculo: VehiculoRequest): Observable<Vehiculo> {
+    return this.http.post<Vehiculo>(`${this.apiUrl}/mios`, vehiculo);
   }
 }

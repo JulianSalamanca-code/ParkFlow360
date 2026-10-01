@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { PagoService } from '../../services/pago.service';
 import { PagoRequest } from '../../models/pago.model';
+import { ToastService } from '../../../../shared/services/toast.service';
 
 @Component({
   selector: 'app-pago-form',
@@ -11,39 +12,42 @@ import { PagoRequest } from '../../models/pago.model';
   imports: [CommonModule, ReactiveFormsModule, RouterLink],
   template: `
     <div class="page">
-      <div class="form-card">
-        <div class="form-header">
-          <h2>{{ esEdicion ? 'Editar Pago' : 'Nuevo Pago' }}</h2>
+      <div class="page-header">
+        <div class="page-title">
+          <h1>{{ esEdicion ? 'Editar' : 'Nuevo' }} Pago</h1>
+          <p>Registra la transacción y el método de recaudo</p>
         </div>
+      </div>
 
+      <div class="form-card">
         <form [formGroup]="form" (ngSubmit)="guardar()">
           <div class="form-group">
-            <label for="vehiculoId">Vehículo (ID) *</label>
-            <input id="vehiculoId" type="number" formControlName="vehiculoId" class="form-control" placeholder="1" />
+            <label for="vehiculoId">Vehículo (ID)</label>
+            <input id="vehiculoId" type="number" formControlName="vehiculoId" class="form-control mono-input" placeholder="1" />
             <div *ngIf="form.get('vehiculoId')?.invalid && form.get('vehiculoId')?.touched" class="field-error">
               El vehículo es obligatorio
             </div>
           </div>
 
           <div class="form-group">
-            <label for="espacioId">Espacio (ID) *</label>
-            <input id="espacioId" type="number" formControlName="espacioId" class="form-control" placeholder="1" />
+            <label for="espacioId">Espacio (ID)</label>
+            <input id="espacioId" type="number" formControlName="espacioId" class="form-control mono-input" placeholder="1" />
             <div *ngIf="form.get('espacioId')?.invalid && form.get('espacioId')?.touched" class="field-error">
               El espacio es obligatorio
             </div>
           </div>
 
           <div class="form-group">
-            <label for="tarifaId">Tarifa (ID) *</label>
-            <input id="tarifaId" type="number" formControlName="tarifaId" class="form-control" placeholder="1" />
+            <label for="tarifaId">Tarifa (ID)</label>
+            <input id="tarifaId" type="number" formControlName="tarifaId" class="form-control mono-input" placeholder="1" />
             <div *ngIf="form.get('tarifaId')?.invalid && form.get('tarifaId')?.touched" class="field-error">
               La tarifa es obligatoria
             </div>
           </div>
 
           <div class="form-group">
-            <label for="valor">Valor *</label>
-            <input id="valor" type="number" formControlName="valor" class="form-control" step="0.01" min="0" placeholder="2000" />
+            <label for="valor">Valor</label>
+            <input id="valor" type="number" formControlName="valor" class="form-control mono-input" step="0.01" min="0" placeholder="2000" />
             <div *ngIf="form.get('valor')?.invalid && form.get('valor')?.touched" class="field-error">
               El valor es obligatorio y debe ser positivo
             </div>
@@ -61,7 +65,9 @@ import { PagoRequest } from '../../models/pago.model';
           </div>
 
           <div class="form-actions">
-            <button type="submit" class="btn btn-primary" [disabled]="form.invalid">Guardar</button>
+            <button type="submit" class="btn btn-primary" [disabled]="form.invalid">
+              <span class="material-symbols-outlined">save</span> Guardar
+            </button>
             <a routerLink="/pagos" class="btn btn-secondary">Cancelar</a>
           </div>
         </form>
@@ -78,7 +84,8 @@ export class PagoFormComponent implements OnInit {
     private fb: FormBuilder,
     private pagoService: PagoService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -117,16 +124,23 @@ export class PagoFormComponent implements OnInit {
     if (this.form.invalid) return;
 
     const request: PagoRequest = this.form.value;
+    const accion = this.esEdicion ? 'actualizado' : 'registrado';
 
     if (this.esEdicion && this.pagoId) {
       this.pagoService.actualizar(this.pagoId, request).subscribe({
-        next: () => this.router.navigate(['/pagos']),
-        error: (err) => console.error('Error al actualizar:', err)
+        next: () => {
+          this.toast.success(`Pago ${accion} correctamente.`);
+          this.router.navigate(['/pagos']);
+        },
+        error: (err) => this.toast.error(err.error?.message || 'No se pudo guardar el pago.')
       });
     } else {
       this.pagoService.crear(request).subscribe({
-        next: () => this.router.navigate(['/pagos']),
-        error: (err) => console.error('Error al crear:', err)
+        next: () => {
+          this.toast.success(`Pago ${accion} correctamente.`);
+          this.router.navigate(['/pagos']);
+        },
+        error: (err) => this.toast.error(err.error?.message || 'No se pudo guardar el pago.')
       });
     }
   }

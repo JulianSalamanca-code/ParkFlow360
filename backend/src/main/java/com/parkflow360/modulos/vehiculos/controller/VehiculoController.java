@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,6 +18,22 @@ import java.util.List;
 public class VehiculoController {
 
     private final VehiculoService vehiculoService;
+
+    // ---------- Usuario (cliente): solo sus vehículos ----------
+
+    @GetMapping("/mios")
+    public ResponseEntity<List<VehiculoResponse>> misVehiculos(Authentication auth) {
+        return ResponseEntity.ok(vehiculoService.listarPorUsuarioEmail(auth.getName()));
+    }
+
+    @PostMapping("/mios")
+    public ResponseEntity<VehiculoResponse> crearMiVehiculo(
+            Authentication auth,
+            @Valid @RequestBody VehiculoRequest request) {
+        return new ResponseEntity<>(vehiculoService.crearParaUsuario(auth.getName(), request), HttpStatus.CREATED);
+    }
+
+    // ---------- Administrador ----------
 
     @GetMapping
     public ResponseEntity<List<VehiculoResponse>> listarTodos() {

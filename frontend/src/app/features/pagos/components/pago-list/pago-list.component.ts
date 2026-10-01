@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { PagoService } from '../../services/pago.service';
 import { Pago } from '../../models/pago.model';
+import { ToastService } from '../../../../shared/services/toast.service';
 
 @Component({
   selector: 'app-pago-list',
@@ -12,20 +13,31 @@ import { Pago } from '../../models/pago.model';
     <div class="page">
       <div class="page-header">
         <div class="page-title">
-          <div>
-            <h1>Pagos</h1>
-            <p class="page-subtitle">Historial de transacciones y recaudos</p>
-          </div>
+          <h1>Pagos</h1>
+          <p>Historial de transacciones y recaudo del parqueadero</p>
         </div>
-        <a routerLink="/pagos/nuevo" class="btn btn-primary">+ Nuevo Pago</a>
+        <a routerLink="/pagos/nuevo" class="btn btn-primary">
+          <span class="material-symbols-outlined">add</span> Nuevo Pago
+        </a>
+      </div>
+
+      <div class="metrics">
+        <div class="metric">
+          <div class="label">Transacciones</div>
+          <div class="value">{{ pagos.length }}</div>
+        </div>
+        <div class="metric metric-available">
+          <div class="label">Recaudo Total</div>
+          <div class="value">{{ recaudoTotal | currency:'COP':'symbol-narrow':'1.0-0' }}</div>
+        </div>
       </div>
 
       <div class="card">
-        <div class="table-wrapper">
+        <div class="table-wrap">
           <table class="table">
             <thead>
               <tr>
-                <th>ID</th>
+                <th>Ticket</th>
                 <th>Vehículo</th>
                 <th>Espacio</th>
                 <th>Tarifa</th>
@@ -37,17 +49,21 @@ import { Pago } from '../../models/pago.model';
             </thead>
             <tbody>
               <tr *ngFor="let pago of pagos">
-                <td><strong>#{{ pago.id }}</strong></td>
-                <td>{{ pago.vehiculoId }}</td>
-                <td>{{ pago.espacioId }}</td>
-                <td>{{ pago.tarifaId }}</td>
-                <td><strong>{{ pago.valor | currency:'COP':'symbol-narrow':'1.0-0' }}</strong></td>
-                <td>{{ pago.fecha | date:'short' }}</td>
-                <td>{{ pago.metodoPago }}</td>
+                <td><span class="plate">#{{ pago.id }}</span></td>
+                <td class="num">{{ pago.vehiculoId }}</td>
+                <td class="num">{{ pago.espacioId }}</td>
+                <td class="num">{{ pago.tarifaId }}</td>
+                <td><span class="num">{{ pago.valor | currency:'COP':'symbol-narrow':'1.0-0' }}</span></td>
+                <td class="mono">{{ pago.fecha | date:'short' }}</td>
+                <td><span class="badge badge-neutral">{{ pago.metodoPago }}</span></td>
                 <td>
                   <div class="table-actions">
-                    <a [routerLink]="['/pagos/editar', pago.id]" class="btn btn-sm btn-warning">Editar</a>
-                    <button (click)="eliminar(pago.id)" class="btn btn-sm btn-danger">Eliminar</button>
+                    <a [routerLink]="['/pagos/editar', pago.id]" class="btn btn-sm btn-secondary">
+                      <span class="material-symbols-outlined">edit</span>
+                    </a>
+                    <button (click)="eliminar(pago.id)" class="btn btn-sm btn-danger">
+                      <span class="material-symbols-outlined">delete</span>
+                    </button>
                   </div>
                 </td>
               </tr>
@@ -64,7 +80,11 @@ import { Pago } from '../../models/pago.model';
 export class PagoListComponent implements OnInit {
   pagos: Pago[] = [];
 
-  constructor(private pagoService: PagoService) {}
+  constructor(private pagoService: PagoService, private toast: ToastService) {}
+
+  get recaudoTotal(): number {
+    return this.pagos.reduce((sum, p) => sum + (Number(p.valor) || 0), 0);
+  }
 
   ngOnInit(): void {
     this.cargarPagos();
@@ -80,8 +100,11 @@ export class PagoListComponent implements OnInit {
   eliminar(id: number): void {
     if (confirm('¿Está seguro de eliminar este pago?')) {
       this.pagoService.eliminar(id).subscribe({
-        next: () => this.cargarPagos(),
-        error: (err) => console.error('Error al eliminar:', err)
+        next: () => {
+          this.toast.success('Pago eliminado correctamente.');
+          this.cargarPagos();
+        },
+        error: (err) => this.toast.error(err.error?.message || 'No se pudo eliminar el pago.')
       });
     }
   }

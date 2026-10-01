@@ -17,5 +17,6 @@ public class VehiculoResponse {
     private String tipo;
     private String color;
     private String modelo;
+    private Long usuarioId;
     private LocalDateTime fechaCreacion;
 }

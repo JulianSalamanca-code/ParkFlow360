@@ -11,27 +11,29 @@ import { Reporte } from '../../models/reporte.model';
     <div class="page">
       <div class="page-header">
         <div class="page-title">
-          <div>
-            <h1>Reportes</h1>
-            <p class="page-subtitle">Resumen operativo y financiero del parqueadero</p>
-          </div>
+          <h1>Reportes</h1>
+          <p>Resumen operativo y financiero del parqueadero</p>
         </div>
       </div>
 
       <div class="section-title">Resumen General</div>
-      <div class="stats-grid">
-        <div class="stat-card" *ngFor="let r of reporteGeneral">
-          <div class="stat-label">{{ r.descripcion }}</div>
-          <div class="stat-value">
-            <ng-container *ngIf="r.tipo === 'PAGOS'; else cantidad">{{ r.total | currency:'COP':'symbol-narrow':'1.0-0' }}</ng-container>
+      <div class="metrics">
+        <div class="metric" *ngFor="let r of reporteGeneral"
+             [ngClass]="r.tipo === 'PAGOS' ? 'metric-available' : ''">
+          <div class="label">{{ r.tipo }}</div>
+          <div class="value">
+            <ng-container *ngIf="r.tipo === 'PAGOS'; else cantidad">
+              {{ r.total | currency:'COP':'symbol-narrow':'1.0-0' }}
+            </ng-container>
             <ng-template #cantidad>{{ r.cantidad }}</ng-template>
           </div>
+          <div class="text-muted" style="font-size:12px;margin-top:4px">{{ r.descripcion }}</div>
         </div>
       </div>
 
-      <div class="section-title">Espacios por Estado</div>
+      <div class="section-title">Ocupación por Estado</div>
       <div class="card">
-        <div class="table-wrapper">
+        <div class="table-wrap">
           <table class="table">
             <thead>
               <tr>
@@ -42,9 +44,16 @@ import { Reporte } from '../../models/reporte.model';
             </thead>
             <tbody>
               <tr *ngFor="let r of espaciosPorEstado">
-                <td><strong>{{ r.tipo | slice:8 }}</strong></td>
-                <td>{{ r.cantidad }}</td>
+                <td>
+                  <span class="badge" [ngClass]="estadoBadge(r.tipo)">
+                    {{ r.tipo | slice:8 }}
+                  </span>
+                </td>
+                <td class="num">{{ r.cantidad }}</td>
                 <td>{{ r.descripcion }}</td>
+              </tr>
+              <tr *ngIf="espaciosPorEstado.length === 0">
+                <td colspan="3" class="table-empty">Sin datos de ocupación</td>
               </tr>
             </tbody>
           </table>
@@ -73,5 +82,14 @@ export class ReporteListComponent implements OnInit {
       next: (data) => this.espaciosPorEstado = data,
       error: (err) => console.error('Error al cargar espacios por estado:', err)
     });
+  }
+
+  estadoBadge(tipo: string): string {
+    switch (tipo?.toUpperCase()) {
+      case 'ESPACIO_LIBRE': return 'badge-available';
+      case 'ESPACIO_OCUPADO': return 'badge-occupied';
+      case 'ESPACIO_RESERVADO': return 'badge-warning';
+      default: return 'badge-neutral';
+    }
   }
 }

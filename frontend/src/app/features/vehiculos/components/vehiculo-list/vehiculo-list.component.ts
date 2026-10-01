@@ -12,16 +12,31 @@ import { Vehiculo } from '../../models/vehiculo.model';
     <div class="page">
       <div class="page-header">
         <div class="page-title">
-          <div>
-            <h1>Vehículos</h1>
-            <p class="page-subtitle">Registro y control de vehículos del parqueadero</p>
-          </div>
+          <h1>Vehículos</h1>
+          <p>Registro y control de vehículos del parqueadero</p>
         </div>
-        <a routerLink="/vehiculos/nuevo" class="btn btn-primary">+ Nuevo Vehículo</a>
+        <a routerLink="/vehiculos/nuevo" class="btn btn-primary">
+          <span class="material-symbols-outlined">add</span> Nuevo Vehículo
+        </a>
+      </div>
+
+      <div class="metrics">
+        <div class="metric">
+          <div class="label">Total Vehículos</div>
+          <div class="value">{{ vehiculos.length }}</div>
+        </div>
+        <div class="metric metric-available">
+          <div class="label">Automóviles</div>
+          <div class="value">{{ contarPorTipo('CARRO') }}</div>
+        </div>
+        <div class="metric metric-occupied">
+          <div class="label">Motocicletas</div>
+          <div class="value">{{ contarPorTipo('MOTO') }}</div>
+        </div>
       </div>
 
       <div class="card">
-        <div class="table-wrapper">
+        <div class="table-wrap">
           <table class="table">
             <thead>
               <tr>
@@ -34,14 +49,18 @@ import { Vehiculo } from '../../models/vehiculo.model';
             </thead>
             <tbody>
               <tr *ngFor="let vehiculo of vehiculos">
-                <td><strong>{{ vehiculo.placa }}</strong></td>
-                <td>{{ vehiculo.tipo }}</td>
+                <td><span class="plate">{{ vehiculo.placa }}</span></td>
+                <td><span class="badge badge-neutral">{{ vehiculo.tipo }}</span></td>
                 <td>{{ vehiculo.color }}</td>
                 <td>{{ vehiculo.modelo }}</td>
                 <td>
                   <div class="table-actions">
-                    <a [routerLink]="['/vehiculos/editar', vehiculo.id]" class="btn btn-sm btn-warning">Editar</a>
-                    <button (click)="eliminar(vehiculo.id)" class="btn btn-sm btn-danger">Eliminar</button>
+                    <a [routerLink]="['/vehiculos/editar', vehiculo.id]" class="btn btn-sm btn-secondary">
+                      <span class="material-symbols-outlined">edit</span> Editar
+                    </a>
+                    <button (click)="eliminar(vehiculo.id)" class="btn btn-sm btn-danger">
+                      <span class="material-symbols-outlined">delete</span>
+                    </button>
                   </div>
                 </td>
               </tr>
@@ -69,6 +88,10 @@ export class VehiculoListComponent implements OnInit {
       next: (data) => this.vehiculos = data,
       error: (err) => console.error('Error al cargar vehículos:', err)
     });
+  }
+
+  contarPorTipo(tipo: string): number {
+    return this.vehiculos.filter(v => v.tipo?.toUpperCase() === tipo).length;
   }
 
   eliminar(id: number): void {

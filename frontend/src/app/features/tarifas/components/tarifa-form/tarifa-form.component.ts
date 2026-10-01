@@ -11,14 +11,17 @@ import { TarifaRequest } from '../../models/tarifa.model';
   imports: [CommonModule, ReactiveFormsModule, RouterLink],
   template: `
     <div class="page">
-      <div class="form-card">
-        <div class="form-header">
-          <h2>{{ esEdicion ? 'Editar Tarifa' : 'Nueva Tarifa' }}</h2>
+      <div class="page-header">
+        <div class="page-title">
+          <h1>{{ esEdicion ? 'Editar' : 'Nueva' }} Tarifa</h1>
+          <p>Define el nombre, modalidad y valor de la tarifa</p>
         </div>
+      </div>
 
+      <div class="form-card">
         <form [formGroup]="form" (ngSubmit)="guardar()">
           <div class="form-group">
-            <label for="nombre">Nombre *</label>
+            <label for="nombre">Nombre</label>
             <input id="nombre" type="text" formControlName="nombre" class="form-control" placeholder="Tarifa por hora" />
             <div *ngIf="form.get('nombre')?.invalid && form.get('nombre')?.touched" class="field-error">
               El nombre es obligatorio
@@ -26,7 +29,7 @@ import { TarifaRequest } from '../../models/tarifa.model';
           </div>
 
           <div class="form-group">
-            <label for="tipo">Tipo *</label>
+            <label for="tipo">Tipo</label>
             <select id="tipo" formControlName="tipo" class="form-control">
               <option value="">Seleccione...</option>
               <option value="HORA">Por Hora</option>
@@ -41,8 +44,8 @@ import { TarifaRequest } from '../../models/tarifa.model';
           </div>
 
           <div class="form-group">
-            <label for="valor">Valor *</label>
-            <input id="valor" type="number" formControlName="valor" class="form-control" step="0.01" min="0" placeholder="2000" />
+            <label for="valor">Valor</label>
+            <input id="valor" type="number" formControlName="valor" class="form-control mono-input" step="0.01" min="0" placeholder="2000" />
             <div *ngIf="form.get('valor')?.invalid && form.get('valor')?.touched" class="field-error">
               El valor es obligatorio y debe ser positivo
             </div>
@@ -54,7 +57,9 @@ import { TarifaRequest } from '../../models/tarifa.model';
           </div>
 
           <div class="form-actions">
-            <button type="submit" class="btn btn-primary" [disabled]="form.invalid">Guardar</button>
+            <button type="submit" class="btn btn-primary" [disabled]="form.invalid">
+              <span class="material-symbols-outlined">save</span> Guardar
+            </button>
             <a routerLink="/tarifas" class="btn btn-secondary">Cancelar</a>
           </div>
         </form>

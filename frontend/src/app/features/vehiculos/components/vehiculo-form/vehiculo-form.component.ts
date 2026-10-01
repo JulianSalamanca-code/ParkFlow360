@@ -11,22 +11,25 @@ import { VehiculoRequest } from '../../models/vehiculo.model';
   imports: [CommonModule, ReactiveFormsModule, RouterLink],
   template: `
     <div class="page">
-      <div class="form-card">
-        <div class="form-header">
-          <h2>{{ esEdicion ? 'Editar Vehículo' : 'Nuevo Vehículo' }}</h2>
+      <div class="page-header">
+        <div class="page-title">
+          <h1>{{ esEdicion ? 'Editar' : 'Nuevo' }} Vehículo</h1>
+          <p>Completa los datos del vehículo para registrarlo en el sistema</p>
         </div>
+      </div>
 
+      <div class="form-card">
         <form [formGroup]="form" (ngSubmit)="guardar()">
           <div class="form-group">
-            <label for="placa">Placa *</label>
-            <input id="placa" type="text" formControlName="placa" class="form-control" placeholder="ABC123" />
+            <label for="placa">Placa</label>
+            <input id="placa" type="text" formControlName="placa" class="form-control mono-input" placeholder="ABC123" />
             <div *ngIf="form.get('placa')?.invalid && form.get('placa')?.touched" class="field-error">
               La placa es obligatoria
             </div>
           </div>
 
           <div class="form-group">
-            <label for="tipo">Tipo *</label>
+            <label for="tipo">Tipo</label>
             <select id="tipo" formControlName="tipo" class="form-control">
               <option value="">Seleccione...</option>
               <option value="CARRO">Carro</option>
@@ -51,7 +54,9 @@ import { VehiculoRequest } from '../../models/vehiculo.model';
           </div>
 
           <div class="form-actions">
-            <button type="submit" class="btn btn-primary" [disabled]="form.invalid">Guardar</button>
+            <button type="submit" class="btn btn-primary" [disabled]="form.invalid">
+              <span class="material-symbols-outlined">save</span> Guardar
+            </button>
             <a routerLink="/vehiculos" class="btn btn-secondary">Cancelar</a>
           </div>
         </form>

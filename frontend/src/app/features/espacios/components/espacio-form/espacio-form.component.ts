@@ -11,22 +11,25 @@ import { EspacioRequest } from '../../models/espacio.model';
   imports: [CommonModule, ReactiveFormsModule, RouterLink],
   template: `
     <div class="page">
-      <div class="form-card">
-        <div class="form-header">
-          <h2>{{ esEdicion ? 'Editar Espacio' : 'Nuevo Espacio' }}</h2>
+      <div class="page-header">
+        <div class="page-title">
+          <h1>{{ esEdicion ? 'Editar' : 'Nuevo' }} Espacio</h1>
+          <p>Define la ubicación, categoría y estado del espacio de parqueo</p>
         </div>
+      </div>
 
+      <div class="form-card">
         <form [formGroup]="form" (ngSubmit)="guardar()">
           <div class="form-group">
-            <label for="numero">Número *</label>
-            <input id="numero" type="text" formControlName="numero" class="form-control" placeholder="A01" />
+            <label for="numero">Número / Código</label>
+            <input id="numero" type="text" formControlName="numero" class="form-control mono-input" placeholder="A01" />
             <div *ngIf="form.get('numero')?.invalid && form.get('numero')?.touched" class="field-error">
               El número es obligatorio
             </div>
           </div>
 
           <div class="form-group">
-            <label for="tipo">Tipo *</label>
+            <label for="tipo">Tipo</label>
             <select id="tipo" formControlName="tipo" class="form-control">
               <option value="">Seleccione...</option>
               <option value="CARRO">Carro</option>
@@ -42,7 +45,7 @@ import { EspacioRequest } from '../../models/espacio.model';
           </div>
 
           <div class="form-group">
-            <label for="estado">Estado *</label>
+            <label for="estado">Estado</label>
             <select id="estado" formControlName="estado" class="form-control">
               <option value="">Seleccione...</option>
               <option value="LIBRE">Libre</option>
@@ -56,15 +59,17 @@ import { EspacioRequest } from '../../models/espacio.model';
           </div>
 
           <div class="form-group">
-            <label for="piso">Piso *</label>
-            <input id="piso" type="number" formControlName="piso" class="form-control" placeholder="1" />
+            <label for="piso">Piso</label>
+            <input id="piso" type="number" formControlName="piso" class="form-control mono-input" placeholder="1" />
             <div *ngIf="form.get('piso')?.invalid && form.get('piso')?.touched" class="field-error">
               El piso es obligatorio
             </div>
           </div>
 
           <div class="form-actions">
-            <button type="submit" class="btn btn-primary" [disabled]="form.invalid">Guardar</button>
+            <button type="submit" class="btn btn-primary" [disabled]="form.invalid">
+              <span class="material-symbols-outlined">save</span> Guardar
+            </button>
             <a routerLink="/espacios" class="btn btn-secondary">Cancelar</a>
           </div>
         </form>

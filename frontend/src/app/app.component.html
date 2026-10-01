@@ -1,44 +1,79 @@
-<div class="app-container">
-  <ng-container *ngIf="isAuthenticated$ | async">
-    <header class="navbar">
-      <div class="navbar-inner">
-        <a routerLink="/vehiculos" class="navbar-brand">
-          <span class="brand-mark">P</span>
-          <span class="brand-text">ParkFlow<span>360</span></span>
-        </a>
-
-        <nav class="navbar-menu">
-          <a routerLink="/vehiculos" routerLinkActive="active">
-            <span class="nav-icon">🚗</span> Vehículos
-          </a>
-          <a routerLink="/espacios" routerLinkActive="active">
-            <span class="nav-icon">🅿️</span> Espacios
-          </a>
-          <a routerLink="/tarifas" routerLinkActive="active">
-            <span class="nav-icon">💲</span> Tarifas
-          </a>
-          <a routerLink="/pagos" routerLinkActive="active">
-            <span class="nav-icon">🧾</span> Pagos
-          </a>
-          <a routerLink="/reportes" routerLinkActive="active">
-            <span class="nav-icon">📊</span> Reportes
-          </a>
-        </nav>
-
-        <div class="navbar-user">
-          <div class="user-info">
-            <span class="user-avatar">{{ (userName || 'U').charAt(0) }}</span>
-            <span class="user-name">{{ userName }}</span>
-          </div>
-          <button (click)="logout()" class="btn-logout" title="Cerrar sesión">
-            Salir
-          </button>
+<div class="app-shell" [ngClass]="{ authed: isAuthenticated$ | async }">
+  <aside class="sidebar" *ngIf="isAuthenticated$ | async">
+    <div>
+      <div class="brand" routerLink="/vehiculos">
+        <span class="brand-mark">P</span>
+        <div>
+          <div class="brand-name">ParkFlow</div>
+          <div class="brand-sub">Pro Control</div>
         </div>
       </div>
-    </header>
-  </ng-container>
 
-  <main class="content">
-    <router-outlet></router-outlet>
-  </main>
+      <div class="nav-section-label">Operación Central</div>
+
+      <nav class="nav">
+        <a routerLink="/vehiculos" routerLinkActive="active">
+          <span class="material-symbols-outlined">directions_car</span>
+          Vehículos
+        </a>
+        <a routerLink="/espacios" routerLinkActive="active">
+          <span class="material-symbols-outlined">local_parking</span>
+          Espacios
+        </a>
+        <a routerLink="/tarifas" routerLinkActive="active">
+          <span class="material-symbols-outlined">sell</span>
+          Tarifas
+        </a>
+        <a routerLink="/pagos" routerLinkActive="active">
+          <span class="material-symbols-outlined">point_of_sale</span>
+          Pagos
+        </a>
+        <a routerLink="/reportes" routerLinkActive="active">
+          <span class="material-symbols-outlined">analytics</span>
+          Reportes
+        </a>
+      </nav>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="terminal-card">
+        <div class="row">
+          <span class="brand-sub">Terminal Activa</span>
+          <span class="row">
+            <span class="online-dot"></span>
+            <strong style="font-size:11px;color:var(--pf-available-text)">ONLINE</strong>
+          </span>
+        </div>
+        <div>
+          <div style="font-weight:700;font-size:13px">Sesión activa</div>
+          <div class="brand-sub" style="letter-spacing:0">{{ userRole }}</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main-area">
+    <header class="topbar" *ngIf="isAuthenticated$ | async">
+      <div class="clock">
+        <span class="material-symbols-outlined">schedule</span>
+        <span class="time">{{ clock }}</span>
+        <span class="date">{{ today }}</span>
+      </div>
+
+      <div class="user-box">
+        <div class="user-meta">
+          <div class="name">{{ userName }}</div>
+          <div class="role">{{ userRole }}</div>
+        </div>
+        <div class="avatar">{{ (userName || 'U').charAt(0) }}</div>
+        <button class="btn btn-ghost btn-sm" (click)="logout()" title="Cerrar sesión">
+          <span class="material-symbols-outlined">logout</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="content" [ngClass]="{ full: !(isAuthenticated$ | async) }">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
 </div>

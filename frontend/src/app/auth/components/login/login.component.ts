@@ -1,105 +1,154 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule],
   template: `
-    <div class="login-container">
-      <div class="login-box">
-        <h2>ParkFlow360</h2>
-        <p>Inicia sesión para continuar</p>
+    <div class="login-page">
+      <div class="login-card">
+        <div class="brand">
+          <span class="brand-mark">P</span>
+          <span class="brand-text">ParkFlow<span>360</span></span>
+        </div>
+
+        <h1 class="login-title">Bienvenido de nuevo</h1>
+        <p class="login-subtitle">Gestiona tus parqueaderos de forma inteligente</p>
 
         <form [formGroup]="form" (ngSubmit)="login()">
           <div class="form-group">
-            <label for="email">Email</label>
-            <input id="email" type="email" formControlName="email" class="form-control" placeholder="tu@email.com" />
-            <div *ngIf="form.get('email')?.invalid && form.get('email')?.touched" class="error">
-              El email es obligatorio
+            <label for="email">Correo electrónico</label>
+            <input
+              id="email"
+              type="email"
+              formControlName="email"
+              class="form-control"
+              placeholder="tu@empresa.com"
+              autocomplete="username" />
+            <div *ngIf="form.get('email')?.invalid && form.get('email')?.touched" class="field-error">
+              Ingresa un correo válido
             </div>
           </div>
 
           <div class="form-group">
             <label for="password">Contraseña</label>
-            <input id="password" type="password" formControlName="password" class="form-control" placeholder="••••••••" />
-            <div *ngIf="form.get('password')?.invalid && form.get('password')?.touched" class="error">
+            <input
+              id="password"
+              type="password"
+              formControlName="password"
+              class="form-control"
+              placeholder="••••••••"
+              autocomplete="current-password" />
+            <div *ngIf="form.get('password')?.invalid && form.get('password')?.touched" class="field-error">
               La contraseña es obligatoria
             </div>
           </div>
 
-          <div *ngIf="errorMessage" class="error-message">
+          <div *ngIf="errorMessage" class="alert alert-danger">
             {{ errorMessage }}
           </div>
 
-          <button type="submit" class="btn btn-primary" [disabled]="form.invalid || isLoading">
-            {{ isLoading ? 'Cargando...' : 'Iniciar Sesión' }}
+          <button type="submit" class="btn btn-primary btn-block" [disabled]="form.invalid || isLoading">
+            <span *ngIf="!isLoading">Iniciar Sesión</span>
+            <span *ngIf="isLoading">Ingresando...</span>
           </button>
         </form>
+
+        <p class="login-footer">ParkFlow360 © {{ year }} · Gestión de parqueaderos</p>
       </div>
     </div>
   `,
   styles: [`
-    .login-container {
-      display: flex;
-      justify-content: center;
-      align-items: center;
+    .login-page {
       min-height: 100vh;
-      background-color: #f5f5f5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background:
+        radial-gradient(circle at 15% 20%, rgba(41, 182, 246, 0.18), transparent 45%),
+        radial-gradient(circle at 85% 80%, rgba(79, 195, 247, 0.14), transparent 45%),
+        linear-gradient(135deg, #0b1120, #16213e 60%, #1a2745);
     }
-    .login-box {
-      background: white;
-      padding: 40px;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+
+    .login-card {
       width: 100%;
-      max-width: 400px;
+      max-width: 420px;
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 40px 36px 28px;
+      box-shadow: 0 24px 60px rgba(11, 17, 32, 0.45);
     }
-    .login-box h2 {
-      text-align: center;
-      color: #333;
-      margin-bottom: 10px;
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 28px;
     }
-    .login-box p {
-      text-align: center;
-      color: #666;
-      margin-bottom: 30px;
+
+    .brand-mark {
+      width: 40px;
+      height: 40px;
+      border-radius: 11px;
+      background: linear-gradient(135deg, #29b6f6, #4fc3f7);
+      color: #0b1120;
+      font-weight: 900;
+      font-size: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 6px 16px rgba(41, 182, 246, 0.45);
     }
-    .form-group { margin-bottom: 20px; }
-    .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; }
-    .form-control {
-      width: 100%;
-      padding: 12px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
+
+    .brand-text {
+      font-size: 22px;
+      font-weight: 800;
+      color: #16213e;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-text span {
+      color: #29b6f6;
+    }
+
+    .login-title {
+      font-size: 24px;
+      font-weight: 800;
+      color: #16213e;
+      letter-spacing: -0.02em;
+    }
+
+    .login-subtitle {
+      color: #64748b;
       font-size: 14px;
+      margin: 6px 0 28px;
     }
-    .error { color: #dc3545; font-size: 12px; margin-top: 4px; }
-    .error-message {
-      color: #dc3545;
-      font-size: 14px;
-      margin-bottom: 15px;
-      text-align: center;
-    }
-    .btn {
+
+    .btn-block {
       width: 100%;
-      padding: 12px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 16px;
+      padding: 13px;
+      margin-top: 8px;
+      font-size: 15px;
     }
-    .btn-primary { background-color: #007bff; color: white; }
-    .btn-primary:disabled { background-color: #6c757d; cursor: not-allowed; }
+
+    .login-footer {
+      text-align: center;
+      color: #94a3b8;
+      font-size: 12px;
+      margin-top: 26px;
+    }
   `]
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   form!: FormGroup;
   isLoading = false;
   errorMessage = '';
+  year = new Date().getFullYear();
 
   constructor(
     private fb: FormBuilder,
@@ -122,7 +171,8 @@ export class LoginComponent {
 
     this.authService.login(this.form.value).subscribe({
       next: () => {
-        this.router.navigate(['/']);
+        this.isLoading = false;
+        this.router.navigate(['/vehiculos']);
       },
       error: (err) => {
         this.errorMessage = err.error?.message || 'Error al iniciar sesión';

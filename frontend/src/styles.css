@@ -1,1 +1,443 @@
-/* You can add global styles to this file, and also import other style files */
+/* ============================================================
+   ParkFlow360 - Design System
+   Paleta: azul noche + cyan
+   ============================================================ */
+
+:root {
+  /* Colores de marca */
+  --pf-navy-900: #0b1120;
+  --pf-navy-800: #111a2e;
+  --pf-navy-700: #16213e;
+  --pf-navy-600: #1a2745;
+  --pf-cyan-500: #29b6f6;
+  --pf-cyan-400: #4fc3f7;
+  --pf-cyan-300: #81d4fa;
+
+  /* Colores de estado */
+  --pf-success: #22c55e;
+  --pf-success-dark: #16a34a;
+  --pf-warning: #f59e0b;
+  --pf-warning-dark: #d97706;
+  --pf-danger: #ef4444;
+  --pf-danger-dark: #dc2626;
+  --pf-info: #3b82f6;
+
+  /* Neutrales */
+  --pf-bg: #eef1f6;
+  --pf-surface: #ffffff;
+  --pf-border: #e2e8f0;
+  --pf-text: #1e293b;
+  --pf-text-muted: #64748b;
+
+  /* Sombras */
+  --pf-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --pf-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+  --pf-shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.14);
+
+  /* Radios */
+  --pf-radius: 10px;
+  --pf-radius-sm: 6px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
+  background-color: var(--pf-bg);
+  color: var(--pf-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--pf-cyan-500);
+  text-decoration: none;
+}
+
+/* ============================================================
+   Layout de páginas de módulo
+   ============================================================ */
+
+.page {
+  padding: 28px 32px;
+  max-width: 1280px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.page-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.page-title h1 {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--pf-navy-700);
+  letter-spacing: -0.02em;
+}
+
+.page-subtitle {
+  color: var(--pf-text-muted);
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+/* ============================================================
+   Cards / superficies
+   ============================================================ */
+
+.card {
+  background: var(--pf-surface);
+  border: 1px solid var(--pf-border);
+  border-radius: var(--pf-radius);
+  box-shadow: var(--pf-shadow-sm);
+  overflow: hidden;
+}
+
+.card-body {
+  padding: 20px;
+}
+
+/* ============================================================
+   Botones
+   ============================================================ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border: 1px solid transparent;
+  border-radius: var(--pf-radius-sm);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 0.18s, box-shadow 0.18s, transform 0.05s, color 0.18s;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--pf-cyan-500), var(--pf-cyan-400));
+  color: var(--pf-navy-900);
+  box-shadow: 0 4px 12px rgba(41, 182, 246, 0.35);
+}
+
+.btn-primary:hover:not(:disabled) {
+  box-shadow: 0 6px 18px rgba(41, 182, 246, 0.45);
+}
+
+.btn-secondary {
+  background: #eef1f6;
+  color: var(--pf-navy-700);
+  border-color: var(--pf-border);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #e2e8f0;
+}
+
+.btn-success {
+  background: var(--pf-success);
+  color: #fff;
+}
+
+.btn-success:hover:not(:disabled) {
+  background: var(--pf-success-dark);
+}
+
+.btn-warning {
+  background: var(--pf-warning);
+  color: #fff;
+}
+
+.btn-warning:hover:not(:disabled) {
+  background: var(--pf-warning-dark);
+}
+
+.btn-danger {
+  background: var(--pf-danger);
+  color: #fff;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: var(--pf-danger-dark);
+}
+
+.btn-sm {
+  padding: 7px 12px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.btn-icon {
+  padding: 7px 11px;
+}
+
+/* ============================================================
+   Tablas
+   ============================================================ */
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.table thead th {
+  text-align: left;
+  padding: 14px 16px;
+  background: #f8fafc;
+  color: var(--pf-navy-700);
+  font-weight: 700;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 2px solid var(--pf-border);
+  white-space: nowrap;
+}
+
+.table tbody td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--pf-border);
+  color: var(--pf-text);
+  vertical-align: middle;
+}
+
+.table tbody tr {
+  transition: background-color 0.15s;
+}
+
+.table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.table-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.table-empty {
+  text-align: center;
+  padding: 48px 16px;
+  color: var(--pf-text-muted);
+}
+
+/* ============================================================
+   Badges de estado
+   ============================================================ */
+
+.badge {
+  display: inline-block;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.badge-libre {
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--pf-success-dark);
+}
+
+.badge-ocupado {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--pf-danger-dark);
+}
+
+.badge-reservado {
+  background: rgba(245, 158, 11, 0.18);
+  color: var(--pf-warning-dark);
+}
+
+.badge-mantenimiento {
+  background: rgba(100, 116, 139, 0.18);
+  color: #475569;
+}
+
+/* ============================================================
+   Formularios
+   ============================================================ */
+
+.form-card {
+  background: var(--pf-surface);
+  border: 1px solid var(--pf-border);
+  border-radius: var(--pf-radius);
+  box-shadow: var(--pf-shadow);
+  padding: 28px;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.form-header {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--pf-border);
+}
+
+.form-header h2 {
+  font-size: 22px;
+  color: var(--pf-navy-700);
+}
+
+.form-group {
+  margin-bottom: 18px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 7px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--pf-navy-700);
+}
+
+.form-control {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1px solid var(--pf-border);
+  border-radius: var(--pf-radius-sm);
+  font-size: 14px;
+  color: var(--pf-text);
+  background: #fff;
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--pf-cyan-500);
+  box-shadow: 0 0 0 3px rgba(41, 182, 246, 0.18);
+}
+
+.form-control.ng-invalid.ng-touched {
+  border-color: var(--pf-danger);
+}
+
+.field-error {
+  color: var(--pf-danger);
+  font-size: 12px;
+  margin-top: 5px;
+  font-weight: 600;
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 26px;
+  padding-top: 20px;
+  border-top: 1px solid var(--pf-border);
+}
+
+/* ============================================================
+   Mensajes / alertas
+   ============================================================ */
+
+.alert {
+  padding: 12px 16px;
+  border-radius: var(--pf-radius-sm);
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.alert-danger {
+  background: rgba(239, 68, 68, 0.12);
+  color: var(--pf-danger-dark);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* ============================================================
+   Stat cards (reportes)
+   ============================================================ */
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 18px;
+  margin-bottom: 28px;
+}
+
+.stat-card {
+  background: var(--pf-surface);
+  border: 1px solid var(--pf-border);
+  border-radius: var(--pf-radius);
+  padding: 20px;
+  box-shadow: var(--pf-shadow-sm);
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg, var(--pf-cyan-500), var(--pf-cyan-400));
+}
+
+.stat-label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--pf-text-muted);
+}
+
+.stat-value {
+  font-size: 30px;
+  font-weight: 800;
+  color: var(--pf-navy-700);
+  margin-top: 6px;
+}
+
+.section-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--pf-navy-700);
+  margin: 24px 0 14px;
+}
+
+/* ============================================================
+   Utilidades
+   ============================================================ */
+
+.text-muted { color: var(--pf-text-muted); }
+.mt-0 { margin-top: 0; }
+.mb-0 { margin-bottom: 0; }

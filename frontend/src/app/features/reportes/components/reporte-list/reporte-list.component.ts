@@ -8,60 +8,50 @@ import { Reporte } from '../../models/reporte.model';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="reporte-list">
-      <h2>Reportes</h2>
-
-      <div class="section">
-        <h3>Reporte General</h3>
-        <table class="table">
-          <thead>
-            <tr>
-              <th>Tipo</th>
-              <th>Cantidad</th>
-              <th>Total</th>
-              <th>Descripción</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let reporte of reporteGeneral">
-              <td>{{ reporte.tipo }}</td>
-              <td>{{ reporte.cantidad }}</td>
-              <td>{{ reporte.total | currency }}</td>
-              <td>{{ reporte.descripcion }}</td>
-            </tr>
-          </tbody>
-        </table>
+    <div class="page">
+      <div class="page-header">
+        <div class="page-title">
+          <div>
+            <h1>Reportes</h1>
+            <p class="page-subtitle">Resumen operativo y financiero del parqueadero</p>
+          </div>
+        </div>
       </div>
 
-      <div class="section">
-        <h3>Espacios por Estado</h3>
-        <table class="table">
-          <thead>
-            <tr>
-              <th>Tipo</th>
-              <th>Cantidad</th>
-              <th>Descripción</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let reporte of espaciosPorEstado">
-              <td>{{ reporte.tipo }}</td>
-              <td>{{ reporte.cantidad }}</td>
-              <td>{{ reporte.descripcion }}</td>
-            </tr>
-          </tbody>
-        </table>
+      <div class="section-title">Resumen General</div>
+      <div class="stats-grid">
+        <div class="stat-card" *ngFor="let r of reporteGeneral">
+          <div class="stat-label">{{ r.descripcion }}</div>
+          <div class="stat-value">
+            <ng-container *ngIf="r.tipo === 'PAGOS'; else cantidad">{{ r.total | currency:'COP':'symbol-narrow':'1.0-0' }}</ng-container>
+            <ng-template #cantidad>{{ r.cantidad }}</ng-template>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title">Espacios por Estado</div>
+      <div class="card">
+        <div class="table-wrapper">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Estado</th>
+                <th>Cantidad</th>
+                <th>Descripción</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let r of espaciosPorEstado">
+                <td><strong>{{ r.tipo | slice:8 }}</strong></td>
+                <td>{{ r.cantidad }}</td>
+                <td>{{ r.descripcion }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
-  `,
-  styles: [`
-    .reporte-list { padding: 20px; }
-    .section { margin-bottom: 30px; }
-    .section h3 { margin-bottom: 15px; color: #333; }
-    .table { width: 100%; border-collapse: collapse; }
-    .table th, .table td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-    .table th { background-color: #f5f5f5; font-weight: bold; }
-  `]
+  `
 })
 export class ReporteListComponent implements OnInit {
   reporteGeneral: Reporte[] = [];

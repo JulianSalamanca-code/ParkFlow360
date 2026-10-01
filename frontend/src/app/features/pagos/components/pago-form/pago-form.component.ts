@@ -10,71 +10,64 @@ import { PagoRequest } from '../../models/pago.model';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterLink],
   template: `
-    <div class="pago-form">
-      <h2>{{ esEdicion ? 'Editar' : 'Nuevo' }} Pago</h2>
+    <div class="page">
+      <div class="form-card">
+        <div class="form-header">
+          <h2>{{ esEdicion ? 'Editar Pago' : 'Nuevo Pago' }}</h2>
+        </div>
 
-      <form [formGroup]="form" (ngSubmit)="guardar()">
-        <div class="form-group">
-          <label for="vehiculoId">Vehículo ID *</label>
-          <input id="vehiculoId" type="number" formControlName="vehiculoId" class="form-control" />
-          <div *ngIf="form.get('vehiculoId')?.invalid && form.get('vehiculoId')?.touched" class="error">
-            El vehículo es obligatorio
+        <form [formGroup]="form" (ngSubmit)="guardar()">
+          <div class="form-group">
+            <label for="vehiculoId">Vehículo (ID) *</label>
+            <input id="vehiculoId" type="number" formControlName="vehiculoId" class="form-control" placeholder="1" />
+            <div *ngIf="form.get('vehiculoId')?.invalid && form.get('vehiculoId')?.touched" class="field-error">
+              El vehículo es obligatorio
+            </div>
           </div>
-        </div>
 
-        <div class="form-group">
-          <label for="espacioId">Espacio ID *</label>
-          <input id="espacioId" type="number" formControlName="espacioId" class="form-control" />
-          <div *ngIf="form.get('espacioId')?.invalid && form.get('espacioId')?.touched" class="error">
-            El espacio es obligatorio
+          <div class="form-group">
+            <label for="espacioId">Espacio (ID) *</label>
+            <input id="espacioId" type="number" formControlName="espacioId" class="form-control" placeholder="1" />
+            <div *ngIf="form.get('espacioId')?.invalid && form.get('espacioId')?.touched" class="field-error">
+              El espacio es obligatorio
+            </div>
           </div>
-        </div>
 
-        <div class="form-group">
-          <label for="tarifaId">Tarifa ID *</label>
-          <input id="tarifaId" type="number" formControlName="tarifaId" class="form-control" />
-          <div *ngIf="form.get('tarifaId')?.invalid && form.get('tarifaId')?.touched" class="error">
-            La tarifa es obligatoria
+          <div class="form-group">
+            <label for="tarifaId">Tarifa (ID) *</label>
+            <input id="tarifaId" type="number" formControlName="tarifaId" class="form-control" placeholder="1" />
+            <div *ngIf="form.get('tarifaId')?.invalid && form.get('tarifaId')?.touched" class="field-error">
+              La tarifa es obligatoria
+            </div>
           </div>
-        </div>
 
-        <div class="form-group">
-          <label for="valor">Valor *</label>
-          <input id="valor" type="number" formControlName="valor" class="form-control" step="0.01" min="0" />
-          <div *ngIf="form.get('valor')?.invalid && form.get('valor')?.touched" class="error">
-            El valor es obligatorio y debe ser positivo
+          <div class="form-group">
+            <label for="valor">Valor *</label>
+            <input id="valor" type="number" formControlName="valor" class="form-control" step="0.01" min="0" placeholder="2000" />
+            <div *ngIf="form.get('valor')?.invalid && form.get('valor')?.touched" class="field-error">
+              El valor es obligatorio y debe ser positivo
+            </div>
           </div>
-        </div>
 
-        <div class="form-group">
-          <label for="metodoPago">Método de Pago</label>
-          <select id="metodoPago" formControlName="metodoPago" class="form-control">
-            <option value="">Seleccione...</option>
-            <option value="EFECTIVO">Efectivo</option>
-            <option value="TARJETA">Tarjeta</option>
-            <option value="TRANSFERENCIA">Transferencia</option>
-            <option value="QR">QR</option>
-          </select>
-        </div>
+          <div class="form-group">
+            <label for="metodoPago">Método de Pago</label>
+            <select id="metodoPago" formControlName="metodoPago" class="form-control">
+              <option value="">Seleccione...</option>
+              <option value="EFECTIVO">Efectivo</option>
+              <option value="TARJETA">Tarjeta</option>
+              <option value="TRANSFERENCIA">Transferencia</option>
+              <option value="QR">QR</option>
+            </select>
+          </div>
 
-        <div class="actions">
-          <button type="submit" class="btn btn-primary" [disabled]="form.invalid">Guardar</button>
-          <a routerLink="/pagos" class="btn btn-secondary">Cancelar</a>
-        </div>
-      </form>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary" [disabled]="form.invalid">Guardar</button>
+            <a routerLink="/pagos" class="btn btn-secondary">Cancelar</a>
+          </div>
+        </form>
+      </div>
     </div>
-  `,
-  styles: [`
-    .pago-form { padding: 20px; max-width: 500px; }
-    .form-group { margin-bottom: 15px; }
-    .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
-    .form-control { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
-    .error { color: #dc3545; font-size: 12px; margin-top: 4px; }
-    .actions { margin-top: 20px; }
-    .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; text-decoration: none; display: inline-block; margin-right: 8px; }
-    .btn-primary { background-color: #007bff; color: white; }
-    .btn-secondary { background-color: #6c757d; color: white; }
-  `]
+  `
 })
 export class PagoFormComponent implements OnInit {
   form!: FormGroup;

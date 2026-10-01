@@ -81,10 +81,15 @@ type Filtro = 'TODOS' | 'EN_USO' | 'FINALIZADOS';
                   <td class="mono">{{ ingreso.fechaEntrada | date:'short' }}</td>
                   <td (click)="$event.stopPropagation()">
                     <div class="table-actions">
-                      <button *ngIf="ingreso.estado !== 'FINALIZADO'"
+                      <button *ngIf="ingreso.estado === 'ACTIVO'"
                               (click)="registrarSalida(ingreso.id)" class="btn btn-sm btn-primary"
                               title="Registrar salida">
                         <span class="material-symbols-outlined">logout</span>
+                      </button>
+                      <button *ngIf="ingreso.estado === 'RESERVADO'"
+                              (click)="liberar(ingreso.id)" class="btn btn-sm btn-warning"
+                              title="Liberar reserva">
+                        <span class="material-symbols-outlined">event_busy</span>
                       </button>
                       <button (click)="eliminar(ingreso.id)" class="btn btn-sm btn-danger" title="Eliminar">
                         <span class="material-symbols-outlined">delete</span>
@@ -221,6 +226,7 @@ export class IngresoListComponent implements OnInit {
       case 'ACTIVO': return 'badge-occupied';
       case 'RESERVADO': return 'badge-warning';
       case 'FINALIZADO': return 'badge-available';
+      case 'CANCELADO': return 'badge-neutral';
       default: return 'badge-neutral';
     }
   }
@@ -233,6 +239,18 @@ export class IngresoListComponent implements OnInit {
           this.cargarIngresos();
         },
         error: (err) => this.toast.error(err.error?.message || 'No se pudo registrar la salida.')
+      });
+    }
+  }
+
+  liberar(id: number): void {
+    if (confirm('¿Liberar esta reserva y dejar el espacio disponible?')) {
+      this.ingresoService.liberar(id).subscribe({
+        next: () => {
+          this.toast.success('Reserva liberada. El espacio quedó disponible.');
+          this.cargarIngresos();
+        },
+        error: (err) => this.toast.error(err.error?.message || 'No se pudo liberar la reserva.')
       });
     }
   }

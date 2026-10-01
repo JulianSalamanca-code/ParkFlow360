@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { EspacioService } from '../../services/espacio.service';
 import { Espacio } from '../../models/espacio.model';
 import { ToastService } from '../../../../shared/services/toast.service';
+import { IngresoService } from '../../../ingresos/services/ingreso.service';
 
 @Component({
   selector: 'app-espacio-list',
@@ -67,6 +68,11 @@ import { ToastService } from '../../../../shared/services/toast.service';
                     <a [routerLink]="['/espacios/editar', espacio.id]" class="btn btn-sm btn-secondary">
                       <span class="material-symbols-outlined">edit</span> Editar
                     </a>
+                    <button *ngIf="espacio.estado === 'RESERVADO' || espacio.estado === 'OCUPADO'"
+                            (click)="liberar(espacio)" class="btn btn-sm btn-warning"
+                            title="Liberar reserva / parqueo">
+                      <span class="material-symbols-outlined">event_busy</span> Liberar
+                    </button>
                     <button (click)="eliminar(espacio.id)" class="btn btn-sm btn-danger">
                       <span class="material-symbols-outlined">delete</span>
                     </button>
@@ -86,7 +92,11 @@ import { ToastService } from '../../../../shared/services/toast.service';
 export class EspacioListComponent implements OnInit {
   espacios: Espacio[] = [];
 
-  constructor(private espacioService: EspacioService, private toast: ToastService) {}
+  constructor(
+    private espacioService: EspacioService,
+    private ingresoService: IngresoService,
+    private toast: ToastService
+  ) {}
 
   ngOnInit(): void {
     this.cargarEspacios();
@@ -109,6 +119,18 @@ export class EspacioListComponent implements OnInit {
       case 'OCUPADO': return 'badge-occupied';
       case 'RESERVADO': return 'badge-warning';
       default: return 'badge-neutral';
+    }
+  }
+
+  liberar(espacio: Espacio): void {
+    if (confirm(`¿Liberar el espacio ${espacio.numero}? La reserva o parqueo activo se cancelará.`)) {
+      this.ingresoService.liberarPorEspacio(espacio.id).subscribe({
+        next: () => {
+          this.toast.success(`Espacio ${espacio.numero} liberado correctamente.`);
+          this.cargarEspacios();
+        },
+        error: (err) => this.toast.error(err.error?.message || 'No se pudo liberar el espacio.')
+      });
     }
   }
 

@@ -35,6 +35,14 @@ export class IngresoService {
     return this.http.put<Ingreso>(`${this.apiUrl}/${id}/salida`, {});
   }
 
+  liberar(id: number): Observable<Ingreso> {
+    return this.http.put<Ingreso>(`${this.apiUrl}/${id}/liberar`, {});
+  }
+
+  liberarPorEspacio(espacioId: number): Observable<Ingreso> {
+    return this.http.put<Ingreso>(`${this.apiUrl}/espacio/${espacioId}/liberar`, {});
+  }
+
   eliminar(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }

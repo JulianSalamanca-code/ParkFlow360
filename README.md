@@ -197,6 +197,61 @@ El frontend estará disponible en `http://localhost:4200`
 - `GET /api/reportes/espacios-por-estado` - Espacios por estado
 - `GET /api/reportes/ingresos-por-periodo?inicio=&fin=` - Ingresos por período
 
+## Despliegue
+
+El proyecto es un **monorepo**: el frontend y el backend se despliegan en plataformas distintas.
+
+```
+GitHub (ParkFlow360)
+├── frontend/  ──►  Netlify         (sitio estático Angular)
+└── backend/   ──►  Railway / Render (Spring Boot)
+                          │
+                          ▼
+                   Supabase (PostgreSQL)
+```
+
+### Frontend en Netlify
+
+El archivo `netlify.toml` en la raíz ya contiene la configuración:
+
+```toml
+[build]
+  base = "frontend"
+  command = "npm install && npm run build"
+  publish = "dist/frontend/browser"
+```
+
+Conectar el repositorio en https://app.netlify.com y Netlify tomará esta configuración automáticamente.
+
+### Backend en Railway / Render
+
+1. Crear un proyecto desde el repositorio de GitHub.
+2. Configurar el **Root Directory** en `backend`.
+3. Definir las variables de entorno (ver `backend/.env.example`):
+
+| Variable | Descripción |
+|----------|-------------|
+| `DB_URL` | URL JDBC de Supabase (`...?prepareThreshold=0`) |
+| `DB_USERNAME` | Usuario de la base de datos |
+| `DB_PASSWORD` | Contraseña de la base de datos |
+| `JWT_SECRET` | Clave secreta para firmar tokens |
+| `CORS_ALLOWED_ORIGINS` | Dominios del frontend separados por coma |
+| `PORT` | Se asigna automáticamente en la plataforma |
+
+El backend incluye `Dockerfile`, `Procfile` y `system.properties` para facilitar el despliegue.
+
+### Conectar frontend con backend
+
+Una vez desplegado el backend, descomentar en `netlify.toml` y reemplazar la URL:
+
+```toml
+[[redirects]]
+  from = "/api/*"
+  to = "https://TU-BACKEND.up.railway.app/api/:splat"
+  status = 200
+  force = true
+```
+
 ## Licencia
 
 Este proyecto es privado y confidencial.

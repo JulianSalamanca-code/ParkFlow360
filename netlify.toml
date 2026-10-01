@@ -1,0 +1,23 @@
+# Configuración de despliegue en Netlify para ParkFlow360 (frontend Angular)
+
+[build]
+  base = "frontend"
+  command = "npm install && npm run build"
+  publish = "dist/frontend/browser"
+
+# SPA: redirigir todas las rutas al index.html para que funcione el router de Angular
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# NOTA: cuando despliegues el backend (Spring Boot) en Railway/Render/Fly.io,
+# descomenta y reemplaza la URL para enrutar las llamadas /api/* hacia el backend.
+# [[redirects]]
+#   from = "/api/*"
+#   to = "https://TU-BACKEND.up.railway.app/api/:splat"
+#   status = 200
+#   force = true
+
+[build.environment]
+  NODE_VERSION = "20"

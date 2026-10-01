@@ -4,6 +4,7 @@ import com.parkflow360.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -23,15 +24,36 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
-            .sessionManagement(session -> 
+            .cors(cors -> {})
+            .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
+                // Público
                 .requestMatchers("/api/auth/**").permitAll()
+
+                // Compartido (ADMIN y USUARIO)
+                .requestMatchers(
+                    "/api/vehiculos/mios",
+                    "/api/ingresos/mios",
+                    "/api/ingresos/reservar"
+                ).hasAnyRole("ADMIN", "USUARIO")
+                .requestMatchers(HttpMethod.GET, "/api/espacios/**", "/api/tarifas/**")
+                    .hasAnyRole("ADMIN", "USUARIO")
+
+                // Solo ADMIN
+                .requestMatchers("/api/usuarios/**").hasRole("ADMIN")
+                .requestMatchers("/api/reportes/**").hasRole("ADMIN")
+                .requestMatchers("/api/pagos/**").hasRole("ADMIN")
+                .requestMatchers("/api/vehiculos/**").hasRole("ADMIN")
+                .requestMatchers("/api/ingresos/**").hasRole("ADMIN")
+                .requestMatchers("/api/espacios/**").hasRole("ADMIN")
+                .requestMatchers("/api/tarifas/**").hasRole("ADMIN")
+
                 .requestMatchers("/api/**").authenticated()
                 .anyRequest().permitAll()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-        
+
         return http.build();
     }
 

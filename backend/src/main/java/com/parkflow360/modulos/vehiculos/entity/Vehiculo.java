@@ -32,6 +32,9 @@ public class Vehiculo {
     @Column(length = 100)
     private String modelo;
 
+    @Column(name = "usuario_id")
+    private Long usuarioId;
+
     @Column(name = "fecha_creacion", updatable = false)
     private LocalDateTime fechaCreacion;
 

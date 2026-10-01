@@ -1,4 +1,4 @@
-package com.parkflow360.modulos.vehiculos.dto;
+package com.parkflow360.security.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,12 +11,10 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class VehiculoResponse {
+public class UsuarioResponse {
     private Long id;
-    private String placa;
-    private String tipo;
-    private String color;
-    private String modelo;
-    private Long usuarioId;
+    private String email;
+    private String rol;
+    private String nombre;
     private LocalDateTime fechaCreacion;
 }

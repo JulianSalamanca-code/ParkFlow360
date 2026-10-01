@@ -65,6 +65,16 @@ public class IngresoController {
         return ResponseEntity.ok(ingresoService.registrarSalida(id));
     }
 
+    @PutMapping("/{id}/liberar")
+    public ResponseEntity<IngresoResponse> liberar(@PathVariable Long id) {
+        return ResponseEntity.ok(ingresoService.liberar(id));
+    }
+
+    @PutMapping("/espacio/{espacioId}/liberar")
+    public ResponseEntity<IngresoResponse> liberarPorEspacio(@PathVariable Long espacioId) {
+        return ResponseEntity.ok(ingresoService.liberarPorEspacio(espacioId));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         ingresoService.eliminar(id);

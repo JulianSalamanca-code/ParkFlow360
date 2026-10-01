@@ -152,6 +152,33 @@ public class IngresoService {
     }
 
     @Transactional
+    public IngresoResponse liberar(Long id) {
+        Ingreso ingreso = ingresoRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Ingreso no encontrado con id: " + id));
+
+        if ("FINALIZADO".equalsIgnoreCase(ingreso.getEstado()) || "CANCELADO".equalsIgnoreCase(ingreso.getEstado())) {
+            throw new IllegalArgumentException("Esta reserva ya fue finalizada o liberada.");
+        }
+
+        ingreso.setEstado("CANCELADO");
+        ingreso.setFechaSalida(LocalDateTime.now());
+        ingreso = ingresoRepository.save(ingreso);
+
+        marcarEspacio(ingreso.getEspacioId(), "LIBRE");
+
+        return mapToResponse(ingreso);
+    }
+
+    @Transactional
+    public IngresoResponse liberarPorEspacio(Long espacioId) {
+        Ingreso ingreso = ingresoRepository
+                .findFirstByEspacioIdAndEstadoIn(espacioId, List.of("RESERVADO", "ACTIVO"))
+                .orElseThrow(() -> new IllegalArgumentException(
+                    "El espacio no tiene una reserva o parqueo activo que liberar."));
+        return liberar(ingreso.getId());
+    }
+
+    @Transactional
     public void eliminar(Long id) {
         if (!ingresoRepository.existsById(id)) {
             throw new NoSuchElementException("Ingreso no encontrado con id: " + id);

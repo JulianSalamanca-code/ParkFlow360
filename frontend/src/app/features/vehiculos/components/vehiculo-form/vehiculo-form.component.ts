@@ -10,61 +10,54 @@ import { VehiculoRequest } from '../../models/vehiculo.model';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterLink],
   template: `
-    <div class="vehiculo-form">
-      <h2>{{ esEdicion ? 'Editar' : 'Nuevo' }} Vehículo</h2>
+    <div class="page">
+      <div class="form-card">
+        <div class="form-header">
+          <h2>{{ esEdicion ? 'Editar Vehículo' : 'Nuevo Vehículo' }}</h2>
+        </div>
 
-      <form [formGroup]="form" (ngSubmit)="guardar()">
-        <div class="form-group">
-          <label for="placa">Placa *</label>
-          <input id="placa" type="text" formControlName="placa" class="form-control" />
-          <div *ngIf="form.get('placa')?.invalid && form.get('placa')?.touched" class="error">
-            La placa es obligatoria
+        <form [formGroup]="form" (ngSubmit)="guardar()">
+          <div class="form-group">
+            <label for="placa">Placa *</label>
+            <input id="placa" type="text" formControlName="placa" class="form-control" placeholder="ABC123" />
+            <div *ngIf="form.get('placa')?.invalid && form.get('placa')?.touched" class="field-error">
+              La placa es obligatoria
+            </div>
           </div>
-        </div>
 
-        <div class="form-group">
-          <label for="tipo">Tipo *</label>
-          <select id="tipo" formControlName="tipo" class="form-control">
-            <option value="">Seleccione...</option>
-            <option value="CARRO">Carro</option>
-            <option value="MOTO">Moto</option>
-            <option value="CAMIONETA">Camioneta</option>
-            <option value="CAMIÓN">Camión</option>
-            <option value="OTRO">Otro</option>
-          </select>
-          <div *ngIf="form.get('tipo')?.invalid && form.get('tipo')?.touched" class="error">
-            El tipo es obligatorio
+          <div class="form-group">
+            <label for="tipo">Tipo *</label>
+            <select id="tipo" formControlName="tipo" class="form-control">
+              <option value="">Seleccione...</option>
+              <option value="CARRO">Carro</option>
+              <option value="MOTO">Moto</option>
+              <option value="CAMIONETA">Camioneta</option>
+              <option value="CAMIÓN">Camión</option>
+              <option value="OTRO">Otro</option>
+            </select>
+            <div *ngIf="form.get('tipo')?.invalid && form.get('tipo')?.touched" class="field-error">
+              El tipo es obligatorio
+            </div>
           </div>
-        </div>
 
-        <div class="form-group">
-          <label for="color">Color</label>
-          <input id="color" type="text" formControlName="color" class="form-control" />
-        </div>
+          <div class="form-group">
+            <label for="color">Color</label>
+            <input id="color" type="text" formControlName="color" class="form-control" placeholder="Rojo" />
+          </div>
 
-        <div class="form-group">
-          <label for="modelo">Modelo</label>
-          <input id="modelo" type="text" formControlName="modelo" class="form-control" />
-        </div>
+          <div class="form-group">
+            <label for="modelo">Modelo</label>
+            <input id="modelo" type="text" formControlName="modelo" class="form-control" placeholder="Toyota Corolla" />
+          </div>
 
-        <div class="actions">
-          <button type="submit" class="btn btn-primary" [disabled]="form.invalid">Guardar</button>
-          <a routerLink="/vehiculos" class="btn btn-secondary">Cancelar</a>
-        </div>
-      </form>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary" [disabled]="form.invalid">Guardar</button>
+            <a routerLink="/vehiculos" class="btn btn-secondary">Cancelar</a>
+          </div>
+        </form>
+      </div>
     </div>
-  `,
-  styles: [`
-    .vehiculo-form { padding: 20px; max-width: 500px; }
-    .form-group { margin-bottom: 15px; }
-    .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
-    .form-control { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
-    .error { color: #dc3545; font-size: 12px; margin-top: 4px; }
-    .actions { margin-top: 20px; }
-    .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; text-decoration: none; display: inline-block; margin-right: 8px; }
-    .btn-primary { background-color: #007bff; color: white; }
-    .btn-secondary { background-color: #6c757d; color: white; }
-  `]
+  `
 })
 export class VehiculoFormComponent implements OnInit {
   form!: FormGroup;

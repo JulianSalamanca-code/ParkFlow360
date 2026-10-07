@@ -253,13 +253,10 @@ export class PlanoEditorComponent implements OnInit {
     op.subscribe({
       next: (plano) => {
         this.isLoading = false;
-        this.toast.success(this.id ? 'Plano actualizado.' : 'Plano creado.');
+        this.toast.success(this.id ? 'Plano actualizado.' : 'Plano creado. Ahora genera los espacios.');
         this.id = plano.id;
-        if (!this.form.get('imagenUrl')?.value) {
-          this.router.navigate(['/planos']);
-        } else {
-          this.router.navigate(['/planos']);
-        }
+        // Queda en el editor para poder generar los espacios enseguida
+        this.router.navigate(['/planos/editar', plano.id]);
       },
       error: (err) => {
         this.isLoading = false;

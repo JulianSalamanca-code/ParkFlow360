@@ -54,6 +54,13 @@ public class EspacioService {
                 .tipo(request.getTipo())
                 .estado(request.getEstado())
                 .piso(request.getPiso())
+                .planoId(request.getPlanoId())
+                .fila(request.getFila())
+                .columna(request.getColumna())
+                .posX(request.getPosX())
+                .posY(request.getPosY())
+                .ancho(request.getAncho())
+                .alto(request.getAlto())
                 .build();
 
         Espacio guardado = espacioRepository.save(espacio);
@@ -69,6 +76,13 @@ public class EspacioService {
         espacio.setTipo(request.getTipo());
         espacio.setEstado(request.getEstado());
         espacio.setPiso(request.getPiso());
+        if (request.getPlanoId() != null) espacio.setPlanoId(request.getPlanoId());
+        if (request.getFila() != null) espacio.setFila(request.getFila());
+        if (request.getColumna() != null) espacio.setColumna(request.getColumna());
+        if (request.getPosX() != null) espacio.setPosX(request.getPosX());
+        if (request.getPosY() != null) espacio.setPosY(request.getPosY());
+        if (request.getAncho() != null) espacio.setAncho(request.getAncho());
+        if (request.getAlto() != null) espacio.setAlto(request.getAlto());
 
         Espacio actualizado = espacioRepository.save(espacio);
         return mapToResponse(actualizado);
@@ -102,6 +116,13 @@ public class EspacioService {
                 .tipo(espacio.getTipo())
                 .estado(espacio.getEstado())
                 .piso(espacio.getPiso())
+                .planoId(espacio.getPlanoId())
+                .fila(espacio.getFila())
+                .columna(espacio.getColumna())
+                .posX(espacio.getPosX())
+                .posY(espacio.getPosY())
+                .ancho(espacio.getAncho())
+                .alto(espacio.getAlto())
                 .fechaCreacion(espacio.getFechaCreacion())
                 .build();
     }

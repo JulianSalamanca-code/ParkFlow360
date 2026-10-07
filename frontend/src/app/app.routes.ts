@@ -9,11 +9,12 @@ export const routes: Routes = [
   },
 
   // ---------------- ADMINISTRADOR ----------------
+  // El administrador NO registra vehículos ni reserva: opera y supervisa.
   {
-    path: 'vehiculos',
+    path: 'planos',
     canActivate: [RoleGuard], data: { roles: ['ADMIN'] },
-    loadChildren: () => import('./features/vehiculos/vehiculos.routes')
-      .then(m => m.VEHICULOS_ROUTES)
+    loadChildren: () => import('./features/planos/planos.routes')
+      .then(m => m.PLANOS_ROUTES)
   },
   {
     path: 'espacios',
@@ -71,10 +72,22 @@ export const routes: Routes = [
     loadChildren: () => import('./features/cliente/mis-vehiculos/mis-vehiculos.routes')
       .then(m => m.MIS_VEHICULOS_ROUTES)
   },
+  {
+    path: 'pagar/resultado',
+    canActivate: [RoleGuard], data: { roles: ['USUARIO'] },
+    loadComponent: () => import('./features/cliente/pagar/pagar-resultado.component')
+      .then(m => m.PagarResultadoComponent)
+  },
+  {
+    path: 'pagar',
+    canActivate: [RoleGuard], data: { roles: ['USUARIO'] },
+    loadComponent: () => import('./features/cliente/pagar/pagar.component')
+      .then(m => m.PagarComponent)
+  },
 
   {
     path: '',
-    redirectTo: 'vehiculos',
+    redirectTo: 'planos',
     pathMatch: 'full'
   }
 ];

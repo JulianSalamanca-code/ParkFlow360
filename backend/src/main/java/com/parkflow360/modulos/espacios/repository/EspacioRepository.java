@@ -13,4 +13,6 @@ public interface EspacioRepository extends JpaRepository<Espacio, Long> {
     boolean existsByNumero(String numero);
     List<Espacio> findByEstado(String estado);
     List<Espacio> findByPiso(Integer piso);
+    List<Espacio> findByPlanoId(Long planoId);
+    long countByPlanoId(Long planoId);
 }

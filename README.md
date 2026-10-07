@@ -136,6 +136,17 @@ El frontend estará disponible en `http://localhost:4200`
 - Espacios por estado
 - Ingresos por período
 
+## Roles y permisos
+
+El sistema tiene dos roles:
+
+| Rol | Puede hacer |
+|-----|-------------|
+| `ADMIN` | Operación y supervisión: planos, espacios, tarifas, ingresos (entrada/salida), pagos, reportes y usuarios. **No** registra vehículos ni reserva. |
+| `USUARIO` (cliente) | Registra y administra **sus** vehículos, reserva espacios, consulta sus parqueos y paga en línea. |
+
+> El administrador no gestiona vehículos ni reservas: esas acciones son del cliente.
+
 ## Autenticación
 
 - **Endpoint:** `POST /api/auth/login`
@@ -156,6 +167,16 @@ El frontend estará disponible en `http://localhost:4200`
     "nombre": "Administrador"
   }
   ```
+
+### Inicio de sesión con Google
+
+- **Endpoint:** `POST /api/auth/google`
+- **Body:** `{ "credential": "<ID token de Google Identity Services>" }`
+- El backend verifica el ID token, crea el usuario con rol `USUARIO` si no existe y devuelve el mismo JWT.
+- Requiere configurar `GOOGLE_CLIENT_ID` (backend) y `googleClientId` en `frontend/src/environments/environment.ts`.
+
+> La base de datos parte limpia: solo existe el usuario administrador **admin@parkflow360.com / admin123**. El resto de las tablas está vacío.
+
 
 ## API Endpoints
 
@@ -197,6 +218,43 @@ El frontend estará disponible en `http://localhost:4200`
 - `GET /api/reportes/espacios-por-estado` - Espacios por estado
 - `GET /api/reportes/ingresos-por-periodo?inicio=&fin=` - Ingresos por período
 
+### Vehículos del cliente
+- `GET /api/vehiculos/mios` - Listar mis vehículos
+- `POST /api/vehiculos/mios` - Registrar un vehículo a mi nombre
+- `PUT /api/vehiculos/mios/{id}` - Actualizar mi vehículo
+- `DELETE /api/vehiculos/mios/{id}` - Eliminar mi vehículo
+
+### Planos y espacios
+- `GET /api/planos` - Listar planos
+- `POST /api/planos` - Crear plano
+- `PUT /api/planos/{id}` - Actualizar plano
+- `DELETE /api/planos/{id}` - Eliminar plano y sus espacios
+- `POST /api/planos/{id}/generar-espacios` - Generar los espacios en bloque (cuadrícula)
+- `GET /api/planos/{id}/espacios` - Espacios ubicados en el plano (mapa de ocupación)
+
+### Pagos en línea (cliente)
+- `POST /api/pagos/online` - Inicia un pago con Wompi y devuelve la URL de checkout
+- `GET /api/pagos/mios` - Historial de pagos del cliente
+- `POST /api/pagos/wompi/webhook` - Webhook público de Wompi (confirmación de la transacción)
+
+## Plano del parqueadero
+
+En lugar de crear los espacios uno por uno, el administrador carga un plano y genera la cuadrícula de espacios en bloque:
+
+1. Crea un plano (nombre, piso, imagen opcional, filas y columnas).
+2. Genera los espacios con `POST /api/planos/{id}/generar-espacios` (prefijo, tipo y estado inicial).
+3. Visualiza la ocupación en tiempo real en el **Mapa de ocupación** (colores por estado: libre, ocupado, reservado, mantenimiento).
+
+## Pagos en línea con Wompi
+
+El cliente genera un recibo y paga con Wompi (tarjeta, PSE o Nequi):
+
+1. `POST /api/pagos/online` crea una transacción `PENDIENTE` y devuelve la URL del checkout con la firma de integridad.
+2. El cliente paga en Wompi.
+3. Wompi notifica al `POST /api/pagos/wompi/webhook`, donde se verifica la firma y el pago pasa a `PAGADO`.
+
+> Configura `WOMPI_PUBLIC_KEY`, `WOMPI_PRIVATE_KEY`, `WOMPI_EVENTS_SECRET` y `WOMPI_INTEGRITY_SECRET`. Usa primero el entorno sandbox de Wompi.
+
 ## Despliegue
 
 El proyecto es un **monorepo**: el frontend y el backend se despliegan en plataformas distintas.
@@ -236,6 +294,12 @@ Conectar el repositorio en https://app.netlify.com y Netlify tomará esta config
 | `DB_PASSWORD` | Contraseña de la base de datos |
 | `JWT_SECRET` | Clave secreta para firmar tokens |
 | `CORS_ALLOWED_ORIGINS` | Dominios del frontend separados por coma |
+| `APP_FRONTEND_URL` | URL del frontend (redirección de Wompi) |
+| `GOOGLE_CLIENT_ID` | Client ID de Google para el login con Google |
+| `WOMPI_PUBLIC_KEY` | Llave pública de Wompi |
+| `WOMPI_PRIVATE_KEY` | Llave privada de Wompi |
+| `WOMPI_EVENTS_SECRET` | Secreto de eventos (webhook) de Wompi |
+| `WOMPI_INTEGRITY_SECRET` | Secreto de integridad de Wompi |
 | `PORT` | Se asigna automáticamente en la plataforma |
 
 El backend incluye `Dockerfile`, `Procfile` y `system.properties` para facilitar el despliegue.

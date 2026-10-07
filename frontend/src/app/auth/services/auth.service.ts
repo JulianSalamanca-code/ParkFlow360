@@ -24,12 +24,14 @@ export class AuthService {
 
   login(credentials: LoginRequest): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${this.apiUrl}/login`, credentials).pipe(
-      tap(response => {
-        this.setToken(response.token);
-        this.setUser(response);
-        this.isAuthenticatedSubject.next(true);
-        this.rolSubject.next(response.rol);
-      })
+      tap(response => this.handleSession(response))
+    );
+  }
+
+  /** Inicia sesión con el ID token (credential) de Google Identity Services. */
+  loginConGoogle(credential: string): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(`${this.apiUrl}/google`, { credential }).pipe(
+      tap(response => this.handleSession(response))
     );
   }
 
@@ -63,6 +65,13 @@ export class AuthService {
 
   isUsuario(): boolean {
     return this.getRol().toUpperCase() === 'USUARIO';
+  }
+
+  private handleSession(response: LoginResponse): void {
+    this.setToken(response.token);
+    this.setUser(response);
+    this.isAuthenticatedSubject.next(true);
+    this.rolSubject.next(response.rol);
   }
 
   private hasToken(): boolean {

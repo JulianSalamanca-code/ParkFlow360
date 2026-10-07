@@ -20,4 +20,10 @@ public class PagoResponse {
     private BigDecimal valor;
     private LocalDateTime fecha;
     private String metodoPago;
+    private String estado;
+    private String referencia;
+    private String wompiTransactionId;
+    private String moneda;
+    private Long usuarioId;
+    private Long ingresoId;
 }

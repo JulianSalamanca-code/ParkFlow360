@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { ToastService } from '../../../shared/services/toast.service';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-login',
@@ -49,6 +50,12 @@ import { ToastService } from '../../../shared/services/toast.service';
             {{ isLoading ? 'Validando...' : 'Iniciar Turno' }}
           </button>
         </form>
+
+        <ng-container *ngIf="googleEnabled">
+          <div class="login-divider"><span>o</span></div>
+          <div id="google-btn" class="google-btn"></div>
+          <p *ngIf="googleError" class="field-error">{{ googleError }}</p>
+        </ng-container>
 
         <div class="login-foot">
           <span class="online-dot"></span>
@@ -110,6 +117,17 @@ import { ToastService } from '../../../shared/services/toast.service';
 
     .btn-block { width: 100%; padding: 13px; font-size: 15px; margin-top: 6px; }
 
+    .login-divider {
+      display: flex; align-items: center; gap: 12px;
+      margin: 20px 0; color: var(--pf-muted); font-size: 12px; text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .login-divider::before, .login-divider::after {
+      content: ''; flex: 1; height: 1px; background: var(--pf-outline-soft);
+    }
+
+    .google-btn { display: flex; justify-content: center; min-height: 44px; }
+
     .login-foot {
       display: flex; align-items: center; gap: 8px;
       margin-top: 28px; color: var(--pf-muted); font-size: 12px;
@@ -161,6 +179,8 @@ export class LoginComponent implements OnInit {
   form!: FormGroup;
   isLoading = false;
   errorMessage = '';
+  googleEnabled = false;
+  googleError = '';
 
   constructor(
     private fb: FormBuilder,
@@ -174,6 +194,11 @@ export class LoginComponent implements OnInit {
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required]]
     });
+
+    this.googleEnabled = !!environment.googleClientId;
+    if (this.googleEnabled) {
+      this.cargarGoogle();
+    }
   }
 
   login(): void {
@@ -187,8 +212,7 @@ export class LoginComponent implements OnInit {
         this.isLoading = false;
         const nombre = this.authService.getUser()?.nombre || '';
         this.toast.success(`¡Bienvenido${nombre ? ', ' + nombre : ''}!`);
-        const rol = this.authService.getRol().toUpperCase();
-        this.router.navigate([rol === 'ADMIN' ? '/vehiculos' : '/mis-parqueos']);
+        this.redirigir();
       },
       error: (err) => {
         this.errorMessage = err.error?.message || 'Error al iniciar sesión';
@@ -196,5 +220,58 @@ export class LoginComponent implements OnInit {
         this.isLoading = false;
       }
     });
+  }
+
+  /** Carga el SDK de Google Identity Services y dibuja el botón oficial. */
+  private cargarGoogle(): void {
+    const w = window as any;
+    const render = () => {
+      try {
+        w.google.accounts.id.initialize({
+          client_id: environment.googleClientId,
+          callback: (resp: any) => this.loginGoogle(resp.credential)
+        });
+        w.google.accounts.id.renderButton(
+          document.getElementById('google-btn'),
+          { theme: 'outline', size: 'large', width: 360, text: 'continue_with' }
+        );
+      } catch (e) {
+        this.googleError = 'No se pudo inicializar el inicio de sesión con Google.';
+      }
+    };
+
+    if (w.google?.accounts?.id) {
+      setTimeout(render, 0);
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.onload = () => setTimeout(render, 0);
+    script.onerror = () => this.googleError = 'No se pudo cargar Google. Revisa tu conexión.';
+    document.head.appendChild(script);
+  }
+
+  private loginGoogle(credential: string): void {
+    this.isLoading = true;
+    this.googleError = '';
+    this.authService.loginConGoogle(credential).subscribe({
+      next: () => {
+        this.isLoading = false;
+        this.toast.success('Sesión iniciada con Google.');
+        this.redirigir();
+      },
+      error: (err) => {
+        this.isLoading = false;
+        this.googleError = err.error?.message || 'No se pudo iniciar sesión con Google.';
+      }
+    });
+  }
+
+  private redirigir(): void {
+    const rol = this.authService.getRol().toUpperCase();
+    this.router.navigate([rol === 'ADMIN' ? '/planos' : '/mis-parqueos']);
   }
 }

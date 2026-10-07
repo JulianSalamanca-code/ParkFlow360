@@ -39,8 +39,35 @@ public class Pago {
     @Column(name = "metodo_pago", length = 50)
     private String metodoPago;
 
+    /** PENDIENTE | PAGADO | RECHAZADO | EFECTIVO */
+    @Column(length = 20)
+    private String estado;
+
+    @Column(length = 100)
+    private String referencia;
+
+    @Column(name = "wompi_transaction_id", length = 100)
+    private String wompiTransactionId;
+
+    @Column(length = 10)
+    private String moneda;
+
+    @Column(name = "usuario_id")
+    private Long usuarioId;
+
+    @Column(name = "ingreso_id")
+    private Long ingresoId;
+
     @PrePersist
     protected void onCreate() {
-        fecha = LocalDateTime.now();
+        if (fecha == null) {
+            fecha = LocalDateTime.now();
+        }
+        if (estado == null) {
+            estado = "PAGADO";
+        }
+        if (moneda == null) {
+            moneda = "COP";
+        }
     }
 }

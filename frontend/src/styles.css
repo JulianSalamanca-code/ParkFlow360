@@ -461,10 +461,59 @@ a { color: var(--pf-primary); text-decoration: none; }
    Responsive
    ============================================================================ */
 
+.nav-toggle { display: none; }
+.nav-backdrop { display: none; }
+
 @media (max-width: 900px) {
   .app-shell.authed .main-area { margin-left: 0; }
-  .sidebar { display: none; }
+
+  /* Menú móvil: drawer deslizante en vez de ocultar la navegación */
+  .nav-toggle { display: inline-flex; }
+
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+    box-shadow: var(--pf-shadow);
+  }
+  .sidebar.open { transform: translateX(0); }
+
+  .nav-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    z-index: 45;
+  }
+
   .user-meta { display: none; }
+
+  .topbar { padding: 0 12px; gap: 8px; }
+  .clock { flex: 1; }
+  .clock .date { display: none; }
+
+  .content { padding: 16px; }
+  .page-title h1 { font-size: 22px; }
+
+  /* Tablas: desplazamiento horizontal con primera columna fija */
+  .table-wrap { -webkit-overflow-scrolling: touch; }
+  .table thead th:first-child,
+  .table tbody td:first-child {
+    position: sticky;
+    left: 0;
+    background: var(--pf-surface);
+    z-index: 1;
+  }
+
+  .form-card { padding: 16px; max-width: none; }
+  .form-actions { flex-wrap: wrap; }
+  .metrics { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 560px) {
+  .metrics { grid-template-columns: 1fr; }
+  .page-header { align-items: flex-start; }
+  .btn { padding: 10px 14px; }
+  .content { padding: 12px; }
 }
 
 /* ============================================================================

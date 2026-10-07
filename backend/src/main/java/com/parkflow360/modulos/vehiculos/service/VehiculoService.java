@@ -103,6 +103,33 @@ public class VehiculoService {
         return mapToResponse(vehiculoRepository.save(vehiculo));
     }
 
+    @Transactional
+    public VehiculoResponse actualizarParaUsuario(String email, Long id, VehiculoRequest request) {
+        Usuario usuario = requireUsuario(email);
+        Vehiculo vehiculo = vehiculoRepository.findByIdAndUsuarioId(id, usuario.getId())
+                .orElseThrow(() -> new NoSuchElementException("Vehículo no encontrado entre tus vehículos: " + id));
+
+        if (!vehiculo.getPlaca().equalsIgnoreCase(request.getPlaca())
+                && vehiculoRepository.existsByPlaca(request.getPlaca())) {
+            throw new IllegalArgumentException("Ya existe un vehículo con la placa: " + request.getPlaca());
+        }
+
+        vehiculo.setPlaca(request.getPlaca());
+        vehiculo.setTipo(request.getTipo());
+        vehiculo.setColor(request.getColor());
+        vehiculo.setModelo(request.getModelo());
+
+        return mapToResponse(vehiculoRepository.save(vehiculo));
+    }
+
+    @Transactional
+    public void eliminarParaUsuario(String email, Long id) {
+        Usuario usuario = requireUsuario(email);
+        Vehiculo vehiculo = vehiculoRepository.findByIdAndUsuarioId(id, usuario.getId())
+                .orElseThrow(() -> new NoSuchElementException("Vehículo no encontrado entre tus vehículos: " + id));
+        vehiculoRepository.delete(vehiculo);
+    }
+
     private Usuario requireUsuario(String email) {
         return usuarioRepository.findByEmail(email)
                 .orElseThrow(() -> new NoSuchElementException("Usuario no encontrado: " + email));

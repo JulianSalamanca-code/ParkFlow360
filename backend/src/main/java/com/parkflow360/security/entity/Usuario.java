@@ -23,7 +23,8 @@ public class Usuario {
     @Column(nullable = false, unique = true, length = 100)
     private String email;
 
-    @Column(nullable = false)
+    /** Puede ser nulo para cuentas creadas con Google. */
+    @Column(nullable = true)
     private String password;
 
     @Column(nullable = false, length = 50)
@@ -32,11 +33,20 @@ public class Usuario {
     @Column(length = 100)
     private String nombre;
 
+    @Column(length = 20)
+    private String proveedor;
+
+    @Column(name = "google_id", length = 100)
+    private String googleId;
+
     @Column(name = "fecha_creacion", updatable = false)
     private LocalDateTime fechaCreacion;
 
     @PrePersist
     protected void onCreate() {
         fechaCreacion = LocalDateTime.now();
+        if (proveedor == null) {
+            proveedor = "LOCAL";
+        }
     }
 }

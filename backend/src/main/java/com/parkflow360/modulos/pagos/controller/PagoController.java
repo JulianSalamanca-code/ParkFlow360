@@ -1,17 +1,22 @@
 package com.parkflow360.modulos.pagos.controller;
 
+import com.parkflow360.modulos.pagos.dto.PagoOnlineRequest;
+import com.parkflow360.modulos.pagos.dto.PagoOnlineResponse;
 import com.parkflow360.modulos.pagos.dto.PagoRequest;
 import com.parkflow360.modulos.pagos.dto.PagoResponse;
 import com.parkflow360.modulos.pagos.service.PagoService;
+import com.parkflow360.modulos.pagos.service.WompiService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/pagos")
@@ -19,6 +24,32 @@ import java.util.List;
 public class PagoController {
 
     private final PagoService pagoService;
+    private final WompiService wompiService;
+
+    // ---------- Cliente ----------
+
+    /** Inicia un pago en línea y devuelve la URL de checkout de Wompi. */
+    @PostMapping("/online")
+    public ResponseEntity<PagoOnlineResponse> crearPagoOnline(
+            Authentication auth,
+            @Valid @RequestBody PagoOnlineRequest request) {
+        return new ResponseEntity<>(wompiService.crearPagoOnline(auth.getName(), request), HttpStatus.CREATED);
+    }
+
+    /** Historial de pagos del cliente autenticado. */
+    @GetMapping("/mios")
+    public ResponseEntity<List<PagoResponse>> misPagos(Authentication auth) {
+        return ResponseEntity.ok(pagoService.listarPorUsuarioEmail(auth.getName()));
+    }
+
+    /** Webhook público de Wompi: confirma el resultado de la transacción. */
+    @PostMapping("/wompi/webhook")
+    public ResponseEntity<Map<String, String>> webhookWompi(@RequestBody String payload) {
+        wompiService.procesarWebhook(payload);
+        return ResponseEntity.ok(Map.of("status", "ok"));
+    }
+
+    // ---------- Administrador ----------
 
     @GetMapping
     public ResponseEntity<List<PagoResponse>> listarTodos() {

@@ -22,6 +22,6 @@ export class RoleGuard implements CanActivate {
     }
 
     // Redirigir a la pantalla inicial según el rol
-    return this.router.createUrlTree([this.authService.isAdmin() ? '/vehiculos' : '/mis-parqueos']);
+    return this.router.createUrlTree([this.authService.isAdmin() ? '/planos' : '/mis-parqueos']);
   }
 }

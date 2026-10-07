@@ -6,11 +6,13 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface PagoRepository extends JpaRepository<Pago, Long> {
     List<Pago> findByVehiculoId(Long vehiculoId);
     List<Pago> findByEspacioId(Long espacioId);
     List<Pago> findByFechaBetween(LocalDateTime inicio, LocalDateTime fin);
-    List<Pago> findByMetodoPago(String metodoPago);
+    List<Pago> findByUsuarioId(Long usuarioId);
+    Optional<Pago> findByReferencia(String referencia);
 }

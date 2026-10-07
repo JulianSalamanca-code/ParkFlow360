@@ -28,21 +28,24 @@ public class SecurityConfig {
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // Público
+                // ---------- Público ----------
                 .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/pagos/wompi/webhook").permitAll()
 
-                // Compartido (ADMIN y USUARIO)
-                .requestMatchers(
-                    "/api/vehiculos/mios",
-                    "/api/ingresos/mios",
-                    "/api/ingresos/reservar"
-                ).hasAnyRole("ADMIN", "USUARIO")
-                .requestMatchers(HttpMethod.GET, "/api/espacios/**", "/api/tarifas/**")
+                // ---------- Cliente (rol USUARIO) ----------
+                // Solicitudes concretas del cliente (van ANTES de las reglas de ADMIN)
+                .requestMatchers("/api/vehiculos/mios", "/api/vehiculos/mios/**").hasRole("USUARIO")
+                .requestMatchers("/api/ingresos/mios", "/api/ingresos/reservar").hasRole("USUARIO")
+                .requestMatchers("/api/pagos/online", "/api/pagos/mios").hasRole("USUARIO")
+                // Consulta de catálogo (espacios, tarifas y planos) compartida
+                .requestMatchers(HttpMethod.GET, "/api/espacios/**", "/api/tarifas/**", "/api/planos/**")
                     .hasAnyRole("ADMIN", "USUARIO")
 
-                // Solo ADMIN
+                // ---------- Solo ADMIN ----------
+                // El administrador NO registra vehículos ni reserva: solo opera y supervisa.
                 .requestMatchers("/api/usuarios/**").hasRole("ADMIN")
                 .requestMatchers("/api/reportes/**").hasRole("ADMIN")
+                .requestMatchers("/api/planos/**").hasRole("ADMIN")
                 .requestMatchers("/api/pagos/**").hasRole("ADMIN")
                 .requestMatchers("/api/vehiculos/**").hasRole("ADMIN")
                 .requestMatchers("/api/ingresos/**").hasRole("ADMIN")

@@ -17,6 +17,7 @@ export class AppComponent implements OnInit, OnDestroy {
   isAuthenticated$: Observable<boolean>;
   isAdmin$: Observable<boolean>;
   isUsuario$: Observable<boolean>;
+  mobileNavOpen = false;
   clock = '';
   today = '';
   private clockSub?: Subscription;
@@ -54,5 +55,13 @@ export class AppComponent implements OnInit, OnDestroy {
     this.authService.logout();
     this.toast.info('Sesión cerrada.');
     this.router.navigate(['/auth/login']);
+  }
+
+  toggleMobileNav(): void {
+    this.mobileNavOpen = !this.mobileNavOpen;
+  }
+
+  closeMobileNav(): void {
+    this.mobileNavOpen = false;
   }
 }

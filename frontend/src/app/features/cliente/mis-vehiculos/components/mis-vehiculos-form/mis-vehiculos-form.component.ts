@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { VehiculoService } from '../../../../vehiculos/services/vehiculo.service';
 import { VehiculoRequest } from '../../../../vehiculos/models/vehiculo.model';
 import { ToastService } from '../../../../../shared/services/toast.service';
@@ -14,8 +14,8 @@ import { ToastService } from '../../../../../shared/services/toast.service';
     <div class="page">
       <div class="page-header">
         <div class="page-title">
-          <h1>Agregar Vehículo</h1>
-          <p>Registra un vehículo a tu nombre</p>
+          <h1>{{ id ? 'Editar Vehículo' : 'Agregar Vehículo' }}</h1>
+          <p>{{ id ? 'Actualiza los datos de tu vehículo' : 'Registra un vehículo a tu nombre' }}</p>
         </div>
       </div>
 
@@ -57,7 +57,7 @@ import { ToastService } from '../../../../../shared/services/toast.service';
 
           <div class="form-actions">
             <button type="submit" class="btn btn-primary" [disabled]="form.invalid">
-              <span class="material-symbols-outlined">save</span> Guardar
+              <span class="material-symbols-outlined">save</span> {{ id ? 'Guardar cambios' : 'Guardar' }}
             </button>
             <a routerLink="/mis-vehiculos" class="btn btn-secondary">Cancelar</a>
           </div>
@@ -69,10 +69,12 @@ import { ToastService } from '../../../../../shared/services/toast.service';
 export class MisVehiculosFormComponent implements OnInit {
   form!: FormGroup;
   errorMessage = '';
+  id?: number;
 
   constructor(
     private fb: FormBuilder,
     private vehiculoService: VehiculoService,
+    private route: ActivatedRoute,
     private router: Router,
     private toast: ToastService
   ) {}
@@ -84,16 +86,34 @@ export class MisVehiculosFormComponent implements OnInit {
       color: ['', [Validators.maxLength(50)]],
       modelo: ['', [Validators.maxLength(100)]]
     });
+
+    const idParam = this.route.snapshot.paramMap.get('id');
+    if (idParam) {
+      this.id = Number(idParam);
+      this.vehiculoService.misVehiculos().subscribe({
+        next: (lista) => {
+          const v = lista.find(x => x.id === this.id);
+          if (v) {
+            this.form.patchValue({
+              placa: v.placa, tipo: v.tipo, color: v.color, modelo: v.modelo
+            });
+          }
+        }
+      });
+    }
   }
 
   guardar(): void {
     if (this.form.invalid) return;
 
     const request: VehiculoRequest = this.form.value;
+    const op = this.id
+      ? this.vehiculoService.actualizarMio(this.id, request)
+      : this.vehiculoService.crearMio(request);
 
-    this.vehiculoService.crearMio(request).subscribe({
+    op.subscribe({
       next: () => {
-        this.toast.success('Vehículo agregado correctamente.');
+        this.toast.success(this.id ? 'Vehículo actualizado.' : 'Vehículo agregado correctamente.');
         this.router.navigate(['/mis-vehiculos']);
       },
       error: (err) => {

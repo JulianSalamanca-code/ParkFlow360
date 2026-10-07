@@ -28,4 +28,13 @@ public class EspacioRequest {
 
     @NotNull(message = "El piso es obligatorio")
     private Integer piso;
+
+    // ---- Ubicación opcional dentro de un plano ----
+    private Long planoId;
+    private Integer fila;
+    private Integer columna;
+    private Double posX;
+    private Double posY;
+    private Double ancho;
+    private Double alto;
 }

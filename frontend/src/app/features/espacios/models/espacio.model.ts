@@ -4,7 +4,14 @@ export interface Espacio {
   tipo: string;
   estado: string;
   piso: number;
-  fechaCreacion: string;
+  planoId?: number;
+  fila?: number;
+  columna?: number;
+  posX?: number;
+  posY?: number;
+  ancho?: number;
+  alto?: number;
+  fechaCreacion?: string;
 }
 
 export interface EspacioRequest {
@@ -12,4 +19,11 @@ export interface EspacioRequest {
   tipo: string;
   estado: string;
   piso: number;
+  planoId?: number;
+  fila?: number;
+  columna?: number;
+  posX?: number;
+  posY?: number;
+  ancho?: number;
+  alto?: number;
 }

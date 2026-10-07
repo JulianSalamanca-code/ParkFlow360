@@ -4,6 +4,8 @@ import com.parkflow360.modulos.pagos.dto.PagoRequest;
 import com.parkflow360.modulos.pagos.dto.PagoResponse;
 import com.parkflow360.modulos.pagos.entity.Pago;
 import com.parkflow360.modulos.pagos.repository.PagoRepository;
+import com.parkflow360.security.entity.Usuario;
+import com.parkflow360.security.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +20,7 @@ import java.util.stream.Collectors;
 public class PagoService {
 
     private final PagoRepository pagoRepository;
+    private final UsuarioRepository usuarioRepository;
 
     @Transactional(readOnly = true)
     public List<PagoResponse> listarTodos() {
@@ -47,6 +50,15 @@ public class PagoService {
                 .collect(Collectors.toList());
     }
 
+    /** Pagos del cliente autenticado. */
+    @Transactional(readOnly = true)
+    public List<PagoResponse> listarPorUsuarioEmail(String email) {
+        Usuario usuario = requireUsuario(email);
+        return pagoRepository.findByUsuarioId(usuario.getId()).stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
     @Transactional(readOnly = true)
     public PagoResponse obtenerPorId(Long id) {
         Pago pago = pagoRepository.findById(id)
@@ -62,6 +74,7 @@ public class PagoService {
                 .tarifaId(request.getTarifaId())
                 .valor(request.getValor())
                 .metodoPago(request.getMetodoPago())
+                .estado("PAGADO")
                 .build();
 
         Pago guardado = pagoRepository.save(pago);
@@ -91,7 +104,12 @@ public class PagoService {
         pagoRepository.deleteById(id);
     }
 
-    private PagoResponse mapToResponse(Pago pago) {
+    private Usuario requireUsuario(String email) {
+        return usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new NoSuchElementException("Usuario no encontrado: " + email));
+    }
+
+    PagoResponse mapToResponse(Pago pago) {
         return PagoResponse.builder()
                 .id(pago.getId())
                 .vehiculoId(pago.getVehiculoId())
@@ -100,6 +118,12 @@ public class PagoService {
                 .valor(pago.getValor())
                 .fecha(pago.getFecha())
                 .metodoPago(pago.getMetodoPago())
+                .estado(pago.getEstado())
+                .referencia(pago.getReferencia())
+                .wompiTransactionId(pago.getWompiTransactionId())
+                .moneda(pago.getMoneda())
+                .usuarioId(pago.getUsuarioId())
+                .ingresoId(pago.getIngresoId())
                 .build();
     }
 }

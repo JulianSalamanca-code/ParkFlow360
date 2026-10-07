@@ -1,7 +1,9 @@
 <div class="app-shell" [ngClass]="{ authed: isAuthenticated$ | async }">
-  <aside class="sidebar" *ngIf="isAuthenticated$ | async">
+  <div class="nav-backdrop" *ngIf="mobileNavOpen" (click)="closeMobileNav()"></div>
+
+  <aside class="sidebar" *ngIf="isAuthenticated$ | async" [class.open]="mobileNavOpen">
     <div>
-      <div class="brand" [routerLink]="(isAdmin$ | async) ? '/vehiculos' : '/mis-parqueos'">
+      <div class="brand" [routerLink]="(isAdmin$ | async) ? '/planos' : '/mis-parqueos'" (click)="closeMobileNav()">
         <span class="brand-mark">P</span>
         <div>
           <div class="brand-name">ParkFlow</div>
@@ -13,29 +15,29 @@
       <ng-container *ngIf="isAdmin$ | async">
         <div class="nav-section-label">Operación Central</div>
         <nav class="nav">
-          <a routerLink="/vehiculos" routerLinkActive="active">
-            <span class="material-symbols-outlined">directions_car</span> Vehículos
+          <a routerLink="/planos" routerLinkActive="active" (click)="closeMobileNav()">
+            <span class="material-symbols-outlined">map</span> Plano y Ocupación
           </a>
-          <a routerLink="/espacios" routerLinkActive="active">
+          <a routerLink="/espacios" routerLinkActive="active" (click)="closeMobileNav()">
             <span class="material-symbols-outlined">local_parking</span> Espacios
           </a>
-          <a routerLink="/tarifas" routerLinkActive="active">
+          <a routerLink="/tarifas" routerLinkActive="active" (click)="closeMobileNav()">
             <span class="material-symbols-outlined">sell</span> Tarifas
           </a>
-          <a routerLink="/ingresos" routerLinkActive="active">
+          <a routerLink="/ingresos" routerLinkActive="active" (click)="closeMobileNav()">
             <span class="material-symbols-outlined">receipt_long</span> Ingresos
           </a>
-          <a routerLink="/pagos" routerLinkActive="active">
+          <a routerLink="/pagos" routerLinkActive="active" (click)="closeMobileNav()">
             <span class="material-symbols-outlined">point_of_sale</span> Pagos
           </a>
-          <a routerLink="/reportes" routerLinkActive="active">
+          <a routerLink="/reportes" routerLinkActive="active" (click)="closeMobileNav()">
             <span class="material-symbols-outlined">analytics</span> Reportes
           </a>
         </nav>
 
         <div class="nav-section-label">Administración</div>
         <nav class="nav">
-          <a routerLink="/usuarios" routerLinkActive="active">
+          <a routerLink="/usuarios" routerLinkActive="active" (click)="closeMobileNav()">
             <span class="material-symbols-outlined">manage_accounts</span> Usuarios
           </a>
         </nav>
@@ -45,14 +47,17 @@
       <ng-container *ngIf="isUsuario$ | async">
         <div class="nav-section-label">Mi Cuenta</div>
         <nav class="nav">
-          <a routerLink="/reservar" routerLinkActive="active">
+          <a routerLink="/reservar" routerLinkActive="active" (click)="closeMobileNav()">
             <span class="material-symbols-outlined">add_circle</span> Reservar Parqueadero
           </a>
-          <a routerLink="/mis-parqueos" routerLinkActive="active">
+          <a routerLink="/mis-parqueos" routerLinkActive="active" (click)="closeMobileNav()">
             <span class="material-symbols-outlined">local_parking</span> Mis Parqueos
           </a>
-          <a routerLink="/mis-vehiculos" routerLinkActive="active">
+          <a routerLink="/mis-vehiculos" routerLinkActive="active" (click)="closeMobileNav()">
             <span class="material-symbols-outlined">directions_car</span> Mis Vehículos
+          </a>
+          <a routerLink="/pagar" routerLinkActive="active" (click)="closeMobileNav()">
+            <span class="material-symbols-outlined">payments</span> Pagar en Línea
           </a>
         </nav>
       </ng-container>
@@ -77,6 +82,10 @@
 
   <div class="main-area">
     <header class="topbar" *ngIf="isAuthenticated$ | async">
+      <button class="btn btn-ghost btn-sm nav-toggle" (click)="toggleMobileNav()" title="Menú">
+        <span class="material-symbols-outlined">{{ mobileNavOpen ? 'close' : 'menu' }}</span>
+      </button>
+
       <div class="clock">
         <span class="material-symbols-outlined">schedule</span>
         <span class="time">{{ clock }}</span>

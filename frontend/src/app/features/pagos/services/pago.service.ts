@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Pago, PagoRequest } from '../models/pago.model';
+import { Pago, PagoOnlineRequest, PagoOnlineResponse, PagoRequest } from '../models/pago.model';
 
 @Injectable({
   providedIn: 'root'
@@ -37,5 +37,17 @@ export class PagoService {
 
   eliminar(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+  // ---------- Cliente (pago en línea) ----------
+
+  /** Inicia un pago en línea con Wompi y devuelve la URL del checkout. */
+  crearPagoOnline(request: PagoOnlineRequest): Observable<PagoOnlineResponse> {
+    return this.http.post<PagoOnlineResponse>(`${this.apiUrl}/online`, request);
+  }
+
+  /** Historial de pagos del cliente autenticado. */
+  misPagos(): Observable<Pago[]> {
+    return this.http.get<Pago[]>(`${this.apiUrl}/mios`);
   }
 }

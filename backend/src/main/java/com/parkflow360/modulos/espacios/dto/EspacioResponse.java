@@ -17,5 +17,14 @@ public class EspacioResponse {
     private String tipo;
     private String estado;
     private Integer piso;
+
+    private Long planoId;
+    private Integer fila;
+    private Integer columna;
+    private Double posX;
+    private Double posY;
+    private Double ancho;
+    private Double alto;
+
     private LocalDateTime fechaCreacion;
 }

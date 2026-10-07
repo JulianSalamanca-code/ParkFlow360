@@ -33,6 +33,20 @@ public class VehiculoController {
         return new ResponseEntity<>(vehiculoService.crearParaUsuario(auth.getName(), request), HttpStatus.CREATED);
     }
 
+    @PutMapping("/mios/{id}")
+    public ResponseEntity<VehiculoResponse> actualizarMiVehiculo(
+            Authentication auth,
+            @PathVariable Long id,
+            @Valid @RequestBody VehiculoRequest request) {
+        return ResponseEntity.ok(vehiculoService.actualizarParaUsuario(auth.getName(), id, request));
+    }
+
+    @DeleteMapping("/mios/{id}")
+    public ResponseEntity<Void> eliminarMiVehiculo(Authentication auth, @PathVariable Long id) {
+        vehiculoService.eliminarParaUsuario(auth.getName(), id);
+        return ResponseEntity.noContent().build();
+    }
+
     // ---------- Administrador ----------
 
     @GetMapping

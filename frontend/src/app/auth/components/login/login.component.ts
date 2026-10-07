@@ -51,11 +51,18 @@ import { environment } from '../../../../environments/environment';
           </button>
         </form>
 
-        <ng-container *ngIf="googleEnabled">
-          <div class="login-divider"><span>o</span></div>
-          <div id="google-btn" class="google-btn"></div>
-          <p *ngIf="googleError" class="field-error">{{ googleError }}</p>
-        </ng-container>
+        <div class="login-divider"><span>o</span></div>
+
+        <!-- Botón oficial de Google (Google Identity Services) -->
+        <div id="google-btn" class="google-btn" [class.hidden]="!googleEnabled"></div>
+
+        <!-- Botón de respaldo mientras no se configura el Client ID -->
+        <button *ngIf="!googleEnabled" type="button" class="btn btn-secondary btn-block google-fallback"
+                (click)="googleNoConfigurado()">
+          <span class="material-symbols-outlined">account_circle</span> Continuar con Google
+        </button>
+
+        <p *ngIf="googleError" class="field-error">{{ googleError }}</p>
 
         <div class="login-foot">
           <span class="online-dot"></span>
@@ -127,6 +134,8 @@ import { environment } from '../../../../environments/environment';
     }
 
     .google-btn { display: flex; justify-content: center; min-height: 44px; }
+    .google-btn.hidden { display: none; }
+    .google-fallback { margin-top: 4px; }
 
     .login-foot {
       display: flex; align-items: center; gap: 8px;
@@ -273,5 +282,10 @@ export class LoginComponent implements OnInit {
   private redirigir(): void {
     const rol = this.authService.getRol().toUpperCase();
     this.router.navigate([rol === 'ADMIN' ? '/planos' : '/mis-parqueos']);
+  }
+
+  googleNoConfigurado(): void {
+    this.googleError = 'Falta configurar el Client ID de Google (environment.ts).';
+    this.toast.info('Falta configurar googleClientId en environment.ts para habilitar Google.');
   }
 }

@@ -31,7 +31,7 @@ jwt:
 
 # Login con Google (Google Identity Services)
 google:
-  client-id: ${GOOGLE_CLIENT_ID:}
+  client-id: ${GOOGLE_CLIENT_ID:290726857250-a25817snjik3qjn649n49drhrev92lvh.apps.googleusercontent.com}
 
 # Pago en línea con Wompi
 wompi:

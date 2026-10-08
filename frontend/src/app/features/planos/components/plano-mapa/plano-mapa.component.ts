@@ -68,13 +68,14 @@ interface Celda {
   `,
   styles: [`
     .mapa-wrap {
-      background: var(--pf-surface);
-      border: 1px solid var(--pf-outline-soft);
-      border-radius: var(--pf-radius);
-      padding: 20px;
+      background-color: #0f172a;
       background-size: contain;
       background-repeat: no-repeat;
       background-position: center;
+      border: 1px solid #1e293b;
+      border-radius: var(--pf-radius);
+      padding: 24px;
+      min-height: 320px;
     }
     .grid { display: grid; gap: 8px; }
     .celda {
@@ -82,15 +83,18 @@ interface Celda {
       border-radius: 6px;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       gap: 2px; padding: 4px; text-align: center; overflow: hidden;
-      border: 1px solid transparent;
+      /* Fondo semitransparente para que se vea el plano dibujado debajo */
+      border: 1px solid rgba(226, 232, 240, 0.35);
+      color: #f8fafc;
+      text-shadow: 0 1px 3px rgba(2, 6, 23, 0.9);
     }
     .celda-num { font-family: var(--pf-mono); font-weight: 700; font-size: 13px; }
-    .celda-estado { font-size: 9px; text-transform: uppercase; letter-spacing: 0.04em; }
-    .vacio { background: transparent; border: 1px dashed var(--pf-outline); }
-    .libre { background: var(--pf-available-bg); border-color: var(--pf-available-border); color: var(--pf-available-text); }
-    .ocupado { background: var(--pf-occupied-bg); border-color: var(--pf-occupied-border); color: var(--pf-occupied-text); }
-    .reservado { background: var(--pf-warning-bg); border-color: var(--pf-warning-border); color: var(--pf-warning-text); }
-    .mantenimiento { background: var(--pf-surface-alt); border-color: var(--pf-outline); color: var(--pf-muted); }
+    .celda-estado { font-size: 9px; text-transform: uppercase; letter-spacing: 0.04em; opacity: 0.9; }
+    .vacio { background: rgba(15, 23, 42, 0.35); border: 1px dashed rgba(148, 163, 184, 0.5); }
+    .libre { background: rgba(16, 185, 129, 0.34); border-color: rgba(52, 211, 153, 0.8); }
+    .ocupado { background: rgba(239, 68, 68, 0.36); border-color: rgba(248, 113, 113, 0.85); }
+    .reservado { background: rgba(245, 158, 11, 0.36); border-color: rgba(251, 191, 36, 0.85); }
+    .mantenimiento { background: rgba(100, 116, 139, 0.4); border-color: rgba(148, 163, 184, 0.6); }
     .leyenda { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 16px; color: var(--pf-ink-soft); font-size: 13px; }
     .leyenda span { display: inline-flex; align-items: center; gap: 6px; }
     .dot { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }

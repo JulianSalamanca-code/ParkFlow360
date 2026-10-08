@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 560" width="720" height="560" role="img" aria-label="NIVEL 2">
+<rect width="720" height="560" fill="#0f172a"/>
+<text x="40" y="52" fill="#e2e8f0" font-family="Segoe UI, Arial" font-size="26" font-weight="700">NIVEL 2</text>
+<text x="40" y="76" fill="#94a3b8" font-family="Segoe UI, Arial" font-size="14">Sector de motos</text>
+<rect x="86" y="174" width="578" height="27" fill="#1e293b" stroke="#334155"/>
+<line x1="96" y1="187.5" x2="654" y2="187.5" stroke="#475569" stroke-dasharray="10 10" stroke-width="2"/>
+<path d="M 140 187.5 l -12 -7 l 0 14 z" fill="#22d3ee"/>
+<path d="M 610 187.5 l 12 -7 l 0 14 z" fill="#22d3ee"/>
+<rect x="86" y="265" width="578" height="27" fill="#1e293b" stroke="#334155"/>
+<line x1="96" y1="278.5" x2="654" y2="278.5" stroke="#475569" stroke-dasharray="10 10" stroke-width="2"/>
+<path d="M 140 278.5 l -12 -7 l 0 14 z" fill="#22d3ee"/>
+<path d="M 610 278.5 l 12 -7 l 0 14 z" fill="#22d3ee"/>
+<rect x="86" y="356" width="578" height="27" fill="#1e293b" stroke="#334155"/>
+<line x1="96" y1="369.5" x2="654" y2="369.5" stroke="#475569" stroke-dasharray="10 10" stroke-width="2"/>
+<path d="M 140 369.5 l -12 -7 l 0 14 z" fill="#22d3ee"/>
+<path d="M 610 369.5 l 12 -7 l 0 14 z" fill="#22d3ee"/>
+<text x="76" y="130.0" fill="#94a3b8" font-family="Segoe UI, Arial" font-size="15" font-weight="700">A</text>
+<rect x="110" y="110" width="80" height="30" rx="4" fill="#334155" stroke="#94a3b8" stroke-width="1.4"/>
+<text x="150.0" y="130.0" fill="#e2e8f0" font-family="Consolas, monospace" font-size="13" text-anchor="middle">1-01</text>
+<rect x="200" y="110" width="80" height="30" rx="4" fill="#334155" stroke="#94a3b8" stroke-width="1.4"/>
+<text x="240.0" y="130.0" fill="#e2e8f0" font-family="Consolas, monospace" font-size="13" text-anchor="middle">1-02</text>
+<rect x="290" y="110" width="80" height="30" rx="4" fill="#334155" stroke="#94a3b8" stroke-width="1.4"/>
+<text x="330.0" y="130.0" fill="#e2e8f0" font-family="Consolas, monospace" font-size="13" text-anchor="middle">1-03</text>
+<rect x="380" y="110" width="80" height="30" rx="4" fill="#334155" stroke="#94a3b8" stroke-width="1.4"/>
+<text x="420.0" y="130.0" fill="#e2e8f0" font-family="Consolas, monospace" font-size="13" text-anchor="middle">1-04</text>
+<rect x="470" y="110" width="80" height="30" rx="4" fill="#334155" stroke="#94a3b8" stroke-width="1.4"/>
+<text x="510.0" y="130.0" fill="#e2e8f0" font-family="Consolas, monospace" font-size="13" text-anchor="middle">1-05</text>
+<rect x="560" y="110" width="80" height="30" rx="4" fill="#334155" stroke="#94a3b8" stroke-width="1.4"/>
+<text x="600.0" y="130.0" fill="#e2e8f0" font-family="Consolas, monospace" font-size="13" text-anchor="middle">1-06</text>
+<text x="76" y="221.0" fill="#94a3b8" font-family="Segoe UI, Arial" font-size="15" font-weight="700">B</text>
+<rect x="110" y="201" width="80" height="30" rx="4" fill="#334155" stroke="#94a3b8" stroke-width="1.4"/>
+<text x="150.0" y="221.0" fill="#e2e8f0" font-family="Consolas, monospace" font-size="13" text-anchor="middle">2-01</text>
+<rect x="200" y="201" width="80" height="30" rx="4" fill="#334155" stroke="#94a3b8" stroke-width="1.4"/>
+<text x="240.0" y="221.0" fill="#e2e8f0" font-family="Consolas, monospace" font-size="13" text-anchor="middle">2-02</text>
+<rect x="290" y="201" width="80" height="30" rx="4" fill="#334155" stroke="#94a3b8" stroke-width="1.4"/>
+<text x="330.0" y="221.0" fill="#e2e8f0" font-family="Consolas, monospace" font-size="13" text-anchor="middle">2-03</text>
+<rect x="380" y="201" width="80" height="30" rx="4" fill="#334155" stroke="#94a3b8" stroke-width="1.4"/>
+<text x="420.0" y="221.0" fill="#e2e8f0" font-family="Consolas, monospace" font-size="13" text-anchor="middle">2-04</text>
+<rect x="470" y="201" width="80" height="30" rx="4" fill="#334155" stroke="#94a3b8" stroke-width="1.4"/>
+<text x="510.0" y="221.0" fill="#e2e8f0" font-family="Consolas, monospace" font-size="13" text-anchor="middle">2-05</text>
+<rect x="560" y="201" width="80" height="30" rx="4" fill="#334155" stroke="#94a3b8" stroke-width="1.4"/>
+<text x="600.0" y="221.0" fill="#e2e8f0" font-family="Consolas, monospace" font-size="13" text-anchor="middle">2-06</text>
+<text x="76" y="312.0" fill="#94a3b8" font-family="Segoe UI, Arial" font-size="15" font-weight="700">C</text>
+<rect x="110" y="292" width="80" height="30" rx="4" fill="#334155" stroke="#94a3b8" stroke-width="1.4"/>
+<text x="150.0" y="312.0" fill="#e2e8f0" font-family="Consolas, monospace" font-size="13" text-anchor="middle">3-01</text>
+<rect x="200" y="292" width="80" height="30" rx="4" fill="#334155" stroke="#94a3b8" stroke-width="1.4"/>
+<text x="240.0" y="312.0" fill="#e2e8f0" font-family="Consolas, monospace" font-size="13" text-anchor="middle">3-02</text>
+<rect x="290" y="292" width="80" height="30" rx="4" fill="#334155" stroke="#94a3b8" stroke-width="1.4"/>
+<text x="330.0" y="312.0" fill="#e2e8f0" font-family="Consolas, monospace" font-size="13" text-anchor="middle">3-03</text>
+<rect x="380" y="292" width="80" height="30" rx="4" fill="#334155" stroke="#94a3b8" stroke-width="1.4"/>
+<text x="420.0" y="312.0" fill="#e2e8f0" font-family="Consolas, monospace" font-size="13" text-anchor="middle">3-04</text>
+<rect x="470" y="292" width="80" height="30" rx="4" fill="#334155" stroke="#94a3b8" stroke-width="1.4"/>
+<text x="510.0" y="312.0" fill="#e2e8f0" font-family="Consolas, monospace" font-size="13" text-anchor="middle">3-05</text>
+<rect x="560" y="292" width="80" height="30" rx="4" fill="#334155" stroke="#94a3b8" stroke-width="1.4"/>
+<text x="600.0" y="312.0" fill="#e2e8f0" font-family="Consolas, monospace" font-size="13" text-anchor="middle">3-06</text>
+<text x="76" y="403.0" fill="#94a3b8" font-family="Segoe UI, Arial" font-size="15" font-weight="700">D</text>
+<rect x="110" y="383" width="80" height="30" rx="4" fill="#334155" stroke="#94a3b8" stroke-width="1.4"/>
+<text x="150.0" y="403.0" fill="#e2e8f0" font-family="Consolas, monospace" font-size="13" text-anchor="middle">4-01</text>
+<rect x="200" y="383" width="80" height="30" rx="4" fill="#334155" stroke="#94a3b8" stroke-width="1.4"/>
+<text x="240.0" y="403.0" fill="#e2e8f0" font-family="Consolas, monospace" font-size="13" text-anchor="middle">4-02</text>
+<rect x="290" y="383" width="80" height="30" rx="4" fill="#334155" stroke="#94a3b8" stroke-width="1.4"/>
+<text x="330.0" y="403.0" fill="#e2e8f0" font-family="Consolas, monospace" font-size="13" text-anchor="middle">4-03</text>
+<rect x="380" y="383" width="80" height="30" rx="4" fill="#334155" stroke="#94a3b8" stroke-width="1.4"/>
+<text x="420.0" y="403.0" fill="#e2e8f0" font-family="Consolas, monospace" font-size="13" text-anchor="middle">4-04</text>
+<rect x="470" y="383" width="80" height="30" rx="4" fill="#334155" stroke="#94a3b8" stroke-width="1.4"/>
+<text x="510.0" y="403.0" fill="#e2e8f0" font-family="Consolas, monospace" font-size="13" text-anchor="middle">4-05</text>
+<rect x="560" y="383" width="80" height="30" rx="4" fill="#334155" stroke="#94a3b8" stroke-width="1.4"/>
+<text x="600.0" y="403.0" fill="#e2e8f0" font-family="Consolas, monospace" font-size="13" text-anchor="middle">4-06</text>
+<rect x="86" y="457" width="578" height="34" rx="6" fill="#1e293b" stroke="#334155"/>
+<text x="375.0" y="479" fill="#22d3ee" font-family="Segoe UI, Arial" font-size="13" font-weight="700" text-anchor="middle">ENTRADA / SALIDA DE VEHICULOS</text>
+<text x="40" y="519" fill="#64748b" font-family="Segoe UI, Arial" font-size="12">MOTO · 4 filas x 6 columnas = 24 espacios</text>
+</svg>

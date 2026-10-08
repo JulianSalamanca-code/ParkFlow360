@@ -47,7 +47,9 @@ public class SecurityConfig {
                 .requestMatchers("/api/reportes/**").hasRole("ADMIN")
                 .requestMatchers("/api/planos/**").hasRole("ADMIN")
                 .requestMatchers("/api/pagos/**").hasRole("ADMIN")
-                .requestMatchers("/api/vehiculos/**").hasRole("ADMIN")
+                // Catálogo de vehículos: el ADMIN solo lo consulta (reportes y búsqueda).
+                .requestMatchers(HttpMethod.GET, "/api/vehiculos/**").hasRole("ADMIN")
+                .requestMatchers("/api/vehiculos/**").denyAll()
                 .requestMatchers("/api/ingresos/**").hasRole("ADMIN")
                 .requestMatchers("/api/espacios/**").hasRole("ADMIN")
                 .requestMatchers("/api/tarifas/**").hasRole("ADMIN")

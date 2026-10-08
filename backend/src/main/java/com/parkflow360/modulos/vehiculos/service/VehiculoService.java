@@ -1,5 +1,7 @@
 package com.parkflow360.modulos.vehiculos.service;
 
+import com.parkflow360.modulos.ingresos.repository.IngresoRepository;
+import com.parkflow360.modulos.pagos.repository.PagoRepository;
 import com.parkflow360.modulos.vehiculos.dto.VehiculoRequest;
 import com.parkflow360.modulos.vehiculos.dto.VehiculoResponse;
 import com.parkflow360.modulos.vehiculos.entity.Vehiculo;
@@ -14,14 +16,20 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
+/**
+ * El registro y edición de vehículos es exclusivo del cliente (rol USUARIO)
+ * y siempre limitado a los suyos. El ADMIN solo lee el catálogo.
+ */
 @Service
 @RequiredArgsConstructor
 public class VehiculoService {
 
     private final VehiculoRepository vehiculoRepository;
     private final UsuarioRepository usuarioRepository;
+    private final PagoRepository pagoRepository;
+    private final IngresoRepository ingresoRepository;
 
-    // ---------- Administrador ----------
+    // ---------- Administrador (solo lectura) ----------
 
     @Transactional(readOnly = true)
     public List<VehiculoResponse> listarTodos() {
@@ -37,44 +45,7 @@ public class VehiculoService {
         return mapToResponse(vehiculo);
     }
 
-    @Transactional
-    public VehiculoResponse crear(VehiculoRequest request) {
-        if (vehiculoRepository.existsByPlaca(request.getPlaca())) {
-            throw new IllegalArgumentException("Ya existe un vehículo con la placa: " + request.getPlaca());
-        }
-
-        Vehiculo vehiculo = Vehiculo.builder()
-                .placa(request.getPlaca())
-                .tipo(request.getTipo())
-                .color(request.getColor())
-                .modelo(request.getModelo())
-                .build();
-
-        return mapToResponse(vehiculoRepository.save(vehiculo));
-    }
-
-    @Transactional
-    public VehiculoResponse actualizar(Long id, VehiculoRequest request) {
-        Vehiculo vehiculo = vehiculoRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Vehículo no encontrado con id: " + id));
-
-        vehiculo.setPlaca(request.getPlaca());
-        vehiculo.setTipo(request.getTipo());
-        vehiculo.setColor(request.getColor());
-        vehiculo.setModelo(request.getModelo());
-
-        return mapToResponse(vehiculoRepository.save(vehiculo));
-    }
-
-    @Transactional
-    public void eliminar(Long id) {
-        if (!vehiculoRepository.existsById(id)) {
-            throw new NoSuchElementException("Vehículo no encontrado con id: " + id);
-        }
-        vehiculoRepository.deleteById(id);
-    }
-
-    // ---------- Usuario (cliente) ----------
+    // ---------- Cliente (rol USUARIO) ----------
 
     @Transactional(readOnly = true)
     public List<VehiculoResponse> listarPorUsuarioEmail(String email) {
@@ -93,7 +64,7 @@ public class VehiculoService {
         }
 
         Vehiculo vehiculo = Vehiculo.builder()
-                .placa(request.getPlaca())
+                .placa(request.getPlaca().toUpperCase())
                 .tipo(request.getTipo())
                 .color(request.getColor())
                 .modelo(request.getModelo())
@@ -109,12 +80,13 @@ public class VehiculoService {
         Vehiculo vehiculo = vehiculoRepository.findByIdAndUsuarioId(id, usuario.getId())
                 .orElseThrow(() -> new NoSuchElementException("Vehículo no encontrado entre tus vehículos: " + id));
 
-        if (!vehiculo.getPlaca().equalsIgnoreCase(request.getPlaca())
-                && vehiculoRepository.existsByPlaca(request.getPlaca())) {
-            throw new IllegalArgumentException("Ya existe un vehículo con la placa: " + request.getPlaca());
+        String nuevaPlaca = request.getPlaca().toUpperCase();
+        if (!vehiculo.getPlaca().equalsIgnoreCase(nuevaPlaca)
+                && vehiculoRepository.existsByPlaca(nuevaPlaca)) {
+            throw new IllegalArgumentException("Ya existe un vehículo con la placa: " + nuevaPlaca);
         }
 
-        vehiculo.setPlaca(request.getPlaca());
+        vehiculo.setPlaca(nuevaPlaca);
         vehiculo.setTipo(request.getTipo());
         vehiculo.setColor(request.getColor());
         vehiculo.setModelo(request.getModelo());
@@ -127,6 +99,17 @@ public class VehiculoService {
         Usuario usuario = requireUsuario(email);
         Vehiculo vehiculo = vehiculoRepository.findByIdAndUsuarioId(id, usuario.getId())
                 .orElseThrow(() -> new NoSuchElementException("Vehículo no encontrado entre tus vehículos: " + id));
+
+        // Se valida antes de borrar para devolver un mensaje claro y no un error de base de datos.
+        if (!pagoRepository.findByVehiculoId(id).isEmpty()) {
+            throw new IllegalArgumentException(
+                    "No se puede eliminar el vehículo porque tiene pagos registrados en el historial.");
+        }
+        if (ingresoRepository.existsByVehiculoIdAndEstadoIn(id, List.of("ACTIVO", "RESERVADO"))) {
+            throw new IllegalArgumentException(
+                    "No se puede eliminar el vehículo porque tiene un parqueo o reserva activa.");
+        }
+
         vehiculoRepository.delete(vehiculo);
     }
 

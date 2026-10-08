@@ -4,6 +4,8 @@ import com.parkflow360.modulos.espacios.dto.EspacioRequest;
 import com.parkflow360.modulos.espacios.dto.EspacioResponse;
 import com.parkflow360.modulos.espacios.entity.Espacio;
 import com.parkflow360.modulos.espacios.repository.EspacioRepository;
+import com.parkflow360.modulos.ingresos.repository.IngresoRepository;
+import com.parkflow360.modulos.pagos.repository.PagoRepository;
 import com.parkflow360.modulos.planos.dto.GenerarEspaciosRequest;
 import com.parkflow360.modulos.planos.dto.PlanoRequest;
 import com.parkflow360.modulos.planos.dto.PlanoResponse;
@@ -24,6 +26,8 @@ public class PlanoService {
 
     private final PlanoRepository planoRepository;
     private final EspacioRepository espacioRepository;
+    private final PagoRepository pagoRepository;
+    private final IngresoRepository ingresoRepository;
 
     @Transactional(readOnly = true)
     public List<PlanoResponse> listarTodos() {
@@ -69,8 +73,23 @@ public class PlanoService {
     @Transactional
     public void eliminar(Long id) {
         Plano plano = requirePlano(id);
-        // Elimina primero los espacios asociados para no violar la referencia
         List<Espacio> espacios = espacioRepository.findByPlanoId(id);
+
+        // No se elimina un plano con movimientos: hay que preservar el historial.
+        for (Espacio espacio : espacios) {
+            if (!pagoRepository.findByEspacioId(espacio.getId()).isEmpty()) {
+                throw new IllegalArgumentException(
+                        "No se puede eliminar el plano porque el espacio " + espacio.getNumero()
+                                + " tiene pagos registrados.");
+            }
+            if (!ingresoRepository.findByEspacioId(espacio.getId()).isEmpty()) {
+                throw new IllegalArgumentException(
+                        "No se puede eliminar el plano porque el espacio " + espacio.getNumero()
+                                + " tiene ingresos registrados.");
+            }
+        }
+
+        // Elimina primero los espacios asociados para no violar la referencia
         if (!espacios.isEmpty()) {
             espacioRepository.deleteAll(espacios);
         }

@@ -2,256 +2,92 @@
 
 SaaS de gestión de parqueaderos para empresas y universidades.
 
-## Descripción
+## ¿Qué es ParkFlow360?
 
-ParkFlow360 es una aplicación web SaaS que permite gestionar parqueaderos de manera eficiente, con módulos para vehículos, espacios, tarifas, pagos y reportes.
+ParkFlow360 es una aplicación web completa para la administración de parqueaderos. Permite controlar el ingreso y salida de vehículos, gestionar espacios de estacionamiento, definir tarifas flexibles, procesar pagos y generar reportes de ocupación e ingresos — todo desde una interfaz moderna y fácil de usar.
 
-## Stack Tecnológico
+Está diseñado para:
+- **Empresas** que necesitan administrar estacionamientos para empleados y visitantes
+- **Universidades** que gestionan parqueaderos para estudiantes, docentes y personal
+- **Operadores de parqueaderos** que requieren control total de sus instalaciones
 
-| Capa | Tecnología |
-|------|-----------|
-| **Backend** | Java 17 + Spring Boot 3.x |
-| **Frontend** | Angular 17+ |
-| **Base de datos** | PostgreSQL 15+ |
-| **ORM** | Spring Data JPA |
-| **Migraciones** | Flyway |
-| **Auth** | Spring Security + JWT |
-| **Infraestructura** | Docker Compose |
+## Funcionalidades principales
 
-## Estructura del Proyecto
+| Módulo | Qué hace |
+|--------|----------|
+| **Vehículos** | Registro y control de placas, tipos, colores y modelos |
+| **Espacios** | Administración de cupos por piso, tipo y estado (libre, ocupado, reservado, mantenimiento) |
+| **Tarifas** | Configuración de precios por hora, día, semana, mes o tarifa única |
+| **Pagos** | Procesamiento de pagos en efectivo, tarjeta, transferencia o QR |
+| **Reportes** | Visión general del sistema, ocupación por estado e ingresos por período |
 
-```
-ParkFlow360/
-├── backend/                          # Spring Boot
-│   ├── src/main/java/com/parkflow360/
-│   │   ├── config/                   # CORS, Security, etc.
-│   │   ├── shared/                   # Exceptions, utils
-│   │   ├── modulos/
-│   │   │   ├── vehiculos/            # Módulo 1
-│   │   │   ├── espacios/             # Módulo 2
-│   │   │   ├── tarifas/              # Módulo 3
-│   │   │   ├── pagos/                # Módulo 4
-│   │   │   └── reportes/             # Módulo 5
-│   │   └── security/                 # JWT, roles
-│   ├── src/main/resources/
-│   │   ├── application.yml
-│   │   └── db/migration/            # Flyway
-│   └── pom.xml
-├── frontend/                         # Angular
-│   ├── src/app/
-│   │   ├── core/                     # Servicios, guards, interceptors
-│   │   ├── shared/                   # Componentes compartidos
-│   │   ├── features/
-│   │   │   ├── vehiculos/            # Módulo 1
-│   │   │   ├── espacios/             # Módulo 2
-│   │   │   ├── tarifas/              # Módulo 3
-│   │   │   ├── pagos/                # Módulo 4
-│   │   │   └── reportes/             # Módulo 5
-│   │   └── auth/                     # Login
-│   └── angular.json
-├── docker-compose.yml                # PostgreSQL
-└── README.md
-```
+## Cómo empezar
 
-## Requisitos
-
+### Requisitos previos
 - Java 17+
 - Node.js 18+
 - Maven 3.9+
-- Docker (opcional, para PostgreSQL)
+- Docker (opcional, para la base de datos)
 
-## Instalación y Ejecución
-
-### 1. Clonar el repositorio
+### Instalación rápida
 
 ```bash
+# 1. Clonar el repositorio
 git clone https://github.com/JulianSalamanca-code/ParkFlow360.git
 cd ParkFlow360
-```
 
-### 2. Levantar PostgreSQL con Docker (opcional)
-
-```bash
+# 2. Levantar la base de datos (PostgreSQL)
 docker compose up -d
-```
 
-### 3. Configurar variables de entorno
+# 3. Configurar el backend
+# Copia backend/.env.example a backend/src/main/resources/application-local.yml
+# y ajusta las credenciales de base de datos y JWT
 
-Crear archivo `backend/src/main/resources/application-local.yml`:
-
-```yaml
-spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/parkflow360
-    username: parkflow360
-    password: parkflow360
-
-jwt:
-  secret: tu-clave-secreta-muy-segura-y-larga
-  expiration: 86400000
-```
-
-### 4. Ejecutar el backend
-
-```bash
+# 4. Iniciar el backend
 cd backend
 mvn spring-boot:run
-```
+# Disponible en http://localhost:8080
 
-El backend estará disponible en `http://localhost:8080`
-
-### 5. Ejecutar el frontend
-
-```bash
+# 5. En otra terminal, iniciar el frontend
 cd frontend
 npm install
 ng serve
+# Disponible en http://localhost:4200
 ```
 
-El frontend estará disponible en `http://localhost:4200`
-
-## Módulos
-
-### Vehículos
-- CRUD completo de vehículos
-- Campos: placa, tipo, color, modelo
-
-### Espacios
-- CRUD completo de espacios
-- Campos: número, tipo, estado, piso
-- Estados: LIBRE, OCUPADO, RESERVADO, MANTENIMIENTO
-
-### Tarifas
-- CRUD completo de tarifas
-- Campos: nombre, tipo, valor, duración
-- Tipos: HORA, DIA, SEMANA, MES, MOMENTO
-
-### Pagos
-- CRUD completo de pagos
-- Campos: vehículo, espacio, tarifa, valor, método de pago
-- Métodos: EFECTIVO, TARJETA, TRANSFERENCIA, QR
-
-### Reportes
-- Reporte general del sistema
-- Espacios por estado
-- Ingresos por período
-
-## Autenticación
-
-- **Endpoint:** `POST /api/auth/login`
-- **Body:**
-  ```json
-  {
-    "email": "admin@parkflow360.com",
-    "password": "admin123"
-  }
-  ```
-- **Respuesta:**
-  ```json
-  {
-    "token": "eyJhbGciOiJIUzI1NiJ9...",
-    "tipo": "Bearer",
-    "email": "admin@parkflow360.com",
-    "rol": "ADMIN",
-    "nombre": "Administrador"
-  }
-  ```
-
-## API Endpoints
-
-### Vehículos
-- `GET /api/vehiculos` - Listar todos
-- `GET /api/vehiculos/{id}` - Obtener por ID
-- `POST /api/vehiculos` - Crear
-- `PUT /api/vehiculos/{id}` - Actualizar
-- `DELETE /api/vehiculos/{id}` - Eliminar
-
-### Espacios
-- `GET /api/espacios` - Listar todos
-- `GET /api/espacios/estado/{estado}` - Listar por estado
-- `GET /api/espacios/{id}` - Obtener por ID
-- `POST /api/espacios` - Crear
-- `PUT /api/espacios/{id}` - Actualizar
-- `DELETE /api/espacios/{id}` - Eliminar
-
-### Tarifas
-- `GET /api/tarifas` - Listar todos
-- `GET /api/tarifas/tipo/{tipo}` - Listar por tipo
-- `GET /api/tarifas/{id}` - Obtener por ID
-- `POST /api/tarifas` - Crear
-- `PUT /api/tarifas/{id}` - Actualizar
-- `DELETE /api/tarifas/{id}` - Eliminar
-
-### Pagos
-- `GET /api/pagos` - Listar todos
-- `GET /api/pagos/vehiculo/{vehiculoId}` - Listar por vehículo
-- `GET /api/pagos/espacio/{espacioId}` - Listar por espacio
-- `GET /api/pagos/fecha?inicio=&fin=` - Listar por rango de fechas
-- `GET /api/pagos/{id}` - Obtener por ID
-- `POST /api/pagos` - Crear
-- `PUT /api/pagos/{id}` - Actualizar
-- `DELETE /api/pagos/{id}` - Eliminar
-
-### Reportes
-- `GET /api/reportes/general` - Reporte general
-- `GET /api/reportes/espacios-por-estado` - Espacios por estado
-- `GET /api/reportes/ingresos-por-periodo?inicio=&fin=` - Ingresos por período
-
-## Despliegue
-
-El proyecto es un **monorepo**: el frontend y el backend se despliegan en plataformas distintas.
-
+### Credenciales por defecto
 ```
-GitHub (ParkFlow360)
-├── frontend/  ──►  Netlify         (sitio estático Angular)
-└── backend/   ──►  Railway / Render (Spring Boot)
-                          │
-                          ▼
-                   Supabase (PostgreSQL)
+Email:    admin@parkflow360.com
+Password: admin123
 ```
 
-### Frontend en Netlify
+## Despliegue en producción
 
-El archivo `netlify.toml` en la raíz ya contiene la configuración:
+El proyecto está preparado para desplegarse como monorepo en plataformas separadas:
 
-```toml
-[build]
-  base = "frontend"
-  command = "npm install && npm run build"
-  publish = "dist/frontend/browser"
-```
+| Componente | Plataforma recomendada | Configuración |
+|------------|------------------------|---------------|
+| **Frontend** | Netlify | `netlify.toml` incluido (build desde `frontend/`) |
+| **Backend** | Railway / Render | Root directory `backend/`, variables de entorno en `.env.example` |
+| **Base de datos** | Supabase / Neon / Railway | PostgreSQL gestionado |
 
-Conectar el repositorio en https://app.netlify.com y Netlify tomará esta configuración automáticamente.
+Ver `backend/.env.example` para las variables de entorno necesarias en producción.
 
-### Backend en Railway / Render
+## Flujo de trabajo típico
 
-1. Crear un proyecto desde el repositorio de GitHub.
-2. Configurar el **Root Directory** en `backend`.
-3. Definir las variables de entorno (ver `backend/.env.example`):
+1. **Administrador** configura espacios, tarifas y usuarios
+2. **Operador** registra ingresos de vehículos y asigna espacios
+3. **Sistema** calcula automáticamente el tiempo y tarifa aplicable
+4. **Usuario/Operador** procesa el pago al salir
+5. **Reportes** muestran ocupación en tiempo real e ingresos históricos
 
-| Variable | Descripción |
-|----------|-------------|
-| `DB_URL` | URL JDBC de Supabase (`...?prepareThreshold=0`) |
-| `DB_USERNAME` | Usuario de la base de datos |
-| `DB_PASSWORD` | Contraseña de la base de datos |
-| `JWT_SECRET` | Clave secreta para firmar tokens |
-| `CORS_ALLOWED_ORIGINS` | Dominios del frontend separados por coma |
-| `PORT` | Se asigna automáticamente en la plataforma |
+## Tecnologías clave
 
-El backend incluye `Dockerfile`, `Procfile` y `system.properties` para facilitar el despliegue.
-
-### Conectar frontend con backend
-
-Una vez desplegado el backend, descomentar en `netlify.toml` y reemplazar la URL:
-
-```toml
-[[redirects]]
-  from = "/api/*"
-  to = "https://TU-BACKEND.up.railway.app/api/:splat"
-  status = 200
-  force = true
-```
+- **Backend**: Spring Boot 3, Spring Security + JWT, Spring Data JPA, Flyway
+- **Frontend**: Angular 17+, TypeScript, RxJS, Angular Material
+- **Base de datos**: PostgreSQL 15+
+- **Contenedores**: Docker Compose para desarrollo local
 
 ## Licencia
 
-Este proyecto es privado y confidencial.
+Proyecto privado y confidencial.

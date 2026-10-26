@@ -20,42 +20,42 @@ import { ToastService } from '../../../../shared/services/toast.service';
       </div>
 
       <div class="form-card">
-        <form [formGroup]="form" (ngSubmit)="guardar()">
+        <form [formGroup]="form" (ngSubmit)="guardar()" [attr.data-testid]="'pago-form'">
           <div class="form-group">
             <label for="vehiculoId">Vehículo (ID)</label>
-            <input id="vehiculoId" type="number" formControlName="vehiculoId" class="form-control mono-input" placeholder="1" />
-            <div *ngIf="form.get('vehiculoId')?.invalid && form.get('vehiculoId')?.touched" class="field-error">
+            <input id="vehiculoId" type="number" formControlName="vehiculoId" class="form-control mono-input" placeholder="1" [attr.data-testid]="'input-vehiculo-id'" />
+            <div *ngIf="form.get('vehiculoId')?.invalid && form.get('vehiculoId')?.touched" class="field-error" [attr.data-testid]="'error-vehiculo-id'">
               El vehículo es obligatorio
             </div>
           </div>
 
           <div class="form-group">
             <label for="espacioId">Espacio (ID)</label>
-            <input id="espacioId" type="number" formControlName="espacioId" class="form-control mono-input" placeholder="1" />
-            <div *ngIf="form.get('espacioId')?.invalid && form.get('espacioId')?.touched" class="field-error">
+            <input id="espacioId" type="number" formControlName="espacioId" class="form-control mono-input" placeholder="1" [attr.data-testid]="'input-espacio-id'" />
+            <div *ngIf="form.get('espacioId')?.invalid && form.get('espacioId')?.touched" class="field-error" [attr.data-testid]="'error-espacio-id'">
               El espacio es obligatorio
             </div>
           </div>
 
           <div class="form-group">
             <label for="tarifaId">Tarifa (ID)</label>
-            <input id="tarifaId" type="number" formControlName="tarifaId" class="form-control mono-input" placeholder="1" />
-            <div *ngIf="form.get('tarifaId')?.invalid && form.get('tarifaId')?.touched" class="field-error">
+            <input id="tarifaId" type="number" formControlName="tarifaId" class="form-control mono-input" placeholder="1" [attr.data-testid]="'input-tarifa-id'" />
+            <div *ngIf="form.get('tarifaId')?.invalid && form.get('tarifaId')?.touched" class="field-error" [attr.data-testid]="'error-tarifa-id'">
               La tarifa es obligatoria
             </div>
           </div>
 
           <div class="form-group">
             <label for="valor">Valor</label>
-            <input id="valor" type="number" formControlName="valor" class="form-control mono-input" step="0.01" min="0" placeholder="2000" />
-            <div *ngIf="form.get('valor')?.invalid && form.get('valor')?.touched" class="field-error">
+            <input id="valor" type="number" formControlName="valor" class="form-control mono-input" step="0.01" min="0" placeholder="2000" [attr.data-testid]="'input-valor'" />
+            <div *ngIf="form.get('valor')?.invalid && form.get('valor')?.touched" class="field-error" [attr.data-testid]="'error-valor'">
               El valor es obligatorio y debe ser positivo
             </div>
           </div>
 
           <div class="form-group">
             <label for="metodoPago">Método de Pago</label>
-            <select id="metodoPago" formControlName="metodoPago" class="form-control">
+            <select id="metodoPago" formControlName="metodoPago" class="form-control" [attr.data-testid]="'select-metodo-pago'">
               <option value="">Seleccione...</option>
               <option value="EFECTIVO">Efectivo</option>
               <option value="TARJETA">Tarjeta</option>
@@ -65,10 +65,10 @@ import { ToastService } from '../../../../shared/services/toast.service';
           </div>
 
           <div class="form-actions">
-            <button type="submit" class="btn btn-primary" [disabled]="form.invalid">
+            <button type="submit" class="btn btn-primary" [disabled]="form.invalid" [attr.data-testid]="'btn-guardar'">
               <span class="material-symbols-outlined">save</span> Guardar
             </button>
-            <a routerLink="/pagos" class="btn btn-secondary">Cancelar</a>
+            <a routerLink="/pagos" class="btn btn-secondary" [attr.data-testid]="'btn-cancelar'">Cancelar</a>
           </div>
         </form>
       </div>

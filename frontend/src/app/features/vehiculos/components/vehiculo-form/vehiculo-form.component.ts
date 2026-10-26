@@ -20,18 +20,18 @@ import { ToastService } from '../../../../shared/services/toast.service';
       </div>
 
       <div class="form-card">
-        <form [formGroup]="form" (ngSubmit)="guardar()">
+        <form [formGroup]="form" (ngSubmit)="guardar()" [attr.data-testid]="'vehiculo-form'">
           <div class="form-group">
             <label for="placa">Placa</label>
-            <input id="placa" type="text" formControlName="placa" class="form-control mono-input" placeholder="ABC123" />
-            <div *ngIf="form.get('placa')?.invalid && form.get('placa')?.touched" class="field-error">
+            <input id="placa" type="text" formControlName="placa" class="form-control mono-input" placeholder="ABC123" [attr.data-testid]="'input-placa'" />
+            <div *ngIf="form.get('placa')?.invalid && form.get('placa')?.touched" class="field-error" [attr.data-testid]="'error-placa'">
               La placa es obligatoria
             </div>
           </div>
 
           <div class="form-group">
             <label for="tipo">Tipo</label>
-            <select id="tipo" formControlName="tipo" class="form-control">
+            <select id="tipo" formControlName="tipo" class="form-control" [attr.data-testid]="'select-tipo'">
               <option value="">Seleccione...</option>
               <option value="CARRO">Carro</option>
               <option value="MOTO">Moto</option>
@@ -39,26 +39,26 @@ import { ToastService } from '../../../../shared/services/toast.service';
               <option value="CAMIÓN">Camión</option>
               <option value="OTRO">Otro</option>
             </select>
-            <div *ngIf="form.get('tipo')?.invalid && form.get('tipo')?.touched" class="field-error">
+            <div *ngIf="form.get('tipo')?.invalid && form.get('tipo')?.touched" class="field-error" [attr.data-testid]="'error-tipo'">
               El tipo es obligatorio
             </div>
           </div>
 
           <div class="form-group">
             <label for="color">Color</label>
-            <input id="color" type="text" formControlName="color" class="form-control" placeholder="Rojo" />
+            <input id="color" type="text" formControlName="color" class="form-control" placeholder="Rojo" [attr.data-testid]="'input-color'" />
           </div>
 
           <div class="form-group">
             <label for="modelo">Modelo</label>
-            <input id="modelo" type="text" formControlName="modelo" class="form-control" placeholder="Toyota Corolla" />
+            <input id="modelo" type="text" formControlName="modelo" class="form-control" placeholder="Toyota Corolla" [attr.data-testid]="'input-modelo'" />
           </div>
 
           <div class="form-actions">
-            <button type="submit" class="btn btn-primary" [disabled]="form.invalid">
+            <button type="submit" class="btn btn-primary" [disabled]="form.invalid" [attr.data-testid]="'btn-guardar'">
               <span class="material-symbols-outlined">save</span> Guardar
             </button>
-            <a routerLink="/vehiculos" class="btn btn-secondary">Cancelar</a>
+            <a routerLink="/vehiculos" class="btn btn-secondary" [attr.data-testid]="'btn-cancelar'">Cancelar</a>
           </div>
         </form>
       </div>

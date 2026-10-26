@@ -20,18 +20,18 @@ import { ToastService } from '../../../../shared/services/toast.service';
       </div>
 
       <div class="form-card">
-        <form [formGroup]="form" (ngSubmit)="guardar()">
+        <form [formGroup]="form" (ngSubmit)="guardar()" [attr.data-testid]="'espacio-form'">
           <div class="form-group">
             <label for="numero">Número / Código</label>
-            <input id="numero" type="text" formControlName="numero" class="form-control mono-input" placeholder="A01" />
-            <div *ngIf="form.get('numero')?.invalid && form.get('numero')?.touched" class="field-error">
+            <input id="numero" type="text" formControlName="numero" class="form-control mono-input" placeholder="A01" [attr.data-testid]="'input-numero'" />
+            <div *ngIf="form.get('numero')?.invalid && form.get('numero')?.touched" class="field-error" [attr.data-testid]="'error-numero'">
               El número es obligatorio
             </div>
           </div>
 
           <div class="form-group">
             <label for="tipo">Tipo</label>
-            <select id="tipo" formControlName="tipo" class="form-control">
+            <select id="tipo" formControlName="tipo" class="form-control" [attr.data-testid]="'select-tipo'">
               <option value="">Seleccione...</option>
               <option value="CARRO">Carro</option>
               <option value="MOTO">Moto</option>
@@ -40,38 +40,38 @@ import { ToastService } from '../../../../shared/services/toast.service';
               <option value="DISCAPACITADO">Discapacitado</option>
               <option value="ELECTRICO">Eléctrico</option>
             </select>
-            <div *ngIf="form.get('tipo')?.invalid && form.get('tipo')?.touched" class="field-error">
+            <div *ngIf="form.get('tipo')?.invalid && form.get('tipo')?.touched" class="field-error" [attr.data-testid]="'error-tipo'">
               El tipo es obligatorio
             </div>
           </div>
 
           <div class="form-group">
             <label for="estado">Estado</label>
-            <select id="estado" formControlName="estado" class="form-control">
+            <select id="estado" formControlName="estado" class="form-control" [attr.data-testid]="'select-estado'">
               <option value="">Seleccione...</option>
               <option value="LIBRE">Libre</option>
               <option value="OCUPADO">Ocupado</option>
               <option value="RESERVADO">Reservado</option>
               <option value="MANTENIMIENTO">Mantenimiento</option>
             </select>
-            <div *ngIf="form.get('estado')?.invalid && form.get('estado')?.touched" class="field-error">
+            <div *ngIf="form.get('estado')?.invalid && form.get('estado')?.touched" class="field-error" [attr.data-testid]="'error-estado'">
               El estado es obligatorio
             </div>
           </div>
 
           <div class="form-group">
             <label for="piso">Piso</label>
-            <input id="piso" type="number" formControlName="piso" class="form-control mono-input" placeholder="1" />
-            <div *ngIf="form.get('piso')?.invalid && form.get('piso')?.touched" class="field-error">
+            <input id="piso" type="number" formControlName="piso" class="form-control mono-input" placeholder="1" [attr.data-testid]="'input-piso'" />
+            <div *ngIf="form.get('piso')?.invalid && form.get('piso')?.touched" class="field-error" [attr.data-testid]="'error-piso'">
               El piso es obligatorio
             </div>
           </div>
 
           <div class="form-actions">
-            <button type="submit" class="btn btn-primary" [disabled]="form.invalid">
+            <button type="submit" class="btn btn-primary" [disabled]="form.invalid" [attr.data-testid]="'btn-guardar'">
               <span class="material-symbols-outlined">save</span> Guardar
             </button>
-            <a routerLink="/espacios" class="btn btn-secondary">Cancelar</a>
+            <a routerLink="/espacios" class="btn btn-secondary" [attr.data-testid]="'btn-cancelar'">Cancelar</a>
           </div>
         </form>
       </div>

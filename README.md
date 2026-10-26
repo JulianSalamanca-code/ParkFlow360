@@ -91,3 +91,7 @@ Ver `backend/.env.example` para las variables de entorno necesarias en producci�
 ## Licencia
 
 Proyecto privado y confidencial.
+
+## Estado del despliegue
+
+Última actualización: 2026-10-26 17:27:13

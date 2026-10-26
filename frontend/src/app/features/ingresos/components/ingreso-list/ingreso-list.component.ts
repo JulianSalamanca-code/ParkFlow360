@@ -19,38 +19,38 @@ type Filtro = 'TODOS' | 'EN_USO' | 'FINALIZADOS';
           <h1>Ingresos</h1>
           <p>Selecciona un registro para ver su ticket</p>
         </div>
-        <a routerLink="/ingresos/nuevo" class="btn btn-primary">
+        <a routerLink="/ingresos/nuevo" class="btn btn-primary" [attr.data-testid]="'btn-nuevo-ingreso'">
           <span class="material-symbols-outlined">add</span> Registrar Entrada
         </a>
       </div>
 
-      <div class="metrics">
+      <div class="metrics" [attr.data-testid]="'metrics-container'">
         <div class="metric">
           <div class="label">Total Registros</div>
-          <div class="value">{{ ingresos.length }}</div>
+          <div class="value" [attr.data-testid]="'total-ingresos'">{{ ingresos.length }}</div>
         </div>
         <div class="metric metric-occupied">
           <div class="label">En Parqueadero</div>
-          <div class="value">{{ contarPorEstado('ACTIVO') }}</div>
+          <div class="value" [attr.data-testid]="'total-activos'">{{ contarPorEstado('ACTIVO') }}</div>
         </div>
         <div class="metric metric-warning">
           <div class="label">Reservados</div>
-          <div class="value">{{ contarPorEstado('RESERVADO') }}</div>
+          <div class="value" [attr.data-testid]="'total-reservados'">{{ contarPorEstado('RESERVADO') }}</div>
         </div>
         <div class="metric metric-available">
           <div class="label">Finalizados</div>
-          <div class="value">{{ contarPorEstado('FINALIZADO') }}</div>
+          <div class="value" [attr.data-testid]="'total-finalizados'">{{ contarPorEstado('FINALIZADO') }}</div>
         </div>
       </div>
 
-      <div class="filter-bar">
-        <button class="filter-btn" [class.active]="filtro === 'TODOS'" (click)="filtro = 'TODOS'">
+      <div class="filter-bar" [attr.data-testid]="'filter-bar'">
+        <button class="filter-btn" [class.active]="filtro === 'TODOS'" (click)="filtro = 'TODOS'" [attr.data-testid]="'filter-todos'">
           Todos ({{ ingresos.length }})
         </button>
-        <button class="filter-btn" [class.active]="filtro === 'EN_USO'" (click)="filtro = 'EN_USO'">
+        <button class="filter-btn" [class.active]="filtro === 'EN_USO'" (click)="filtro = 'EN_USO'" [attr.data-testid]="'filter-en-uso'">
           En Uso ({{ enUso.length }})
         </button>
-        <button class="filter-btn" [class.active]="filtro === 'FINALIZADOS'" (click)="filtro = 'FINALIZADOS'">
+        <button class="filter-btn" [class.active]="filtro === 'FINALIZADOS'" (click)="filtro = 'FINALIZADOS'" [attr.data-testid]="'filter-finalizados'">
           Finalizados ({{ contarPorEstado('FINALIZADO') }})
         </button>
       </div>
@@ -59,7 +59,7 @@ type Filtro = 'TODOS' | 'EN_USO' | 'FINALIZADOS';
         <!-- Columna izquierda: tabla -->
         <div class="card">
           <div class="table-wrap">
-            <table class="table">
+            <table class="table" [attr.data-testid]="'ingresos-table'">
               <thead>
                 <tr>
                   <th>Folio</th>
@@ -73,32 +73,32 @@ type Filtro = 'TODOS' | 'EN_USO' | 'FINALIZADOS';
               <tbody>
                 <tr *ngFor="let ingreso of ingresosFiltrados"
                     class="row-click" [class.selected]="seleccionado?.id === ingreso.id"
-                    (click)="seleccionar(ingreso)">
-                  <td><span class="plate">{{ ingreso.folio }}</span></td>
-                  <td><span class="plate">{{ ingreso.placa }}</span></td>
-                  <td class="num">{{ ingreso.espacioNumero || ingreso.espacioId }}</td>
-                  <td><span class="badge" [ngClass]="estadoBadge(ingreso.estado)">{{ ingreso.estado }}</span></td>
-                  <td class="mono">{{ ingreso.fechaEntrada | date:'short' }}</td>
+                    (click)="seleccionar(ingreso)" [attr.data-testid]="'ingreso-row-' + ingreso.id">
+                  <td><span class="plate" [attr.data-testid]="'folio-' + ingreso.id">{{ ingreso.folio }}</span></td>
+                  <td><span class="plate" [attr.data-testid]="'placa-' + ingreso.id">{{ ingreso.placa }}</span></td>
+                  <td class="num" [attr.data-testid]="'espacio-' + ingreso.id">{{ ingreso.espacioNumero || ingreso.espacioId }}</td>
+                  <td><span class="badge" [ngClass]="estadoBadge(ingreso.estado)" [attr.data-testid]="'estado-' + ingreso.id">{{ ingreso.estado }}</span></td>
+                  <td class="mono" [attr.data-testid]="'fecha-' + ingreso.id">{{ ingreso.fechaEntrada | date:'short' }}</td>
                   <td (click)="$event.stopPropagation()">
                     <div class="table-actions">
                       <button *ngIf="ingreso.estado === 'ACTIVO'"
                               (click)="registrarSalida(ingreso.id)" class="btn btn-sm btn-primary"
-                              title="Registrar salida">
+                              title="Registrar salida" [attr.data-testid]="'btn-salida-' + ingreso.id">
                         <span class="material-symbols-outlined">logout</span>
                       </button>
                       <button *ngIf="ingreso.estado === 'RESERVADO'"
                               (click)="liberar(ingreso.id)" class="btn btn-sm btn-warning"
-                              title="Liberar reserva">
+                              title="Liberar reserva" [attr.data-testid]="'btn-liberar-' + ingreso.id">
                         <span class="material-symbols-outlined">event_busy</span>
                       </button>
-                      <button (click)="eliminar(ingreso.id)" class="btn btn-sm btn-danger" title="Eliminar">
+                      <button (click)="eliminar(ingreso.id)" class="btn btn-sm btn-danger" title="Eliminar" [attr.data-testid]="'btn-eliminar-' + ingreso.id">
                         <span class="material-symbols-outlined">delete</span>
                       </button>
                     </div>
                   </td>
                 </tr>
                 <tr *ngIf="ingresosFiltrados.length === 0">
-                  <td colspan="6" class="table-empty">No hay registros para este filtro</td>
+                  <td colspan="6" class="table-empty" [attr.data-testid]="'empty-state'">No hay registros para este filtro</td>
                 </tr>
               </tbody>
             </table>
@@ -110,7 +110,7 @@ type Filtro = 'TODOS' | 'EN_USO' | 'FINALIZADOS';
           <div class="ticket-head">
             <span class="material-symbols-outlined">receipt_long</span>
             <strong>Ticket</strong>
-            <button *ngIf="seleccionado" class="btn btn-sm btn-secondary" style="margin-left:auto" (click)="imprimir()">
+            <button *ngIf="seleccionado" class="btn btn-sm btn-secondary" style="margin-left:auto" (click)="imprimir()" [attr.data-testid]="'btn-imprimir'">
               <span class="material-symbols-outlined">print</span> Imprimir
             </button>
           </div>
@@ -129,7 +129,7 @@ type Filtro = 'TODOS' | 'EN_USO' | 'FINALIZADOS';
             [fecha]="seleccionado.fechaEntrada">
           </app-ticket>
 
-          <div *ngIf="!seleccionado" class="ticket-placeholder">
+          <div *ngIf="!seleccionado" class="ticket-placeholder" [attr.data-testid]="'ticket-placeholder'">
             <span class="material-symbols-outlined">receipt_long</span>
             <p>Selecciona un registro de la lista para ver su ticket.</p>
           </div>

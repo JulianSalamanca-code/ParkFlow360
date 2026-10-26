@@ -22,7 +22,7 @@ import { ToastService } from '../../../../shared/services/toast.service';
           <h1>Registro de Entrada</h1>
           <p>Registra el ingreso del vehículo y genera el ticket de parqueo</p>
         </div>
-        <a routerLink="/ingresos" class="btn btn-secondary">
+        <a routerLink="/ingresos" class="btn btn-secondary" [attr.data-testid]="'btn-volver'">
           <span class="material-symbols-outlined">arrow_back</span> Volver
         </a>
       </div>
@@ -30,16 +30,16 @@ import { ToastService } from '../../../../shared/services/toast.service';
       <div class="ingreso-grid">
         <!-- Formulario -->
         <div class="form-card" style="max-width:none">
-          <form [formGroup]="form" (ngSubmit)="guardar()">
+          <form [formGroup]="form" (ngSubmit)="guardar()" [attr.data-testid]="'ingreso-form'">
             <div class="form-group">
               <label>Categoría del Vehículo</label>
               <div class="cat-row">
                 <button type="button" class="cat-btn" [class.selected]="form.get('categoria')?.value === 'CARRO'"
-                        (click)="setCategoria('CARRO')">
+                        (click)="setCategoria('CARRO')" [attr.data-testid]="'btn-categoria-carro'">
                   <span class="material-symbols-outlined">directions_car</span> Automóvil
                 </button>
                 <button type="button" class="cat-btn" [class.selected]="form.get('categoria')?.value === 'MOTO'"
-                        (click)="setCategoria('MOTO')">
+                        (click)="setCategoria('MOTO')" [attr.data-testid]="'btn-categoria-moto'">
                   <span class="material-symbols-outlined">two_wheeler</span> Motocicleta
                 </button>
               </div>
@@ -48,28 +48,28 @@ import { ToastService } from '../../../../shared/services/toast.service';
             <div class="form-group">
               <label for="placa">Placa / Patente</label>
               <input id="placa" type="text" formControlName="placa" class="form-control mono-input"
-                     placeholder="ABC123" style="font-size:18px;text-align:center;letter-spacing:0.15em" />
-              <div *ngIf="form.get('placa')?.invalid && form.get('placa')?.touched" class="field-error">
+                     placeholder="ABC123" style="font-size:18px;text-align:center;letter-spacing:0.15em" [attr.data-testid]="'input-placa'" />
+              <div *ngIf="form.get('placa')?.invalid && form.get('placa')?.touched" class="field-error" [attr.data-testid]="'error-placa'">
                 La placa es obligatoria
               </div>
             </div>
 
             <div class="form-group">
               <label for="espacioId">Espacio Asignado</label>
-              <select id="espacioId" formControlName="espacioId" class="form-control">
+              <select id="espacioId" formControlName="espacioId" class="form-control" [attr.data-testid]="'select-espacio'">
                 <option value="">Seleccione un espacio...</option>
                 <option *ngFor="let e of espacios" [ngValue]="e.id">
                   {{ e.numero }} · Piso {{ e.piso }} · {{ e.estado }}
                 </option>
               </select>
-              <div *ngIf="form.get('espacioId')?.invalid && form.get('espacioId')?.touched" class="field-error">
+              <div *ngIf="form.get('espacioId')?.invalid && form.get('espacioId')?.touched" class="field-error" [attr.data-testid]="'error-espacio'">
                 El espacio es obligatorio
               </div>
             </div>
 
             <div class="form-group">
               <label for="tarifaId">Tarifa</label>
-              <select id="tarifaId" formControlName="tarifaId" class="form-control">
+              <select id="tarifaId" formControlName="tarifaId" class="form-control" [attr.data-testid]="'select-tarifa'">
                 <option value="">Seleccione una tarifa...</option>
                 <option *ngFor="let t of tarifas" [ngValue]="t.id">
                   {{ t.nombre }} · {{ t.valor | currency:'COP':'symbol-narrow':'1.0-0' }}
@@ -80,15 +80,15 @@ import { ToastService } from '../../../../shared/services/toast.service';
             <div class="form-group">
               <label for="novedad">Novedad / Observación</label>
               <input id="novedad" type="text" formControlName="novedad" class="form-control"
-                     placeholder="Sin novedad visible" />
+                     placeholder="Sin novedad visible" [attr.data-testid]="'input-novedad'" />
             </div>
 
             <div class="form-actions">
-              <button type="submit" class="btn btn-primary" [disabled]="form.invalid || isLoading">
+              <button type="submit" class="btn btn-primary" [disabled]="form.invalid || isLoading" [attr.data-testid]="'btn-confirmar'">
                 <span class="material-symbols-outlined">lock_open</span>
                 {{ isLoading ? 'Registrando...' : 'Confirmar y Abrir Barrera' }}
               </button>
-              <a routerLink="/ingresos" class="btn btn-secondary">Cancelar</a>
+              <a routerLink="/ingresos" class="btn btn-secondary" [attr.data-testid]="'btn-cancelar'">Cancelar</a>
             </div>
           </form>
         </div>
@@ -115,7 +115,7 @@ import { ToastService } from '../../../../shared/services/toast.service';
           ></app-ticket>
 
           <button *ngIf="folio" type="button" class="btn btn-primary" style="margin-top:14px;width:100%"
-                  (click)="imprimir()">
+                  (click)="imprimir()" [attr.data-testid]="'btn-imprimir-ticket'">
             <span class="material-symbols-outlined">print</span> Imprimir Ticket
           </button>
         </div>

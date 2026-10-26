@@ -27,7 +27,8 @@ import { ToastService } from '../../../shared/services/toast.service';
           <div class="form-group">
             <label for="email">Usuario / Correo</label>
             <input id="email" type="email" formControlName="email" class="form-control"
-                   placeholder="operador@parkflow360.com" autocomplete="username" />
+                   placeholder="operador@parkflow360.com" autocomplete="username"
+                   [attr.data-testid]="'email-input'" />
             <div *ngIf="form.get('email')?.invalid && form.get('email')?.touched" class="field-error">
               Ingresa un correo válido
             </div>
@@ -36,15 +37,17 @@ import { ToastService } from '../../../shared/services/toast.service';
           <div class="form-group">
             <label for="password">Contraseña</label>
             <input id="password" type="password" formControlName="password" class="form-control"
-                   placeholder="••••••••" autocomplete="current-password" />
+                   placeholder="••••••••" autocomplete="current-password"
+                   [attr.data-testid]="'password-input'" />
             <div *ngIf="form.get('password')?.invalid && form.get('password')?.touched" class="field-error">
               La contraseña es obligatoria
             </div>
           </div>
 
-          <div *ngIf="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
+          <div *ngIf="errorMessage" class="alert alert-danger" [attr.data-testid]="'error-message'">{{ errorMessage }}</div>
 
-          <button type="submit" class="btn btn-primary btn-block" [disabled]="form.invalid || isLoading">
+          <button type="submit" class="btn btn-primary btn-block" [disabled]="form.invalid || isLoading"
+                  [attr.data-testid]="'login-button'">
             <span class="material-symbols-outlined">{{ isLoading ? 'progress_activity' : 'login' }}</span>
             {{ isLoading ? 'Validando...' : 'Iniciar Turno' }}
           </button>

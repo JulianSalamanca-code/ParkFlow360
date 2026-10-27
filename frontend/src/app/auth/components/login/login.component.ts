@@ -62,6 +62,11 @@ import { ToastService } from '../../../shared/services/toast.service';
           Continuar con Google
         </button>
 
+        <div class="login-footer">
+          <span>¿No tienes cuenta?</span>
+          <a routerLink="/auth/registro" class="link-register">Regístrate aquí</a>
+        </div>
+
         <div class="login-foot">
           <span class="online-dot"></span>
           Terminal autorizada · ParkFlow360
@@ -141,6 +146,16 @@ import { ToastService } from '../../../shared/services/toast.service';
       display: flex; align-items: center; gap: 8px;
       margin-top: 28px; color: var(--pf-muted); font-size: 12px;
     }
+
+    .login-footer {
+      display: flex; justify-content: center; align-items: center; gap: 8px;
+      margin-top: 20px; color: var(--pf-muted); font-size: 14px;
+    }
+
+    .link-register {
+      color: var(--pf-primary); text-decoration: none; font-weight: 600;
+    }
+    .link-register:hover { text-decoration: underline; }
 
     .login-side {
       background:

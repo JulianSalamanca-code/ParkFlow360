@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -52,6 +52,15 @@ import { ToastService } from '../../../shared/services/toast.service';
             {{ isLoading ? 'Validando...' : 'Iniciar Turno' }}
           </button>
         </form>
+
+        <div class="divider">
+          <span>O</span>
+        </div>
+
+        <button type="button" class="btn btn-google btn-block" (click)="loginWithGoogle()" [disabled]="isLoading">
+          <span class="material-symbols-outlined">account_circle</span>
+          Continuar con Google
+        </button>
 
         <div class="login-foot">
           <span class="online-dot"></span>
@@ -112,6 +121,21 @@ import { ToastService } from '../../../shared/services/toast.service';
     .login-subtitle { color: var(--pf-muted); font-size: 14px; margin: 8px 0 28px; }
 
     .btn-block { width: 100%; padding: 13px; font-size: 15px; margin-top: 6px; }
+
+    .divider {
+      display: flex; align-items: center; text-align: center; margin: 20px 0;
+      color: var(--pf-muted); font-size: 12px;
+    }
+    .divider::before, .divider::after {
+      content: ''; flex: 1; border-bottom: 1px solid var(--pf-border);
+    }
+    .divider span { padding: 0 10px; }
+
+    .btn-google {
+      background: #fff; color: #333; border: 1px solid var(--pf-border);
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-google:hover { background: #f5f5f5; }
 
     .login-foot {
       display: flex; align-items: center; gap: 8px;
@@ -195,6 +219,46 @@ export class LoginComponent implements OnInit {
       },
       error: (err) => {
         this.errorMessage = err.error?.message || 'Error al iniciar sesión';
+        this.toast.error(this.errorMessage);
+        this.isLoading = false;
+      }
+    });
+  }
+
+  loginWithGoogle(): void {
+    this.isLoading = true;
+    this.errorMessage = '';
+
+    // Simulación de login con Google - en producción usar Google Identity Services
+    // Por ahora, pedimos email y nombre manualmente
+    const email = prompt('Ingresa tu email de Google:');
+    if (!email) {
+      this.isLoading = false;
+      return;
+    }
+    
+    const nombre = prompt('Ingresa tu nombre:');
+    if (!nombre) {
+      this.isLoading = false;
+      return;
+    }
+
+    const googleUser = {
+      email: email,
+      name: nombre,
+      sub: 'google-' + Date.now()
+    };
+
+    this.authService.loginWithGoogle(googleUser).subscribe({
+      next: () => {
+        this.isLoading = false;
+        const userNombre = this.authService.getUser()?.nombre || '';
+        this.toast.success(`¡Bienvenido${userNombre ? ', ' + userNombre : ''}!`);
+        const rol = this.authService.getRol().toUpperCase();
+        this.router.navigate([rol === 'ADMIN' ? '/vehiculos' : '/mis-parqueos']);
+      },
+      error: (err) => {
+        this.errorMessage = err.error?.message || 'Error al iniciar sesión con Google';
         this.toast.error(this.errorMessage);
         this.isLoading = false;
       }

@@ -33,6 +33,22 @@ export class AuthService {
     );
   }
 
+  loginWithGoogle(googleUser: any): Observable<LoginResponse> {
+    const request = {
+      email: googleUser.email,
+      nombre: googleUser.name,
+      googleId: googleUser.sub
+    };
+    return this.http.post<LoginResponse>(`${this.apiUrl}/google`, request).pipe(
+      tap(response => {
+        this.setToken(response.token);
+        this.setUser(response);
+        this.isAuthenticatedSubject.next(true);
+        this.rolSubject.next(response.rol);
+      })
+    );
+  }
+
   logout(): void {
     localStorage.removeItem(this.tokenKey);
     localStorage.removeItem(this.userKey);

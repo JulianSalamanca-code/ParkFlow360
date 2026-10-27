@@ -23,7 +23,7 @@ public class Usuario {
     @Column(nullable = false, unique = true, length = 100)
     private String email;
 
-    @Column(nullable = false)
+    @Column
     private String password;
 
     @Column(nullable = false, length = 50)
@@ -31,6 +31,9 @@ public class Usuario {
 
     @Column(length = 100)
     private String nombre;
+
+    @Column(name = "google_id", unique = true)
+    private String googleId;
 
     @Column(name = "fecha_creacion", updatable = false)
     private LocalDateTime fechaCreacion;

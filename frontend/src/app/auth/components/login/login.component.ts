@@ -250,13 +250,19 @@ export class LoginComponent implements OnInit {
     this.errorMessage = '';
 
     // Implementación real de Google OAuth con Google Identity Services
-    // Por ahora, redirigimos al backend para iniciar el flujo OAuth2
-    // En producción, usar Google Identity Services con client ID configurado
-    window.location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + 
-      'client_id=YOUR_GOOGLE_CLIENT_ID&' +
-      'redirect_uri=' + encodeURIComponent(window.location.origin + '/auth/google/callback') + '&' +
+    // Redirigimos a Google para autenticación
+    const clientId = 'YOUR_GOOGLE_CLIENT_ID'; // Se debe configurar en environment
+    const redirectUri = window.location.origin + '/auth/google/callback';
+    const scope = 'email profile';
+    
+    const authUrl = 'https://accounts.google.com/o/oauth2/v2/auth?' + 
+      'client_id=' + encodeURIComponent(clientId) + '&' +
+      'redirect_uri=' + encodeURIComponent(redirectUri) + '&' +
       'response_type=code&' +
-      'scope=email%20profile&' +
-      'access_type=offline';
+      'scope=' + encodeURIComponent(scope) + '&' +
+      'access_type=offline&' +
+      'prompt=consent';
+
+    window.location.href = authUrl;
   }
 }

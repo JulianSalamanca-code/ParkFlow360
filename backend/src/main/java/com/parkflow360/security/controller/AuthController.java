@@ -39,4 +39,9 @@ public class AuthController {
                 request.getGoogleId()
         ));
     }
+
+    @GetMapping("/google/callback")
+    public ResponseEntity<LoginResponse> googleCallback(@RequestParam String code) {
+        return ResponseEntity.ok(googleAuthService.handleGoogleCallback(code));
+    }
 }

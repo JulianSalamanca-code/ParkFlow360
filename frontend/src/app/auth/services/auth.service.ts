@@ -60,6 +60,19 @@ export class AuthService {
     );
   }
 
+  handleGoogleCallback(code: string): Observable<LoginResponse> {
+    return this.http.get<LoginResponse>(`${this.apiUrl}/google/callback`, {
+      params: { code }
+    }).pipe(
+      tap(response => {
+        this.setToken(response.token);
+        this.setUser(response);
+        this.isAuthenticatedSubject.next(true);
+        this.rolSubject.next(response.rol);
+      })
+    );
+  }
+
   logout(): void {
     localStorage.removeItem(this.tokenKey);
     localStorage.removeItem(this.userKey);

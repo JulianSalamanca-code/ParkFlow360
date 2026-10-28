@@ -23,9 +23,10 @@ import { ToastService } from '../../../../shared/services/toast.service';
         <form [formGroup]="form" (ngSubmit)="guardar()" [attr.data-testid]="'vehiculo-form'">
           <div class="form-group">
             <label for="placa">Placa</label>
-            <input id="placa" type="text" formControlName="placa" class="form-control mono-input" placeholder="ABC123" [attr.data-testid]="'input-placa'" />
+            <input id="placa" type="text" formControlName="placa" class="form-control mono-input" placeholder="ABC-123" [attr.data-testid]="'input-placa'" maxlength="7" />
             <div *ngIf="form.get('placa')?.invalid && form.get('placa')?.touched" class="field-error" [attr.data-testid]="'error-placa'">
-              La placa es obligatoria
+              <span *ngIf="form.get('placa')?.errors?.['required']">La placa es obligatoria</span>
+              <span *ngIf="form.get('placa')?.errors?.['pattern']">Formato inválido. Use AAA-000 o AAA-00A</span>
             </div>
           </div>
 
@@ -33,11 +34,9 @@ import { ToastService } from '../../../../shared/services/toast.service';
             <label for="tipo">Tipo</label>
             <select id="tipo" formControlName="tipo" class="form-control" [attr.data-testid]="'select-tipo'">
               <option value="">Seleccione...</option>
-              <option value="CARRO">Carro</option>
+              <option value="VEHICULO">Vehículo</option>
               <option value="MOTO">Moto</option>
-              <option value="CAMIONETA">Camioneta</option>
-              <option value="CAMIÓN">Camión</option>
-              <option value="OTRO">Otro</option>
+              <option value="VEHICULO_ELECTRICO">Vehículo Eléctrico</option>
             </select>
             <div *ngIf="form.get('tipo')?.invalid && form.get('tipo')?.touched" class="field-error" [attr.data-testid]="'error-tipo'">
               El tipo es obligatorio
@@ -80,8 +79,8 @@ export class VehiculoFormComponent implements OnInit {
 
   ngOnInit(): void {
     this.form = this.fb.group({
-      placa: ['', [Validators.required, Validators.maxLength(20)]],
-      tipo: ['', [Validators.required, Validators.maxLength(50)]],
+      placa: ['', [Validators.required, Validators.pattern(/^[A-Z]{3}-[A-Z0-9]{3}$/), Validators.maxLength(7)]],
+      tipo: ['', [Validators.required, Validators.pattern(/^(VEHICULO|MOTO|VEHICULO_ELECTRICO)$/)]],
       color: ['', [Validators.maxLength(50)]],
       modelo: ['', [Validators.maxLength(100)]]
     });

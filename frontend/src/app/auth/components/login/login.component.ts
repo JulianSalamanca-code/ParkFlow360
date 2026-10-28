@@ -62,6 +62,16 @@ import { ToastService } from '../../../shared/services/toast.service';
           Continuar con Google
         </button>
 
+        <div class="login-footer">
+          <span>¿No tienes cuenta?</span>
+          <a routerLink="/auth/registro" class="link-register">Regístrate aquí</a>
+        </div>
+
+        <div class="login-footer">
+          <span>¿Olvidaste tu contraseña?</span>
+          <a routerLink="/auth/recuperar" class="link-register">Recupérala aquí</a>
+        </div>
+
         <div class="login-foot">
           <span class="online-dot"></span>
           Terminal autorizada · ParkFlow360
@@ -141,6 +151,16 @@ import { ToastService } from '../../../shared/services/toast.service';
       display: flex; align-items: center; gap: 8px;
       margin-top: 28px; color: var(--pf-muted); font-size: 12px;
     }
+
+    .login-footer {
+      display: flex; justify-content: center; align-items: center; gap: 8px;
+      margin-top: 20px; color: var(--pf-muted); font-size: 14px;
+    }
+
+    .link-register {
+      color: var(--pf-primary); text-decoration: none; font-weight: 600;
+    }
+    .link-register:hover { text-decoration: underline; }
 
     .login-side {
       background:
@@ -229,39 +249,14 @@ export class LoginComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = '';
 
-    // Simulación de login con Google - en producción usar Google Identity Services
-    // Por ahora, pedimos email y nombre manualmente
-    const email = prompt('Ingresa tu email de Google:');
-    if (!email) {
-      this.isLoading = false;
-      return;
-    }
-    
-    const nombre = prompt('Ingresa tu nombre:');
-    if (!nombre) {
-      this.isLoading = false;
-      return;
-    }
-
-    const googleUser = {
-      email: email,
-      name: nombre,
-      sub: 'google-' + Date.now()
-    };
-
-    this.authService.loginWithGoogle(googleUser).subscribe({
-      next: () => {
-        this.isLoading = false;
-        const userNombre = this.authService.getUser()?.nombre || '';
-        this.toast.success(`¡Bienvenido${userNombre ? ', ' + userNombre : ''}!`);
-        const rol = this.authService.getRol().toUpperCase();
-        this.router.navigate([rol === 'ADMIN' ? '/vehiculos' : '/mis-parqueos']);
-      },
-      error: (err) => {
-        this.errorMessage = err.error?.message || 'Error al iniciar sesión con Google';
-        this.toast.error(this.errorMessage);
-        this.isLoading = false;
-      }
-    });
+    // Implementación real de Google OAuth con Google Identity Services
+    // Por ahora, redirigimos al backend para iniciar el flujo OAuth2
+    // En producción, usar Google Identity Services con client ID configurado
+    window.location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + 
+      'client_id=YOUR_GOOGLE_CLIENT_ID&' +
+      'redirect_uri=' + encodeURIComponent(window.location.origin + '/auth/google/callback') + '&' +
+      'response_type=code&' +
+      'scope=email%20profile&' +
+      'access_type=offline';
   }
 }

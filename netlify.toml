@@ -2,7 +2,7 @@
 
 [build]
   base = "frontend"
-  command = "npm install && npm run build"
+  command = "pnpm install && pnpm run build"
   publish = "dist/frontend/browser"
 
 # IMPORTANTE: las reglas se evalúan de arriba hacia abajo.

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -104,13 +104,13 @@ import { ToastService } from '../../../../shared/services/toast.service';
           <app-ticket
             [titulo]="folio ? 'TICKET INGRESO' : 'PREVISUALIZACIÓN'"
             [folio]="folio || 'TK-PREVIEW'"
-            [placa]="form.get('placa')?.value"
-            [categoria]="form.get('categoria')?.value"
+            [placa]="$safeNavigationMigration(form.get('placa')?.value)"
+            [categoria]="$safeNavigationMigration(form.get('categoria')?.value)"
             [espacio]="espacioLabel"
             [tarifaValor]="tarifaValor"
             [modalidad]="'POR HORAS'"
             [operador]="operador"
-            [novedad]="form.get('novedad')?.value"
+            [novedad]="$safeNavigationMigration(form.get('novedad')?.value)"
             [fecha]="fechaTicket"
           ></app-ticket>
 
@@ -122,6 +122,7 @@ import { ToastService } from '../../../../shared/services/toast.service';
       </div>
     </div>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     .ingreso-grid {
       display: grid;

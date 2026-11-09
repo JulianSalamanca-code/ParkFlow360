@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { IngresoService } from '../../ingresos/services/ingreso.service';
@@ -102,6 +102,7 @@ import { TicketComponent } from '../../../shared/components/ticket/ticket.compon
       </div>
     </div>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     .split { display: grid; grid-template-columns: 1fr 400px; gap: 20px; align-items: start; }
     .row-click { cursor: pointer; }

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { VehiculoService } from '../../../../vehiculos/services/vehiculo.service';
@@ -8,6 +8,7 @@ import { Vehiculo } from '../../../../vehiculos/models/vehiculo.model';
   selector: 'app-mis-vehiculos-list',
   standalone: true,
   imports: [CommonModule, RouterLink],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="page">
       <div class="page-header">

@@ -13,4 +13,7 @@ public interface PagoRepository extends JpaRepository<Pago, Long> {
     List<Pago> findByEspacioId(Long espacioId);
     List<Pago> findByFechaBetween(LocalDateTime inicio, LocalDateTime fin);
     List<Pago> findByMetodoPago(String metodoPago);
+    List<Pago> findByIngresoId(Long ingresoId);
+    boolean existsByIngresoId(Long ingresoId);
+    boolean existsByIngresoIdAndEstadoPago(Long ingresoId, String estadoPago);
 }

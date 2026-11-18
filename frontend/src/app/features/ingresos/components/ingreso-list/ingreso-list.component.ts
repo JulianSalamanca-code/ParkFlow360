@@ -81,7 +81,19 @@ type Filtro = 'TODOS' | 'EN_USO' | 'FINALIZADOS';
                   <td class="mono" [attr.data-testid]="'fecha-' + ingreso.id">{{ ingreso.fechaEntrada | date:'short' }}</td>
                   <td (click)="$event.stopPropagation()">
                     <div class="table-actions">
-                      <button *ngIf="ingreso.estado === 'ACTIVO'"
+                      <a *ngIf="ingreso.estado === 'ACTIVO' && !ingreso.pagoRegistrado && !ingreso.pagoId"
+                              [routerLink]="['/pagos/nuevo']" [queryParams]="{ ingresoId: ingreso.id }"
+                              class="btn btn-sm btn-secondary" title="Registrar pago de esta estancia"
+                              [attr.data-testid]="'btn-pago-' + ingreso.id">
+                        <span class="material-symbols-outlined">payments</span>
+                      </a>
+                      <a *ngIf="ingreso.estado === 'ACTIVO' && !ingreso.pagoRegistrado && ingreso.pagoId"
+                              [routerLink]="['/pagos/editar', ingreso.pagoId]"
+                              class="btn btn-sm btn-secondary" title="Revisar el resultado del pago"
+                              [attr.data-testid]="'btn-reintentar-pago-' + ingreso.id">
+                        <span class="material-symbols-outlined">refresh</span>
+                      </a>
+                      <button *ngIf="ingreso.estado === 'ACTIVO' && ingreso.pagoRegistrado"
                               (click)="registrarSalida(ingreso.id)" class="btn btn-sm btn-primary"
                               title="Registrar salida" [attr.data-testid]="'btn-salida-' + ingreso.id">
                         <span class="material-symbols-outlined">logout</span>

@@ -10,8 +10,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -58,6 +61,49 @@ public class EspacioService {
 
         Espacio guardado = espacioRepository.save(espacio);
         return mapToResponse(guardado);
+    }
+
+    @Transactional
+    public List<EspacioResponse> importar(List<EspacioRequest> requests) {
+        if (requests == null || requests.isEmpty()) {
+            throw new IllegalArgumentException("Debes incluir al menos un espacio para importar.");
+        }
+        if (requests.size() > 2000) {
+            throw new IllegalArgumentException("No se pueden importar más de 2000 espacios por lote.");
+        }
+
+        Set<String> numeros = new HashSet<>();
+        List<Espacio> espacios = requests.stream()
+                .map(request -> {
+                    if (request == null || request.getNumero() == null || request.getNumero().isBlank()) {
+                        throw new IllegalArgumentException("Todos los espacios deben tener un número.");
+                    }
+
+                    String numero = request.getNumero().trim();
+                    String numeroNormalizado = numero.toUpperCase(Locale.ROOT);
+                    if (!numeros.add(numeroNormalizado)) {
+                        throw new IllegalArgumentException("El lote contiene el número repetido: " + numero);
+                    }
+
+                    return Espacio.builder()
+                            .numero(numero)
+                            .tipo(request.getTipo())
+                            .estado(request.getEstado())
+                            .piso(request.getPiso())
+                            .build();
+                })
+                .collect(Collectors.toList());
+
+        List<String> numerosNormalizados = numeros.stream().toList();
+        List<Espacio> existentes = espacioRepository.findAllByNumeroIgnoreCaseIn(numerosNormalizados);
+        if (!existentes.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Ya existe un espacio con el número: " + existentes.get(0).getNumero());
+        }
+
+        return espacioRepository.saveAll(espacios).stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
     }
 
     @Transactional

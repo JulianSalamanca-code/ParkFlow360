@@ -17,7 +17,9 @@ public class PagoResponse {
     private Long vehiculoId;
     private Long espacioId;
     private Long tarifaId;
+    private Long ingresoId;
     private BigDecimal valor;
     private LocalDateTime fecha;
     private String metodoPago;
+    private String estadoPago;
 }

@@ -30,6 +30,9 @@ public class Pago {
     @Column(name = "tarifa_id")
     private Long tarifaId;
 
+    @Column(name = "ingreso_id")
+    private Long ingresoId;
+
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal valor;
 
@@ -39,8 +42,15 @@ public class Pago {
     @Column(name = "metodo_pago", length = 50)
     private String metodoPago;
 
+    @Builder.Default
+    @Column(name = "estado_pago", nullable = false, length = 20)
+    private String estadoPago = "CONFIRMADO";
+
     @PrePersist
     protected void onCreate() {
         fecha = LocalDateTime.now();
+        if (estadoPago == null) {
+            estadoPago = "CONFIRMADO";
+        }
     }
 }

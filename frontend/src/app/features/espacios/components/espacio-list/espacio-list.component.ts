@@ -18,9 +18,14 @@ import { IngresoService } from '../../../ingresos/services/ingreso.service';
           <h1>Espacios</h1>
           <p>Disponibilidad y estado de los espacios de parqueo</p>
         </div>
-        <a routerLink="/espacios/nuevo" class="btn btn-primary" [attr.data-testid]="'btn-nuevo-espacio'">
-          <span class="material-symbols-outlined">add</span> Nuevo Espacio
-        </a>
+        <div class="page-actions">
+          <a routerLink="/espacios/importar" class="btn btn-secondary" data-testid="btn-importar-espacios">
+            <span class="material-symbols-outlined">upload_file</span> Importar plano / CSV
+          </a>
+          <a routerLink="/espacios/nuevo" class="btn btn-primary" [attr.data-testid]="'btn-nuevo-espacio'">
+            <span class="material-symbols-outlined">add</span> Nuevo Espacio
+          </a>
+        </div>
       </div>
 
       <div class="metrics" [attr.data-testid]="'metrics-container'">
@@ -88,7 +93,10 @@ import { IngresoService } from '../../../ingresos/services/ingreso.service';
         </div>
       </div>
     </div>
-  `
+  `,
+  styles: [`
+    .page-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+  `]
 })
 export class EspacioListComponent implements OnInit {
   espacios: Espacio[] = [];

@@ -50,8 +50,8 @@ describe('Ingresos Management', () => {
     
     // Fill form
     cy.get('[data-testid="input-placa"]').type('INGRESO123')
-    cy.get('[data-testid="select-espacio"]').select(0) // Select first available space
-    cy.get('[data-testid="select-tarifa"]').select(0) // Select first tarifa
+    cy.get('[data-testid="select-espacio"]').select(1) // Select first available space
+    cy.get('[data-testid="select-tarifa"]').select(1) // Select first tarifa
     cy.get('[data-testid="input-novedad"]').type('Sin novedad')
     
     cy.get('[data-testid="btn-confirmar"]').click()
@@ -73,8 +73,8 @@ describe('Ingresos Management', () => {
     cy.get('[data-testid="btn-nuevo-ingreso"]').click()
     cy.get('[data-testid="btn-categoria-carro"]').click()
     cy.get('[data-testid="input-placa"]').type('SALIDA123')
-    cy.get('[data-testid="select-espacio"]').select(0)
-    cy.get('[data-testid="select-tarifa"]').select(0)
+    cy.get('[data-testid="select-espacio"]').select(1)
+    cy.get('[data-testid="select-tarifa"]').select(1)
     cy.get('[data-testid="btn-confirmar"]').click()
     
     cy.get('[data-testid="btn-imprimir-ticket"]').should('be.visible')
@@ -82,15 +82,104 @@ describe('Ingresos Management', () => {
     // Go back to list
     cy.visit('/ingresos')
     
-    // Find the created ingreso and click salida
-    cy.contains('SALIDA123').parent().parent().within(() => {
+    cy.contains('SALIDA123').closest('tr').find('[data-testid^="btn-salida-"]').should('not.exist')
+    cy.contains('SALIDA123').closest('tr').find('[data-testid^="btn-pago-"]').click()
+
+    cy.url().should('include', '/pagos/nuevo')
+    cy.get('[data-testid="input-valor"]').clear().type('5000')
+    cy.get('[data-testid="select-metodo-pago"]').select('EFECTIVO')
+    cy.get('[data-testid="btn-guardar"]').click()
+    cy.url().should('include', '/ingresos')
+
+    cy.on('window:confirm', () => true)
+    cy.contains('SALIDA123').closest('tr').within(() => {
       cy.get('[data-testid^="btn-salida-"]').click()
     })
-    
-    cy.on('window:confirm', () => true)
-    
+
     // The ingreso should now be FINALIZADO
     cy.contains('FINALIZADO').should('be.visible')
+  })
+
+  it('should reject salida until the ingreso has an associated pago', () => {
+    cy.get('[data-testid="btn-nuevo-ingreso"]').click()
+    cy.get('[data-testid="btn-categoria-carro"]').click()
+    cy.get('[data-testid="input-placa"]').type('SINPAGO123')
+    cy.get('[data-testid="select-espacio"]').select(1)
+    cy.get('[data-testid="select-tarifa"]').select(1)
+    cy.get('[data-testid="btn-confirmar"]').click()
+    cy.get('[data-testid="btn-imprimir-ticket"]').should('be.visible')
+
+    cy.visit('/ingresos')
+    cy.contains('SINPAGO123').closest('tr').invoke('attr', 'data-testid').then((testId) => {
+      const ingresoId = testId?.replace('ingreso-row-', '')
+      cy.window().then((win) => {
+        cy.request({
+          method: 'PUT',
+          url: `/api/ingresos/${ingresoId}/salida`,
+          headers: { Authorization: `Bearer ${win.localStorage.getItem('token')}` },
+          body: {},
+          failOnStatusCode: false
+        }).its('status').should('eq', 400)
+      })
+    })
+    cy.contains('SINPAGO123').closest('tr').find('[data-testid^="btn-salida-"]').should('not.exist')
+  })
+
+  it('should reject salida after a failed payment and reject mismatched references', () => {
+    cy.get('[data-testid="btn-nuevo-ingreso"]').click()
+    cy.get('[data-testid="btn-categoria-carro"]').click()
+    cy.get('[data-testid="input-placa"]').type('FALLIDOPAGO123')
+    cy.get('[data-testid="select-espacio"]').select(1)
+    cy.get('[data-testid="select-tarifa"]').select(1)
+    cy.get('[data-testid="btn-confirmar"]').click()
+    cy.get('[data-testid="btn-imprimir-ticket"]').should('be.visible')
+
+    cy.visit('/ingresos')
+    cy.contains('FALLIDOPAGO123').closest('tr').invoke('attr', 'data-testid').then((testId) => {
+      const ingresoId = Number(testId?.replace('ingreso-row-', ''))
+      cy.window().then((win) => {
+        const headers = { Authorization: `Bearer ${win.localStorage.getItem('token')}` }
+        cy.request({
+          method: 'POST',
+          url: '/api/pagos',
+          headers,
+          body: {
+            ingresoId,
+            vehiculoId: -1,
+            valor: 5000,
+            metodoPago: 'EFECTIVO',
+            estadoPago: 'CONFIRMADO'
+          },
+          failOnStatusCode: false
+        }).its('status').should('eq', 400)
+
+        cy.request({
+          method: 'POST',
+          url: '/api/pagos',
+          headers,
+          body: {
+            ingresoId,
+            valor: 5000,
+            metodoPago: 'EFECTIVO',
+            estadoPago: 'FALLIDO'
+          }
+        }).its('status').should('eq', 201)
+
+        cy.request({
+          method: 'PUT',
+          url: `/api/ingresos/${ingresoId}/salida`,
+          headers,
+          body: {},
+          failOnStatusCode: false
+        }).its('status').should('eq', 400)
+      })
+    })
+
+    cy.visit('/ingresos')
+    cy.contains('FALLIDOPAGO123').closest('tr').within(() => {
+      cy.get('[data-testid^="btn-reintentar-pago-"]').should('be.visible')
+      cy.get('[data-testid^="btn-salida-"]').should('not.exist')
+    })
   })
 
   it('should liberar a reserved ingreso', () => {
@@ -98,8 +187,8 @@ describe('Ingresos Management', () => {
     cy.get('[data-testid="btn-nuevo-ingreso"]').click()
     cy.get('[data-testid="btn-categoria-moto"]').click()
     cy.get('[data-testid="input-placa"]').type('LIBERAR123')
-    cy.get('[data-testid="select-espacio"]').select(0)
-    cy.get('[data-testid="select-tarifa"]').select(0)
+    cy.get('[data-testid="select-espacio"]').select(1)
+    cy.get('[data-testid="select-tarifa"]').select(1)
     cy.get('[data-testid="btn-confirmar"]').click()
     
     cy.get('[data-testid="btn-imprimir-ticket"]').should('be.visible')
@@ -123,8 +212,8 @@ describe('Ingresos Management', () => {
     cy.get('[data-testid="btn-nuevo-ingreso"]').click()
     cy.get('[data-testid="btn-categoria-carro"]').click()
     cy.get('[data-testid="input-placa"]').type('DELETE123')
-    cy.get('[data-testid="select-espacio"]').select(0)
-    cy.get('[data-testid="select-tarifa"]').select(0)
+    cy.get('[data-testid="select-espacio"]').select(1)
+    cy.get('[data-testid="select-tarifa"]').select(1)
     cy.get('[data-testid="btn-confirmar"]').click()
     
     cy.get('[data-testid="btn-imprimir-ticket"]').should('be.visible')
@@ -147,8 +236,8 @@ describe('Ingresos Management', () => {
     cy.get('[data-testid="btn-nuevo-ingreso"]').click()
     cy.get('[data-testid="btn-categoria-carro"]').click()
     cy.get('[data-testid="input-placa"]').type('TICKET123')
-    cy.get('[data-testid="select-espacio"]').select(0)
-    cy.get('[data-testid="select-tarifa"]').select(0)
+    cy.get('[data-testid="select-espacio"]').select(1)
+    cy.get('[data-testid="select-tarifa"]').select(1)
     cy.get('[data-testid="btn-confirmar"]').click()
     
     cy.get('[data-testid="btn-imprimir-ticket"]').should('be.visible')

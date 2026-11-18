@@ -4,13 +4,17 @@ import com.parkflow360.modulos.pagos.dto.PagoRequest;
 import com.parkflow360.modulos.pagos.dto.PagoResponse;
 import com.parkflow360.modulos.pagos.entity.Pago;
 import com.parkflow360.modulos.pagos.repository.PagoRepository;
+import com.parkflow360.modulos.ingresos.entity.Ingreso;
+import com.parkflow360.modulos.ingresos.repository.IngresoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Locale;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -18,6 +22,7 @@ import java.util.stream.Collectors;
 public class PagoService {
 
     private final PagoRepository pagoRepository;
+    private final IngresoRepository ingresoRepository;
 
     @Transactional(readOnly = true)
     public List<PagoResponse> listarTodos() {
@@ -56,12 +61,20 @@ public class PagoService {
 
     @Transactional
     public PagoResponse crear(PagoRequest request) {
+        Ingreso ingreso = requireIngresoForPayment(request.getIngresoId());
+        validarReferencias(request, ingreso);
+        if (pagoRepository.existsByIngresoId(ingreso.getId())) {
+            throw new IllegalArgumentException("El ingreso ya tiene un pago registrado.");
+        }
+
         Pago pago = Pago.builder()
-                .vehiculoId(request.getVehiculoId())
-                .espacioId(request.getEspacioId())
-                .tarifaId(request.getTarifaId())
+                .vehiculoId(ingreso.getVehiculoId())
+                .espacioId(ingreso.getEspacioId())
+                .tarifaId(ingreso.getTarifaId())
+                .ingresoId(ingreso.getId())
                 .valor(request.getValor())
                 .metodoPago(request.getMetodoPago())
+                .estadoPago(normalizarEstadoPago(request.getEstadoPago()))
                 .build();
 
         Pago guardado = pagoRepository.save(pago);
@@ -73,11 +86,39 @@ public class PagoService {
         Pago pago = pagoRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Pago no encontrado con id: " + id));
 
-        pago.setVehiculoId(request.getVehiculoId());
-        pago.setEspacioId(request.getEspacioId());
-        pago.setTarifaId(request.getTarifaId());
+        if (pago.getIngresoId() != null) {
+            if (request.getIngresoId() != null && !request.getIngresoId().equals(pago.getIngresoId())) {
+                throw new IllegalArgumentException("No se puede cambiar el ingreso asociado a un pago.");
+            }
+            Ingreso ingreso = ingresoRepository.findByIdForUpdate(pago.getIngresoId())
+                    .orElseThrow(() -> new NoSuchElementException(
+                            "Ingreso asociado al pago no encontrado: " + pago.getIngresoId()));
+            validarReferencias(request, ingreso);
+            if (request.getEstadoPago() != null
+                    && !normalizarEstadoPago(request.getEstadoPago()).equals(pago.getEstadoPago())
+                    && !"ACTIVO".equalsIgnoreCase(ingreso.getEstado())) {
+                throw new IllegalArgumentException("No se puede cambiar el resultado del pago de una estancia inactiva.");
+            }
+        } else if (request.getIngresoId() != null) {
+            Ingreso ingreso = requireIngresoForPayment(request.getIngresoId());
+            validarReferencias(request, ingreso);
+            if (pagoRepository.existsByIngresoId(ingreso.getId())) {
+                throw new IllegalArgumentException("El ingreso ya tiene un pago registrado.");
+            }
+            pago.setVehiculoId(ingreso.getVehiculoId());
+            pago.setEspacioId(ingreso.getEspacioId());
+            pago.setTarifaId(ingreso.getTarifaId());
+            pago.setIngresoId(ingreso.getId());
+        } else {
+            pago.setVehiculoId(request.getVehiculoId());
+            pago.setEspacioId(request.getEspacioId());
+            pago.setTarifaId(request.getTarifaId());
+        }
         pago.setValor(request.getValor());
         pago.setMetodoPago(request.getMetodoPago());
+        if (request.getEstadoPago() != null) {
+            pago.setEstadoPago(normalizarEstadoPago(request.getEstadoPago()));
+        }
 
         Pago actualizado = pagoRepository.save(pago);
         return mapToResponse(actualizado);
@@ -85,10 +126,42 @@ public class PagoService {
 
     @Transactional
     public void eliminar(Long id) {
-        if (!pagoRepository.existsById(id)) {
-            throw new NoSuchElementException("Pago no encontrado con id: " + id);
+        Pago pago = pagoRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Pago no encontrado con id: " + id));
+        if (pago.getIngresoId() != null) {
+            Ingreso ingreso = ingresoRepository.findByIdForUpdate(pago.getIngresoId())
+                    .orElseThrow(() -> new NoSuchElementException(
+                            "Ingreso asociado al pago no encontrado: " + pago.getIngresoId()));
+            if ("FINALIZADO".equalsIgnoreCase(ingreso.getEstado())) {
+                throw new IllegalArgumentException("No se puede eliminar el pago de una estancia finalizada.");
+            }
         }
-        pagoRepository.deleteById(id);
+        pagoRepository.delete(pago);
+    }
+
+    private Ingreso requireIngresoForPayment(Long ingresoId) {
+        if (ingresoId == null) {
+            throw new IllegalArgumentException("Debes asociar el pago a un ingreso activo.");
+        }
+
+        Ingreso ingreso = ingresoRepository.findByIdForUpdate(ingresoId)
+                .orElseThrow(() -> new NoSuchElementException("Ingreso no encontrado con id: " + ingresoId));
+        if (!"ACTIVO".equalsIgnoreCase(ingreso.getEstado())) {
+            throw new IllegalArgumentException("Solo se puede registrar el pago de un ingreso activo.");
+        }
+        return ingreso;
+    }
+
+    private void validarReferencias(PagoRequest request, Ingreso ingreso) {
+        if (request.getVehiculoId() != null && !Objects.equals(request.getVehiculoId(), ingreso.getVehiculoId())) {
+            throw new IllegalArgumentException("El vehículo del pago no coincide con el ingreso.");
+        }
+        if (request.getEspacioId() != null && !Objects.equals(request.getEspacioId(), ingreso.getEspacioId())) {
+            throw new IllegalArgumentException("El espacio del pago no coincide con el ingreso.");
+        }
+        if (request.getTarifaId() != null && !Objects.equals(request.getTarifaId(), ingreso.getTarifaId())) {
+            throw new IllegalArgumentException("La tarifa del pago no coincide con el ingreso.");
+        }
     }
 
     private PagoResponse mapToResponse(Pago pago) {
@@ -97,9 +170,22 @@ public class PagoService {
                 .vehiculoId(pago.getVehiculoId())
                 .espacioId(pago.getEspacioId())
                 .tarifaId(pago.getTarifaId())
+                .ingresoId(pago.getIngresoId())
                 .valor(pago.getValor())
                 .fecha(pago.getFecha())
                 .metodoPago(pago.getMetodoPago())
+                .estadoPago(pago.getEstadoPago())
                 .build();
+    }
+
+    private String normalizarEstadoPago(String estadoPago) {
+        if (estadoPago == null || estadoPago.isBlank()) {
+            return "CONFIRMADO";
+        }
+        String estadoNormalizado = estadoPago.toUpperCase(Locale.ROOT);
+        if (!"CONFIRMADO".equals(estadoNormalizado) && !"FALLIDO".equals(estadoNormalizado)) {
+            throw new IllegalArgumentException("El estado del pago debe ser CONFIRMADO o FALLIDO.");
+        }
+        return estadoNormalizado;
     }
 }

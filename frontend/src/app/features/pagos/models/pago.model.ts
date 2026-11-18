@@ -3,15 +3,19 @@ export interface Pago {
   vehiculoId: number;
   espacioId: number;
   tarifaId: number;
+  ingresoId?: number | null;
   valor: number;
   fecha: string;
   metodoPago: string;
+  estadoPago?: 'CONFIRMADO' | 'FALLIDO';
 }
 
 export interface PagoRequest {
-  vehiculoId: number;
-  espacioId: number;
-  tarifaId: number;
+  ingresoId?: number;
+  vehiculoId?: number;
+  espacioId?: number;
+  tarifaId?: number;
   valor: number;
   metodoPago: string;
+  estadoPago: 'CONFIRMADO' | 'FALLIDO';
 }

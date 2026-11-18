@@ -39,24 +39,28 @@ import { ToastService } from '../../../../shared/services/toast.service';
             <thead>
               <tr>
                 <th>Ticket</th>
+                <th>Ingreso</th>
                 <th>Vehículo</th>
                 <th>Espacio</th>
                 <th>Tarifa</th>
                 <th>Valor</th>
                 <th>Fecha</th>
                 <th>Método</th>
+                <th>Estado</th>
                 <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
               <tr *ngFor="let pago of pagos" [attr.data-testid]="'pago-row-' + pago.id">
                 <td><span class="plate" [attr.data-testid]="'ticket-' + pago.id">#{{ pago.id }}</span></td>
+                <td class="num" [attr.data-testid]="'ingreso-' + pago.id">{{ pago.ingresoId || '—' }}</td>
                 <td class="num" [attr.data-testid]="'vehiculo-' + pago.id">{{ pago.vehiculoId }}</td>
                 <td class="num" [attr.data-testid]="'espacio-' + pago.id">{{ pago.espacioId }}</td>
                 <td class="num" [attr.data-testid]="'tarifa-' + pago.id">{{ pago.tarifaId }}</td>
                 <td><span class="num" [attr.data-testid]="'valor-' + pago.id">{{ pago.valor | currency:'COP':'symbol-narrow':'1.0-0' }}</span></td>
                 <td class="mono" [attr.data-testid]="'fecha-' + pago.id">{{ pago.fecha | date:'short' }}</td>
                 <td><span class="badge badge-neutral" [attr.data-testid]="'metodo-' + pago.id">{{ pago.metodoPago }}</span></td>
+                <td><span class="badge badge-neutral" [attr.data-testid]="'estado-pago-' + pago.id">{{ pago.estadoPago }}</span></td>
                 <td>
                   <div class="table-actions">
                     <a [routerLink]="['/pagos/editar', pago.id]" class="btn btn-sm btn-secondary" [attr.data-testid]="'btn-editar-' + pago.id">
@@ -69,7 +73,7 @@ import { ToastService } from '../../../../shared/services/toast.service';
                 </td>
               </tr>
               <tr *ngIf="pagos.length === 0">
-                <td colspan="8" class="table-empty" [attr.data-testid]="'empty-state'">No hay pagos registrados</td>
+                <td colspan="10" class="table-empty" [attr.data-testid]="'empty-state'">No hay pagos registrados</td>
               </tr>
             </tbody>
           </table>

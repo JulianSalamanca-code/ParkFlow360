@@ -1,6 +1,5 @@
 package com.parkflow360.security.controller;
 
-import com.parkflow360.security.dto.GoogleLoginRequest;
 import com.parkflow360.security.dto.LoginRequest;
 import com.parkflow360.security.dto.LoginResponse;
 import com.parkflow360.security.dto.RegistroRequest;
@@ -9,6 +8,8 @@ import com.parkflow360.security.service.GoogleAuthService;
 import com.parkflow360.security.service.RegistroService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,13 +32,12 @@ public class AuthController {
         return ResponseEntity.ok(registroService.registrar(request));
     }
 
-    @PostMapping("/google")
-    public ResponseEntity<LoginResponse> loginWithGoogle(@Valid @RequestBody GoogleLoginRequest request) {
-        return ResponseEntity.ok(googleAuthService.loginWithGoogle(
-                request.getEmail(),
-                request.getNombre(),
-                request.getGoogleId()
-        ));
+    @GetMapping("/google/authorize")
+    public ResponseEntity<Void> googleAuthorize(@RequestParam String state) {
+        String authorizationUrl = googleAuthService.getAuthorizationUrl(state);
+        return ResponseEntity.status(HttpStatus.FOUND)
+                .header(HttpHeaders.LOCATION, authorizationUrl)
+                .build();
     }
 
     @GetMapping("/google/callback")

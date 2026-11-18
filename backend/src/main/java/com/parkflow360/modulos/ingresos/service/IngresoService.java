@@ -5,6 +5,7 @@ import com.parkflow360.modulos.ingresos.dto.IngresoRequest;
 import com.parkflow360.modulos.ingresos.dto.IngresoResponse;
 import com.parkflow360.modulos.ingresos.entity.Ingreso;
 import com.parkflow360.modulos.ingresos.repository.IngresoRepository;
+import com.parkflow360.modulos.pagos.repository.PagoRepository;
 import com.parkflow360.security.entity.Usuario;
 import com.parkflow360.security.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ import java.util.stream.Collectors;
 public class IngresoService {
 
     private final IngresoRepository ingresoRepository;
+    private final PagoRepository pagoRepository;
     private final EspacioRepository espacioRepository;
     private final UsuarioRepository usuarioRepository;
 
@@ -139,8 +141,16 @@ public class IngresoService {
 
     @Transactional
     public IngresoResponse registrarSalida(Long id) {
-        Ingreso ingreso = ingresoRepository.findById(id)
+        Ingreso ingreso = ingresoRepository.findByIdForUpdate(id)
                 .orElseThrow(() -> new NoSuchElementException("Ingreso no encontrado con id: " + id));
+
+        if (!"ACTIVO".equalsIgnoreCase(ingreso.getEstado())) {
+            throw new IllegalArgumentException("Solo se puede registrar la salida de un ingreso activo.");
+        }
+        if (!pagoRepository.existsByIngresoIdAndEstadoPago(id, "CONFIRMADO")) {
+            throw new IllegalArgumentException(
+                    "No se puede finalizar la estancia: primero registra un pago confirmado asociado a este ingreso.");
+        }
 
         ingreso.setEstado("FINALIZADO");
         ingreso.setFechaSalida(LocalDateTime.now());
@@ -158,6 +168,9 @@ public class IngresoService {
 
         if ("FINALIZADO".equalsIgnoreCase(ingreso.getEstado()) || "CANCELADO".equalsIgnoreCase(ingreso.getEstado())) {
             throw new IllegalArgumentException("Esta reserva ya fue finalizada o liberada.");
+        }
+        if (pagoRepository.existsByIngresoIdAndEstadoPago(id, "CONFIRMADO")) {
+            throw new IllegalArgumentException("No se puede liberar una estancia con un pago confirmado; registra la salida.");
         }
 
         ingreso.setEstado("CANCELADO");
@@ -183,6 +196,9 @@ public class IngresoService {
         if (!ingresoRepository.existsById(id)) {
             throw new NoSuchElementException("Ingreso no encontrado con id: " + id);
         }
+        if (pagoRepository.existsByIngresoId(id)) {
+            throw new IllegalArgumentException("No se puede eliminar una estancia que tiene un pago asociado.");
+        }
         ingresoRepository.deleteById(id);
     }
 
@@ -204,6 +220,7 @@ public class IngresoService {
     }
 
     private IngresoResponse mapToResponse(Ingreso ingreso) {
+        var pago = pagoRepository.findByIngresoId(ingreso.getId()).stream().findFirst().orElse(null);
         return IngresoResponse.builder()
                 .id(ingreso.getId())
                 .folio(ingreso.getFolio())
@@ -219,6 +236,9 @@ public class IngresoService {
                 .novedad(ingreso.getNovedad())
                 .estado(ingreso.getEstado())
                 .usuarioId(ingreso.getUsuarioId())
+                .pagoId(pago != null ? pago.getId() : null)
+                .pagoRegistrado(pago != null && "CONFIRMADO".equals(pago.getEstadoPago()))
+                .estadoPago(pago != null ? pago.getEstadoPago() : null)
                 .fechaEntrada(ingreso.getFechaEntrada())
                 .fechaSalida(ingreso.getFechaSalida())
                 .build();

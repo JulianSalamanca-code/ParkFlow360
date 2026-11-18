@@ -23,6 +23,12 @@ public class EspacioController {
         return ResponseEntity.ok(espacioService.listarTodos());
     }
 
+    @PostMapping("/importar")
+    public ResponseEntity<List<EspacioResponse>> importar(
+            @Valid @RequestBody List<@Valid EspacioRequest> requests) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(espacioService.importar(requests));
+    }
+
     @GetMapping("/estado/{estado}")
     public ResponseEntity<List<EspacioResponse>> listarPorEstado(@PathVariable String estado) {
         return ResponseEntity.ok(espacioService.listarPorEstado(estado));

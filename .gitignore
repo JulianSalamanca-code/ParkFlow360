@@ -41,3 +41,6 @@ desktop.ini
 tmp/
 temp/
 *.tmp
+
+# Material de gerencia y presentaciones fuera del código fuente
+doc/

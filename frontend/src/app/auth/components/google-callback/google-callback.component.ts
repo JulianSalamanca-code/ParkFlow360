@@ -92,9 +92,18 @@ export class GoogleCallbackComponent implements OnInit {
     this.route.queryParams.subscribe(params => {
       const code = params['code'];
       const error = params['error'];
+      const state = params['state'];
+      const expectedState = sessionStorage.getItem('google_oauth_state');
+      sessionStorage.removeItem('google_oauth_state');
 
       if (error) {
         this.error = 'Error en la autenticación con Google: ' + error;
+        this.toast.error(this.error);
+        return;
+      }
+
+      if (!state || !expectedState || state !== expectedState) {
+        this.error = 'No se pudo validar la respuesta de inicio de sesión con Google. Inténtalo de nuevo.';
         this.toast.error(this.error);
         return;
       }

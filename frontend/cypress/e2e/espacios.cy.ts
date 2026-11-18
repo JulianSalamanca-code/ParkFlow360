@@ -25,6 +25,26 @@ describe('Espacios Management', () => {
     cy.get('[data-testid="espacio-form"]').should('be.visible')
   })
 
+  it('should import spaces from a CSV file in one request', () => {
+    cy.intercept('POST', '/api/espacios/importar', {
+      statusCode: 201,
+      body: [
+        { id: 101, numero: 'P-A-01', tipo: 'CARRO', estado: 'LIBRE', piso: 1 },
+        { id: 102, numero: 'P-A-02', tipo: 'MOTO', estado: 'LIBRE', piso: 1 }
+      ]
+    }).as('importSpaces')
+
+    cy.get('[data-testid="btn-importar-espacios"]').click()
+    cy.get('[data-testid="csv-file-input"]').selectFile({
+      contents: Cypress.Buffer.from('numero;tipo;estado;piso\nP-A-01;CARRO;LIBRE;1\nP-A-02;MOTO;LIBRE;1'),
+      fileName: 'espacios.csv',
+      mimeType: 'text/csv'
+    })
+    cy.contains('2 espacios listos para importar').should('be.visible')
+    cy.get('[data-testid="btn-importar"]').click()
+    cy.wait('@importSpaces').its('request.body').should('have.length', 2)
+  })
+
   it('should create a new espacio', () => {
     cy.get('[data-testid="btn-nuevo-espacio"]').click()
     

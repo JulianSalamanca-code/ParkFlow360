@@ -10,8 +10,12 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.util.UriComponentsBuilder;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 @Service
@@ -28,6 +32,9 @@ public class GoogleAuthService {
     @Value("${spring.security.oauth2.client.registration.google.client-secret}")
     private String clientSecret;
 
+    @Value("${spring.security.oauth2.client.provider.google.authorization-uri}")
+    private String authorizationUri;
+
     @Value("${spring.security.oauth2.client.provider.google.token-uri}")
     private String tokenUri;
 
@@ -37,7 +44,29 @@ public class GoogleAuthService {
     @Value("${app.oauth2.redirect-uri:http://localhost:4200/auth/google/callback}")
     private String redirectUri;
 
-    public LoginResponse loginWithGoogle(String email, String nombre, String googleId) {
+    public String getAuthorizationUrl(String state) {
+        if (clientId.isBlank()) {
+            throw new ResponseStatusException(
+                    HttpStatus.SERVICE_UNAVAILABLE,
+                    "El inicio de sesión con Google no está configurado en el servidor.");
+        }
+        if (state == null || !state.matches("[A-Za-z0-9_-]{32,128}")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El estado OAuth no es válido.");
+        }
+
+        return UriComponentsBuilder.fromUriString(authorizationUri)
+                .queryParam("client_id", clientId)
+                .queryParam("redirect_uri", redirectUri)
+                .queryParam("response_type", "code")
+                .queryParam("scope", "openid email profile")
+                .queryParam("state", state)
+                .queryParam("prompt", "select_account")
+                .encode(StandardCharsets.UTF_8)
+                .build()
+                .toUriString();
+    }
+
+    private LoginResponse loginWithVerifiedGoogleUser(String email, String nombre, String googleId) {
         Usuario usuario = usuarioRepository.findByEmail(email)
                 .orElseGet(() -> {
                     Usuario nuevo = Usuario.builder()
@@ -71,17 +100,29 @@ public class GoogleAuthService {
         String accessToken = exchangeCodeForToken(code);
         
         // 2. Obtener información del usuario de Google
-        Map<String, Object> userInfo = getUserInfo(accessToken);
+        Map<?, ?> userInfo = getUserInfo(accessToken);
         
-        String email = (String) userInfo.get("email");
-        String nombre = (String) userInfo.get("name");
-        String googleId = (String) userInfo.get("sub");
+        String email = requiredUserInfoValue(userInfo, "email");
+        String nombre = requiredUserInfoValue(userInfo, "name");
+        String googleId = requiredUserInfoValue(userInfo, "sub");
+        if (!Boolean.TRUE.equals(userInfo.get("email_verified"))) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Google no verificó el correo de esta cuenta.");
+        }
 
         // 3. Buscar o crear usuario
-        return loginWithGoogle(email, nombre, googleId);
+        return loginWithVerifiedGoogleUser(email, nombre, googleId);
     }
 
     private String exchangeCodeForToken(String code) {
+        if (clientId.isBlank() || clientSecret.isBlank()) {
+            throw new ResponseStatusException(
+                    HttpStatus.SERVICE_UNAVAILABLE,
+                    "El client ID y el secreto de Google deben configurarse en el servidor.");
+        }
+        if (code == null || code.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Google no envió un código de autorización.");
+        }
+
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("code", code);
         params.add("client_id", clientId);
@@ -94,27 +135,47 @@ public class GoogleAuthService {
 
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
 
-        ResponseEntity<Map> response = restTemplate.postForEntity(tokenUri, request, Map.class);
-        
-        if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-            return (String) response.getBody().get("access_token");
+        try {
+            ResponseEntity<Map> response = restTemplate.postForEntity(tokenUri, request, Map.class);
+            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+                Object accessToken = response.getBody().get("access_token");
+                if (accessToken instanceof String token && !token.isBlank()) {
+                    return token;
+                }
+            }
+        } catch (RestClientResponseException ex) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Google rechazó el código. Verifica que el client ID, el secreto y la URL de retorno coincidan.",
+                    ex);
         }
-        
-        throw new RuntimeException("Error al obtener access token de Google");
+
+        throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Google no devolvió un token de acceso válido.");
     }
 
-    private Map<String, Object> getUserInfo(String accessToken) {
+    private Map<?, ?> getUserInfo(String accessToken) {
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(accessToken);
         HttpEntity<String> request = new HttpEntity<>(headers);
 
-        ResponseEntity<Map> response = restTemplate.exchange(
-                userInfoUri, HttpMethod.GET, request, Map.class);
-
-        if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-            return response.getBody();
+        try {
+            ResponseEntity<Map> response = restTemplate.exchange(
+                    userInfoUri, HttpMethod.GET, request, Map.class);
+            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+                return response.getBody();
+            }
+        } catch (RestClientResponseException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "No se pudo verificar el usuario con Google.", ex);
         }
-        
-        throw new RuntimeException("Error al obtener información del usuario de Google");
+
+        throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Google no devolvió información válida del usuario.");
+    }
+
+    private String requiredUserInfoValue(Map<?, ?> userInfo, String key) {
+        Object value = userInfo.get(key);
+        if (value instanceof String text && !text.isBlank()) {
+            return text;
+        }
+        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Google no devolvió los datos de cuenta requeridos.");
     }
 }

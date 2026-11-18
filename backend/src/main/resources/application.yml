@@ -21,9 +21,6 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
     clean-disabled: true
-    # V13 was destructive; keep its applied history without shipping it again.
-    ignore-migration-patterns:
-      - "versioned:missing"
 
   security:
     oauth2:

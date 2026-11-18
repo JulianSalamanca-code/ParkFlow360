@@ -1,6 +1,9 @@
 ALTER TABLE pagos
     ADD COLUMN IF NOT EXISTS ingreso_id BIGINT;
 
+ALTER TABLE pagos
+    ALTER COLUMN ingreso_id TYPE BIGINT USING ingreso_id::BIGINT;
+
 DO $$
 BEGIN
     IF NOT EXISTS (

@@ -1,0 +1,55 @@
+# Spec-to-Plan Traceability Checkpoint
+
+metadata:
+  generated: "2026-11-23"
+  source_spec: "docs/04-historico/HISTORIAL_USUARIO_PARKFLOW360.md"
+  target_plan: "plan.md"
+
+summary:
+  total_requirements: 4
+  covered_requirements: 4
+  missing_requirements: 0
+  coverage_percentage: 100.0
+
+requirements:
+  - req_id: "REQ-AUTH-001"
+    req_description: "El visitante puede crear una cuenta pública USUARIO"
+    priority: "P1"
+    plan_mapping:
+      items:
+        - "1.1"
+        - "2.1"
+        - "8.1"
+  - req_id: "REQ-AUTH-002"
+    req_description: "Registro y recuperación son navegables desde login"
+    priority: "P1"
+    plan_mapping:
+      items:
+        - "1.1"
+        - "6.1"
+        - "8.1"
+  - req_id: "REQ-AUTH-003"
+    req_description: "La contraseña puede restablecerse con token temporal seguro"
+    priority: "P1"
+    plan_mapping:
+      items:
+        - "3.1"
+        - "4.1"
+        - "5.1"
+        - "6.1"
+        - "8.1"
+  - req_id: "REQ-AUTH-004"
+    req_description: "Producción entrega correo y mantiene rutas API/SPA"
+    priority: "P2"
+    plan_mapping:
+      items:
+        - "7.1"
+        - "8.1"
+
+missing_requirements: []
+orphan_plan_items: []
+validation:
+  passed: true
+  errors: []
+  warnings:
+    - "La entrega SMTP real depende de credenciales externas"

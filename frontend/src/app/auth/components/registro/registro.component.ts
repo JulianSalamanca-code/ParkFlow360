@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { ToastService } from '../../../shared/services/toast.service';
+import { RegistroRequest } from '../../models/auth.model';
 
 @Component({
   selector: 'app-registro',
@@ -201,8 +202,13 @@ export class RegistroComponent implements OnInit {
     this.errorMessage = '';
 
     const { confirmPassword, ...registroData } = this.form.value;
+    const datosNormalizados: RegistroRequest = {
+      ...registroData,
+      email: String(registroData.email).trim().toLowerCase(),
+      nombre: String(registroData.nombre).trim()
+    };
 
-    this.authService.registrar(registroData).subscribe({
+    this.authService.registrar(datosNormalizados).subscribe({
       next: () => {
         this.isLoading = false;
         this.toast.success('¡Cuenta creada exitosamente!');

@@ -54,6 +54,17 @@ export class AuthService {
     );
   }
 
+  solicitarRecuperacion(email: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/recuperacion/solicitar`, { email });
+  }
+
+  restablecerPassword(token: string, password: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/recuperacion/restablecer`, {
+      token,
+      password
+    });
+  }
+
   handleGoogleCallback(code: string): Observable<LoginResponse> {
     return this.http.get<LoginResponse>(`${this.apiUrl}/google/callback`, {
       params: { code }

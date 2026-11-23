@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
@@ -58,13 +59,15 @@ public class VehiculoService {
     @Transactional
     public VehiculoResponse crearParaUsuario(String email, VehiculoRequest request) {
         Usuario usuario = requireUsuario(email);
+        String placa = request.getPlaca().trim().toUpperCase(Locale.ROOT);
+        request.setPlaca(placa);
 
-        if (vehiculoRepository.existsByPlaca(request.getPlaca())) {
-            throw new IllegalArgumentException("Ya existe un vehículo con la placa: " + request.getPlaca());
+        if (vehiculoRepository.existsByPlaca(placa)) {
+            throw new IllegalArgumentException("Ya existe un vehículo con la placa: " + placa);
         }
 
         Vehiculo vehiculo = Vehiculo.builder()
-                .placa(request.getPlaca().toUpperCase())
+                .placa(placa)
                 .tipo(request.getTipo())
                 .color(request.getColor())
                 .modelo(request.getModelo())
@@ -80,7 +83,8 @@ public class VehiculoService {
         Vehiculo vehiculo = vehiculoRepository.findByIdAndUsuarioId(id, usuario.getId())
                 .orElseThrow(() -> new NoSuchElementException("Vehículo no encontrado entre tus vehículos: " + id));
 
-        String nuevaPlaca = request.getPlaca().toUpperCase();
+        String nuevaPlaca = request.getPlaca().trim().toUpperCase(Locale.ROOT);
+        request.setPlaca(nuevaPlaca);
         if (!vehiculo.getPlaca().equalsIgnoreCase(nuevaPlaca)
                 && vehiculoRepository.existsByPlaca(nuevaPlaca)) {
             throw new IllegalArgumentException("Ya existe un vehículo con la placa: " + nuevaPlaca);

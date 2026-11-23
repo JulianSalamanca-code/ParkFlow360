@@ -1,0 +1,47 @@
+# Plan-to-Tasks Traceability Checkpoint
+
+metadata:
+  generated: "2026-11-23"
+  source_plan: "plan.md"
+  target_tasks: "plan.md"
+
+summary:
+  total_plan_items: 8
+  covered_plan_items: 8
+  missing_plan_items: 0
+  coverage_percentage: 100.0
+  total_tasks_generated: 20
+  orphan_tasks: 0
+
+phases:
+  - phase_id: "Phase-1"
+    items:
+      - item_id: "1.1"
+        tasks: ["T001", "T002", "T003"]
+  - phase_id: "Phase-2"
+    items:
+      - item_id: "2.1"
+        tasks: ["T004", "T005", "T006", "T007"]
+  - phase_id: "Phase-3"
+    items:
+      - item_id: "3.1"
+        tasks: ["T008", "T009", "T010", "T011", "T012"]
+  - phase_id: "Phase-4"
+    items:
+      - item_id: "6.1"
+        tasks: ["T013", "T014", "T015"]
+  - phase_id: "Phase-5"
+    items:
+      - item_id: "7.1"
+        tasks: ["T016", "T017", "T018"]
+  - phase_id: "Phase-6"
+    items:
+      - item_id: "8.1"
+        tasks: ["T019", "T020"]
+
+missing_plan_items: []
+orphan_tasks: []
+validation:
+  passed: true
+  errors: []
+  warnings: []

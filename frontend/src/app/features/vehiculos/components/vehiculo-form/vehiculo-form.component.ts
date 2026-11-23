@@ -24,10 +24,10 @@ import { ToastService } from '../../../../shared/services/toast.service';
         <form [formGroup]="form" (ngSubmit)="guardar()" [attr.data-testid]="'vehiculo-form'">
           <div class="form-group">
             <label for="placa">Placa</label>
-            <input id="placa" type="text" formControlName="placa" class="form-control mono-input" placeholder="ABC-123" [attr.data-testid]="'input-placa'" maxlength="7" />
+            <input id="placa" type="text" formControlName="placa" class="form-control mono-input" placeholder="ABC-123" [attr.data-testid]="'input-placa'" maxlength="20" />
             <div *ngIf="form.get('placa')?.invalid && form.get('placa')?.touched" class="field-error" [attr.data-testid]="'error-placa'">
               <span *ngIf="form.get('placa')?.errors?.['required']">La placa es obligatoria</span>
-              <span *ngIf="form.get('placa')?.errors?.['pattern']">Formato inválido. Use AAA-000 o AAA-00A</span>
+              <span *ngIf="form.get('placa')?.errors?.['pattern']">La placa solo puede contener letras, números y guiones</span>
             </div>
           </div>
 
@@ -80,7 +80,7 @@ export class VehiculoFormComponent implements OnInit {
 
   ngOnInit(): void {
     this.form = this.fb.group({
-      placa: ['', [Validators.required, Validators.pattern(/^[A-Z]{3}-[A-Z0-9]{3}$/), Validators.maxLength(7)]],
+      placa: ['', [Validators.required, Validators.pattern(/^[A-Za-z0-9-]+$/), Validators.maxLength(20)]],
       tipo: ['', [Validators.required, Validators.pattern(/^(VEHICULO|MOTO|VEHICULO_ELECTRICO)$/)]],
       color: ['', [Validators.maxLength(50)]],
       modelo: ['', [Validators.maxLength(100)]]
@@ -111,7 +111,10 @@ export class VehiculoFormComponent implements OnInit {
   guardar(): void {
     if (this.form.invalid) return;
 
-    const request: VehiculoRequest = this.form.value;
+    const request: VehiculoRequest = {
+      ...this.form.value,
+      placa: String(this.form.value.placa).trim().toUpperCase()
+    };
     const accion = this.esEdicion ? 'actualizado' : 'creado';
 
     if (this.esEdicion && this.vehiculoId) {

@@ -11,7 +11,7 @@ export class VehiculoService {
 
   constructor(private http: HttpClient) {}
 
-  // Administrador
+  // Plataforma (rol PLATAFORMA)
   listarTodos(): Observable<Vehiculo[]> {
     return this.http.get<Vehiculo[]>(this.apiUrl);
   }

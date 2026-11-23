@@ -18,14 +18,19 @@ public class RegistroService {
     private final PasswordEncoder passwordEncoder;
 
     public LoginResponse registrar(RegistroRequest request) {
-        if (usuarioRepository.existsByEmail(request.getEmail())) {
+        String email = request.getEmail().trim().toLowerCase();
+        String nombre = request.getNombre().trim();
+        request.setEmail(email);
+        request.setNombre(nombre);
+
+        if (usuarioRepository.existsByEmail(email)) {
             throw new IllegalArgumentException("El email ya está registrado");
         }
 
         Usuario usuario = Usuario.builder()
-                .email(request.getEmail())
+                .email(email)
                 .password(passwordEncoder.encode(request.getPassword()))
-                .nombre(request.getNombre())
+                .nombre(nombre)
                 .rol("USUARIO")
                 .build();
 

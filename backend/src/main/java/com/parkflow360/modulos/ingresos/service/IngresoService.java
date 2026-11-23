@@ -158,6 +158,7 @@ public class IngresoService {
                 .operador(request.getOperador())
                 .novedad(request.getNovedad())
                 .estado("ACTIVO")
+                .fechaLlegada(LocalDateTime.now())
                 .build();
 
         ingreso = ingresoRepository.save(ingreso);
@@ -165,6 +166,7 @@ public class IngresoService {
         ingreso = ingresoRepository.save(ingreso);
 
         marcarEspacio(request.getEspacioId(), "OCUPADO");
+        facturaService.generarYCobrarUnaHora(ingreso);
 
         return mapToResponse(ingreso);
     }
@@ -184,14 +186,15 @@ public class IngresoService {
         ingreso = ingresoRepository.save(ingreso);
 
         marcarEspacio(ingreso.getEspacioId(), "LIBRE");
-        facturaService.generarYCobrar(ingreso);
+        facturaService.ajustarAlSalir(ingreso);
 
         return mapToResponse(ingreso);
     }
 
     /**
-     * RN-09/RN-11: registra la llegada del guardia. Dentro del límite no genera cargo;
-     * fuera de él factura una hora y deja la estancia activa.
+     * RN-09/RN-11: registra la llegada del guardia y abre la factura con una unidad
+     * de tarifa. Tanto puntual como tardía, la hora de espera queda incluida en esa
+     * única factura, que se ajustará al valor real al registrar la salida.
      */
     @Transactional
     public IngresoResponse registrarLlegada(String email, Long id) {
@@ -207,18 +210,11 @@ public class IngresoService {
             throw new IllegalArgumentException("Solo se puede registrar la llegada de una reserva vigente.");
         }
 
-        LocalDateTime ahora = LocalDateTime.now();
-        LocalDateTime limite = ingreso.getFechaLimiteLlegada();
-        boolean llegadaTardia = limite != null && ahora.isAfter(limite);
-
-        ingreso.setFechaLlegada(ahora);
+        ingreso.setFechaLlegada(LocalDateTime.now());
         ingreso.setEstado("ACTIVO");
         ingreso = ingresoRepository.save(ingreso);
         marcarEspacio(ingreso.getEspacioId(), "OCUPADO");
-
-        if (llegadaTardia) {
-            facturaService.generarYCobrarHoraDeEspera(ingreso);
-        }
+        facturaService.generarYCobrarUnaHora(ingreso);
 
         return mapToResponse(ingreso);
     }
@@ -236,7 +232,7 @@ public class IngresoService {
             ingresoRepository.save(ingreso);
             marcarEspacio(ingreso.getEspacioId(), "LIBRE");
             if (esTarifaHora(ingreso)) {
-                facturaService.generarYCobrarHoraDeEspera(ingreso);
+                facturaService.generarYCobrarUnaHora(ingreso);
             }
         }
         return vencidas.size();

@@ -81,7 +81,7 @@ public class FacturaService {
 
     /**
      * Genera como máximo una factura por ingreso e intenta cobrarla con saldo.
-     * Se invoca desde registrarSalida, dentro de la misma transacción.
+     * Se mantiene como fallback para ingresos anteriores que no abrieron factura al entrar.
      */
     @Transactional
     public FacturaResponse generarYCobrar(Ingreso ingreso) {
@@ -89,12 +89,52 @@ public class FacturaService {
     }
 
     /**
-     * RN-09/RN-11: cobra una sola unidad de la tarifa por la hora de espera o el no-show.
-     * La factura es única por ingreso, por lo que no se duplica si la salida la reutiliza.
+     * Abre la factura con una unidad de tarifa: al entrar (RN-09/RN-11) o al expirar
+     * por no-show (RN-10). La factura es única por ingreso, por lo que no se duplica.
      */
     @Transactional
-    public FacturaResponse generarYCobrarHoraDeEspera(Ingreso ingreso) {
+    public FacturaResponse generarYCobrarUnaHora(Ingreso ingreso) {
         return generarYCobrar(ingreso, calcularValorHora(ingreso));
+    }
+
+    /**
+     * Ajusta la factura abierta al entrar con el valor real de la estancia.
+     * La diferencia se debita del saldo y se refleja en el mismo pago confirmado.
+     */
+    @Transactional
+    public FacturaResponse ajustarAlSalir(Ingreso ingreso) {
+        Optional<Factura> existente = facturaRepository.findByIngresoId(ingreso.getId());
+        if (existente.isEmpty()) {
+            return generarYCobrar(ingreso);
+        }
+
+        Factura factura = existente.get();
+        BigDecimal valorFinal = calcularValor(ingreso);
+        Pago pago = findPagoConfirmado(ingreso.getId()).orElse(null);
+        BigDecimal abonado = pago != null && pago.getValor() != null
+                ? pago.getValor() : BigDecimal.ZERO;
+        BigDecimal faltante = valorFinal.subtract(abonado);
+        if (faltante.compareTo(BigDecimal.ZERO) <= 0) {
+            return mapToResponse(factura, ingreso);
+        }
+
+        factura.setValor(valorFinal);
+        if (ingreso.getUsuarioId() == null
+                || !saldoService.debitarSiAlcanza(ingreso.getUsuarioId(), faltante,
+                        "FACTURA-" + factura.getId() + "-AJUSTE")) {
+            factura.setEstado(PENDIENTE);
+            facturaRepository.save(factura);
+            return mapToResponse(factura, ingreso);
+        }
+
+        if (pago != null) {
+            pago.setValor(abonado.add(faltante));
+            pagoRepository.save(pago);
+        } else {
+            registrarPago(ingreso, factura, "SALDO");
+        }
+        marcarPagada(factura);
+        return mapToResponse(factura, ingreso);
     }
 
     private FacturaResponse generarYCobrar(Ingreso ingreso, BigDecimal valorHora) {
@@ -139,7 +179,11 @@ public class FacturaService {
             return abonarCredito(factura);
         }
 
-        if (pagoRepository.existsByIngresoIdAndEstadoPago(ingreso.getId(), CONFIRMADO)) {
+        Pago pago = findPagoConfirmado(ingreso.getId()).orElse(null);
+        BigDecimal abonado = pago != null && pago.getValor() != null
+                ? pago.getValor() : BigDecimal.ZERO;
+        BigDecimal faltante = factura.getValor().subtract(abonado);
+        if (faltante.compareTo(BigDecimal.ZERO) <= 0) {
             marcarPagada(factura);
             return mapToResponse(factura, ingreso);
         }
@@ -147,12 +191,17 @@ public class FacturaService {
         if (factura.getUsuarioId() == null) {
             throw new IllegalArgumentException("La factura no tiene un usuario asociado para el cobro.");
         }
-        if (!saldoService.debitarSiAlcanza(factura.getUsuarioId(), factura.getValor(),
-                "FACTURA-" + factura.getId())) {
+        if (!saldoService.debitarSiAlcanza(factura.getUsuarioId(), faltante,
+                "FACTURA-" + factura.getId() + "-AJUSTE")) {
             throw new IllegalArgumentException("Saldo insuficiente para pagar la factura.");
         }
 
-        registrarPago(ingreso, factura, "SALDO");
+        if (pago != null) {
+            pago.setValor(abonado.add(faltante));
+            pagoRepository.save(pago);
+        } else {
+            registrarPago(ingreso, factura, "SALDO");
+        }
         marcarPagada(factura);
         return mapToResponse(factura, ingreso);
     }
@@ -188,6 +237,13 @@ public class FacturaService {
         }
         creditoRepository.save(credito);
         return mapToResponse(factura);
+    }
+
+    /** El pago confirmado es único por ingreso (V18); se reutiliza para ajustar el valor final. */
+    private Optional<Pago> findPagoConfirmado(Long ingresoId) {
+        return pagoRepository.findByIngresoId(ingresoId).stream()
+                .filter(pago -> CONFIRMADO.equals(pago.getEstadoPago()))
+                .findFirst();
     }
 
     private void registrarPago(Ingreso ingreso, Factura factura, String metodoPago) {

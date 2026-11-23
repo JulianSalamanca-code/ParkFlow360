@@ -132,14 +132,19 @@ class Hito3HoraEsperaIntegrationTest {
     }
 
     @Test
-    void llegadaDentroDelLimiteActivaSinFactura() {
+    void llegadaDentroDelLimiteActivaYAbreFacturaDeUnaHora() {
+        saldoService.recargar(EMAIL, RecargaRequest.builder().valor(new BigDecimal("5000.00")).build());
         IngresoResponse reserva = ingresoService.reservar(EMAIL, request(tarifaHoraId, "POR HORAS"));
 
         IngresoResponse llegada = ingresoService.registrarLlegada(EMAIL, reserva.getId());
 
         assertThat(llegada.getEstado()).isEqualTo("ACTIVO");
         assertThat(llegada.getFechaLlegada()).isNotNull();
-        assertThat(facturaRepository.findByIngresoId(reserva.getId())).isEmpty();
+        Factura factura = facturaRepository.findByIngresoId(reserva.getId()).orElseThrow();
+        assertThat(factura.getValor()).isEqualByComparingTo(VALOR_HORA);
+        assertThat(factura.getEstado()).isEqualTo("PAGADA");
+        assertThat(pagoRepository.findByIngresoId(reserva.getId())).hasSize(1);
+        assertThat(saldoService.obtenerMiCuenta(EMAIL).getSaldo()).isEqualByComparingTo("3000.00");
         assertThat(espacioRepository.findById(espacioId).orElseThrow().getEstado()).isEqualTo("OCUPADO");
     }
 

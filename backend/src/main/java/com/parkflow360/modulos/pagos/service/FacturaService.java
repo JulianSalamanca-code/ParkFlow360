@@ -226,7 +226,7 @@ public class FacturaService {
         return tarifaValor;
     }
 
-    /** RN-03: tarifas HORA cobran por horas iniciadas desde fechaEntrada; las demás, una sola vez. */
+    /** RN-03: tarifas HORA cobran por horas desde la llegada; las demás, una sola vez. */
     private BigDecimal calcularValor(Ingreso ingreso) {
         BigDecimal tarifaValor = ingreso.getTarifaValor();
         boolean esHora = false;
@@ -246,9 +246,10 @@ public class FacturaService {
             return tarifaValor;
         }
 
-        LocalDateTime inicio = ingreso.getFechaEntrada() != null
-                ? ingreso.getFechaEntrada()
-                : LocalDateTime.now();
+        LocalDateTime inicio = ingreso.getFechaLlegada();
+        if (inicio == null) {
+            inicio = ingreso.getFechaEntrada() != null ? ingreso.getFechaEntrada() : LocalDateTime.now();
+        }
         LocalDateTime fin = ingreso.getFechaSalida() != null
                 ? ingreso.getFechaSalida()
                 : LocalDateTime.now();

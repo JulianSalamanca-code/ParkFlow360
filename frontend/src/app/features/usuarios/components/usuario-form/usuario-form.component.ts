@@ -5,6 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { UsuarioService } from '../../services/usuario.service';
 import { UsuarioRequest } from '../../models/usuario.model';
 import { ToastService } from '../../../../shared/services/toast.service';
+import { ROLES, ROLE_DESCRIPTIONS, normalizeRol, roleLabel } from '../../../../core/auth/roles';
 
 @Component({
   selector: 'app-usuario-form',
@@ -40,14 +41,16 @@ import { ToastService } from '../../../../shared/services/toast.service';
 
           <div class="form-group">
             <label for="rol">Rol</label>
-            <select id="rol" formControlName="rol" class="form-control">
+            <select id="rol" data-testid="select-rol" formControlName="rol" class="form-control">
               <option value="">Seleccione...</option>
-              <option value="ADMIN">Administrador (acceso total)</option>
-              <option value="USUARIO">Usuario (reservas y sus vehículos)</option>
+              <option *ngFor="let opcion of opcionesRol" [value]="opcion.valor">{{ opcion.etiqueta }} — {{ opcion.descripcion }}</option>
             </select>
             <div *ngIf="form.get('rol')?.invalid && form.get('rol')?.touched" class="field-error">
               El rol es obligatorio
             </div>
+            <p class="text-muted" style="font-size: 12px; margin-top: 6px;">
+              Los roles de empresa, cajero y guardia necesitan además su vinculación con parqueaderos para consultar datos.
+            </p>
           </div>
 
           <div class="form-group">
@@ -74,6 +77,12 @@ import { ToastService } from '../../../../shared/services/toast.service';
   `
 })
 export class UsuarioFormComponent implements OnInit {
+  readonly opcionesRol = ROLES.map(rol => ({
+    valor: rol,
+    etiqueta: roleLabel(rol),
+    descripcion: ROLE_DESCRIPTIONS[rol]
+  }));
+
   form!: FormGroup;
   esEdicion = false;
   usuarioId?: number;
@@ -114,7 +123,7 @@ export class UsuarioFormComponent implements OnInit {
         this.form.patchValue({
           nombre: usuario.nombre,
           email: usuario.email,
-          rol: usuario.rol
+          rol: normalizeRol(usuario.rol)
         });
       },
       error: (err) => console.error('Error al cargar usuario:', err)
@@ -127,7 +136,10 @@ export class UsuarioFormComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = '';
 
-    const request: UsuarioRequest = this.form.value;
+    const rol = normalizeRol(this.form.get('rol')?.value);
+    if (!rol) return;
+
+    const request: UsuarioRequest = { ...this.form.value, rol };
     const esEdicion = this.esEdicion && !!this.usuarioId;
     const accion = esEdicion ? 'actualizado' : 'creado';
 

@@ -1,27 +1,42 @@
-# Frontend
+# Frontend ParkFlow360
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 17.3.17.
+SPA Angular 22 (standalone, sin NgModules) dentro del monorepo de ParkFlow360.
 
-## Development server
+## Desarrollo
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+```bash
+pnpm install
+pnpm start          # ng serve en http://localhost:4200
+```
 
-## Code scaffolding
-
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+El servidor de desarrollo usa `proxy.conf.json`: todas las peticiones a `/api` se redirigen a `http://localhost:8080` (backend). La SPA se recarga automáticamente al cambiar archivos.
 
 ## Build
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+```bash
+pnpm build          # genera dist/frontend/browser
+```
 
-## Running unit tests
+## Pruebas
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+```bash
+pnpm e2e            # Cypress contra http://localhost:4200
+pnpm e2e:open       # interfaz interactiva de Cypress
+npm test            # target Karma/Jasmine (actualmente sin archivos *.spec.ts)
+```
 
-## Running end-to-end tests
+Las especificaciones E2E están en `cypress/e2e/` y usan `data-testid` y los comandos personalizados de `cypress/support/commands.ts`.
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
+## Estructura
 
-## Further help
+- `src/app/auth`: login, registro y callback de Google.
+- `src/app/core`: guards (`RoleGuard`) e interceptor JWT.
+- `src/app/features`: módulos por dominio con `components/`, `services/`, `models/` y `<dominio>.routes.ts`.
+- `src/app/shared`: componentes y servicios compartidos.
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+## Referencias
+
+- Comandos y convenciones: [`../AGENTS.md`](../AGENTS.md).
+- Funcionalidades planificadas: [`../docs/01-especificaciones/ESPECIFICACIONES_PARKFLOW360.md`](../docs/01-especificaciones/ESPECIFICACIONES_PARKFLOW360.md).
+
+Stack: Angular `^22.2.4`, TypeScript `~6.0.3`, RxJS `7.8`, Cypress `^16.2.0`, Node 22 en Netlify (usa `pnpm-lock.yaml`).

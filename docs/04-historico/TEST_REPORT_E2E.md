@@ -1,5 +1,7 @@
 # Reporte de Pruebas E2E - ParkFlow360
 
+> **Documento histórico (2026-10-28).** Conserva el estado de esa fecha y no debe usarse como referencia de endpoints, despliegue ni estado actual. Consulta [`AGENTS.md`](../../AGENTS.md), [`SOLUCION_GOOGLE_OAUTH.md`](../03-operacion/SOLUCION_GOOGLE_OAUTH.md) y [`ESPECIFICACIONES_PARKFLOW360.md`](../01-especificaciones/ESPECIFICACIONES_PARKFLOW360.md).
+
 ## Fecha: 2026-10-28
 
 ## Resumen Ejecutivo

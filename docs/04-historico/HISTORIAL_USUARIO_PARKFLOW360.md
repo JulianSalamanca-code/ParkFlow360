@@ -1,5 +1,7 @@
 HISTORIAL DE USUARIO — ParkFlow360
 
+> **Documento histórico (2026-10-27).** Backlog original de 18 historias, ya integrado en `main`. Las historias derivadas del plan F0–F10 están en [`BACKLOG_NUEVO.md`](../01-especificaciones/BACKLOG_NUEVO.md).
+
 ## 1. Estructura base
 
 ```

@@ -1,5 +1,7 @@
 # Explicación de los problemas identificados
 
+> **Documento histórico.** Describe un incidente de despliegue ya resuelto; algunos endpoints y rutas que menciona no existen en el código actual. Consulta [`SOLUCION_GOOGLE_OAUTH.md`](../03-operacion/SOLUCION_GOOGLE_OAUTH.md) para la configuración vigente.
+
 ## 1. Validación de placa no funciona en producción
 
 ### ¿Por qué la placa "ABC1234" fue aceptada?

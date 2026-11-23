@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -39,14 +39,36 @@ type GuardiaView = 'ingresos' | 'ocupacion';
           <ng-container *ngSwitchCase="'ingresos'">
             <div class="card table-wrap" *ngIf="ingresos.length; else guardiaEmpty">
               <table class="table" data-testid="guardia-ingresos">
-                <thead><tr><th>Vehículo</th><th>Conductor</th><th>Espacio</th><th>Ingreso</th><th>Estado</th><th>Acción</th></tr></thead>
+                <thead><tr><th>Vehículo</th><th>Conductor</th><th>Espacio</th><th>Ingreso</th><th>Estado</th><th>Pago / salida</th><th>Acción</th></tr></thead>
                 <tbody>
                   <tr *ngFor="let ingreso of ingresos">
                     <td class="plate">{{ ingreso.placa }}</td><td>{{ ingreso.cliente }}</td>
                     <td class="mono">{{ ingreso.espacio }}</td><td>{{ ingreso.fechaIngreso }}</td>
                     <td><span class="badge" [class.badge-warning]="ingreso.estado === 'ESPERANDO'" [class.badge-available]="ingreso.estado === 'ACTIVO'">{{ ingreso.estado === 'ESPERANDO' ? 'Por validar' : 'En parqueadero' }}</span></td>
                     <td>
-                      <button class="btn btn-primary btn-sm" type="button" [disabled]="workingId === ingreso.id"
+                      <ng-container *ngIf="ingreso.estado === 'ESPERANDO'; else estadoSalida">
+                        <span class="badge badge-neutral">Pendiente de entrada</span>
+                      </ng-container>
+                      <ng-template #estadoSalida>
+                        <span class="badge" [class.badge-available]="ingreso.puedeSalir" [class.badge-warning]="!ingreso.puedeSalir"
+                              [attr.data-testid]="'guardia-pago-' + ingreso.id">
+                          {{ ingreso.puedeSalir ? 'Pagado' : ingreso.estadoPago === 'TOLERANCIA_VENCIDA' ? 'Tolerancia vencida' : 'Pendiente de pago' }}
+                        </span>
+                        <small *ngIf="ingreso.puedeSalir && ingreso.fechaLimiteSalida" class="countdown"
+                               [attr.data-testid]="'guardia-countdown-' + ingreso.id">
+                          Tiene {{ minutosRestantes(ingreso) }} min para salir de la universidad
+                        </small>
+                        <small *ngIf="ingreso.estadoPago === 'TOLERANCIA_VENCIDA'" class="text-danger">
+                          Debe pagar el tiempo adicional en pagaduría.
+                        </small>
+                        <small *ngIf="!ingreso.puedeSalir && ingreso.estadoPago !== 'TOLERANCIA_VENCIDA'" class="text-danger">
+                          El conductor debe pagar en pagaduría.
+                        </small>
+                      </ng-template>
+                    </td>
+                    <td>
+                      <button class="btn btn-primary btn-sm" type="button"
+                              [disabled]="workingId === ingreso.id || (ingreso.estado === 'ACTIVO' && !ingreso.puedeSalir)"
                               (click)="procesar(ingreso)" [attr.data-testid]="'guardia-accion-' + ingreso.id">
                         {{ workingId === ingreso.id ? 'Procesando...' : ingreso.estado === 'ESPERANDO' ? 'Validar entrada' : 'Registrar salida' }}
                       </button>
@@ -132,10 +154,12 @@ type GuardiaView = 'ingresos' | 'ocupacion';
     .occupancy-total { font-family: var(--pf-mono); font-size: 20px; }
     .progress { height: 12px; margin: 22px 0; overflow: hidden; background: var(--pf-surface-alt); border-radius: 99px; }
     .progress span { display: block; height: 100%; background: var(--pf-primary); border-radius: inherit; }
+    .countdown { display: block; margin-top: 4px; color: var(--pf-primary); font-weight: 600; }
+    .text-danger { display: block; margin-top: 4px; color: var(--pf-occupied-text); }
     @media (max-width: 600px) { .occupancy-head { align-items: flex-start; flex-direction: column; } }
   `]
 })
-export class GuardiaComponent {
+export class GuardiaComponent implements OnDestroy {
   readonly view: GuardiaView;
   ingresos: IngresoOperativo[] = [];
   novedades: NovedadResponse[] = [];
@@ -147,10 +171,28 @@ export class GuardiaComponent {
   savingNovedad = false;
   novedadIngresoId: number | null = null;
   novedadDescripcion = '';
+  now = Date.now();
+  private readonly countdownTimer: ReturnType<typeof setInterval>;
 
   constructor(route: ActivatedRoute, private operaciones: OperacionesService) {
     this.view = route.snapshot.data['view'] as GuardiaView;
+    this.countdownTimer = setInterval(() => { this.now = Date.now(); }, 1000);
     this.load();
+  }
+
+  ngOnDestroy(): void {
+    clearInterval(this.countdownTimer);
+  }
+
+  minutosRestantes(ingreso: IngresoOperativo): number {
+    if (!ingreso.fechaLimiteSalida) {
+      return 0;
+    }
+    const limite = new Date(ingreso.fechaLimiteSalida).getTime();
+    if (Number.isNaN(limite)) {
+      return 0;
+    }
+    return Math.max(0, Math.ceil((limite - this.now) / 60000));
   }
 
   get porcentajeOcupacion(): number {
@@ -187,8 +229,16 @@ export class GuardiaComponent {
 
   procesar(ingreso: IngresoOperativo): void {
     const accion: AccionIngreso = ingreso.estado === 'ESPERANDO' ? 'VALIDAR_ENTRADA' : 'REGISTRAR_SALIDA';
+    if (accion === 'REGISTRAR_SALIDA' && ingreso.puedeSalir === false) {
+      this.errorMessage = ingreso.estadoPago === 'TOLERANCIA_VENCIDA'
+        ? 'La tolerancia de salida venció; debe cancelar el tiempo adicional en pagaduría.'
+        : 'El conductor debe pagar en pagaduría antes de salir del parqueadero.';
+      return;
+    }
+
     this.workingId = ingreso.id;
     this.successMessage = '';
+    this.errorMessage = '';
     this.operaciones.actualizarIngreso(ingreso.id, accion).subscribe({
       next: () => {
         this.workingId = null;

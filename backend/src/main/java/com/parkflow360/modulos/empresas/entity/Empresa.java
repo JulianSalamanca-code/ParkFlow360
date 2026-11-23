@@ -36,6 +36,10 @@ public class Empresa {
     @Column(nullable = false)
     private boolean activo = true;
 
+    @Builder.Default
+    @Column(name = "tolerancia_salida_minutos", nullable = false)
+    private int toleranciaSalidaMinutos = 30;
+
     @Column(name = "fecha_creacion", updatable = false)
     private LocalDateTime fechaCreacion;
 

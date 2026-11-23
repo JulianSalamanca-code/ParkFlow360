@@ -123,6 +123,7 @@ class Hito2FacturacionIntegrationTest {
         saldoService.recargar(EMAIL, RecargaRequest.builder()
                 .valor(new BigDecimal("5000.00")).build());
         Long ingresoId = crearIngresoActivo();
+        facturaService.generarYCobrar(ingresoRepository.findById(ingresoId).orElseThrow());
 
         ingresoService.registrarSalida(EMAIL, ingresoId);
 
@@ -143,10 +144,9 @@ class Hito2FacturacionIntegrationTest {
         saldoService.recargar(EMAIL, RecargaRequest.builder()
                 .valor(new BigDecimal("500.00")).build());
         Long ingresoId = crearIngresoActivo();
-
-        ingresoService.registrarSalida(EMAIL, ingresoId);
-
+        facturaService.generarYCobrar(ingresoRepository.findById(ingresoId).orElseThrow());
         Factura factura = facturaRepository.findByIngresoId(ingresoId).orElseThrow();
+
         assertThat(factura.getEstado()).isEqualTo("PENDIENTE");
         assertThat(pagoRepository.findByIngresoId(ingresoId)).isEmpty();
         assertThat(saldoService.obtenerMiCuenta(EMAIL).getSaldo()).isEqualByComparingTo("500.00");
@@ -158,6 +158,8 @@ class Hito2FacturacionIntegrationTest {
                 .isEqualTo("PAGADA");
         assertThat(saldoService.obtenerMiCuenta(EMAIL).getSaldo()).isEqualByComparingTo("0.00");
         assertThat(pagoRepository.findByIngresoId(ingresoId)).hasSize(1);
+
+        ingresoService.registrarSalida(EMAIL, ingresoId);
 
         saldoService.recargar(EMAIL, RecargaRequest.builder()
                 .valor(new BigDecimal("1500.00")).build());
@@ -178,10 +180,11 @@ class Hito2FacturacionIntegrationTest {
         saldoService.recargar(EMAIL, RecargaRequest.builder()
                 .valor(new BigDecimal("500.00")).build());
         Long ingresoId = crearIngresoActivo();
-        ingresoService.registrarSalida(EMAIL, ingresoId);
+        facturaService.generarYCobrar(ingresoRepository.findById(ingresoId).orElseThrow());
         Factura factura = facturaRepository.findByIngresoId(ingresoId).orElseThrow();
         CreditoResponse credito = creditoService.otorgar(EMAIL,
                 CreditoRequest.builder().facturaId(factura.getId()).build());
+        ingresoService.registrarSalida(EMAIL, ingresoId);
 
         Credito vencido = creditoRepository.findById(credito.getId()).orElseThrow();
         vencido.setFechaLimite(LocalDateTime.now().minusDays(1));

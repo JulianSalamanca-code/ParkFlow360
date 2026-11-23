@@ -24,6 +24,7 @@ public interface IngresoRepository extends JpaRepository<Ingreso, Long> {
     List<Ingreso> findByUsuarioIdAndEstadoIn(Long usuarioId, Collection<String> estados);
     List<Ingreso> findByEspacioId(Long espacioId);
     List<Ingreso> findByVehiculoId(Long vehiculoId);
+    List<Ingreso> findByParqueaderoIdIn(Collection<Long> parqueaderoIds);
     Optional<Ingreso> findFirstByEspacioIdAndEstadoIn(Long espacioId, Collection<String> estados);
     boolean existsByEspacioIdAndEstadoIn(Long espacioId, Collection<String> estados);
     boolean existsByVehiculoIdAndEstadoIn(Long vehiculoId, Collection<String> estados);

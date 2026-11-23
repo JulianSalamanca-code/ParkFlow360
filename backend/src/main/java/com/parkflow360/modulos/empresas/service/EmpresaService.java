@@ -1,5 +1,6 @@
 package com.parkflow360.modulos.empresas.service;
 
+import com.parkflow360.modulos.empresas.dto.ConfiguracionEmpresaRequest;
 import com.parkflow360.modulos.empresas.dto.EmpresaRequest;
 import com.parkflow360.modulos.empresas.dto.EmpresaResponse;
 import com.parkflow360.modulos.empresas.entity.Empresa;
@@ -57,6 +58,7 @@ public class EmpresaService {
                 .nombre(request.getNombre().trim())
                 .identificador(identificador)
                 .activo(true)
+                .toleranciaSalidaMinutos(resolverTolerancia(request.getToleranciaSalidaMinutos()))
                 .build());
         empresaUsuarioRepository.save(EmpresaUsuario.builder()
                 .empresaId(empresa.getId())
@@ -64,6 +66,17 @@ public class EmpresaService {
                 .build());
 
         return mapToResponse(empresa);
+    }
+
+    /** RN-13: la empresa define una única tolerancia para todos sus parqueaderos. */
+    @Transactional
+    public EmpresaResponse actualizarConfiguracion(
+            String emailActor, Long empresaId, ConfiguracionEmpresaRequest request) {
+        verificarAccesoEmpresa(emailActor, empresaId);
+        Empresa empresa = requireEmpresa(empresaId);
+        empresa.setToleranciaSalidaMinutos(
+                resolverTolerancia(request.getToleranciaSalidaMinutos()));
+        return mapToResponse(empresaRepository.save(empresa));
     }
 
     @Transactional(readOnly = true)
@@ -90,12 +103,29 @@ public class EmpresaService {
                 .orElseThrow(() -> new NoSuchElementException("Empresa no encontrada con id: " + id));
     }
 
+    private void verificarAccesoEmpresa(String emailActor, Long empresaId) {
+        Usuario actor = accesoParqueaderoService.requireUsuario(emailActor);
+        if (Roles.esPlataforma(actor.getRol())) {
+            return;
+        }
+        if (!Roles.EMPRESA.equals(Roles.normalizar(actor.getRol()))
+                || !empresaUsuarioRepository.existsByEmpresaIdAndUsuarioId(empresaId, actor.getId())) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN, "No tienes acceso a esta empresa.");
+        }
+    }
+
+    private int resolverTolerancia(Integer minutos) {
+        return minutos == null ? 30 : minutos;
+    }
+
     private EmpresaResponse mapToResponse(Empresa empresa) {
         return EmpresaResponse.builder()
                 .id(empresa.getId())
                 .nombre(empresa.getNombre())
                 .identificador(empresa.getIdentificador())
                 .activo(empresa.isActivo())
+                .toleranciaSalidaMinutos(empresa.getToleranciaSalidaMinutos())
                 .fechaCreacion(empresa.getFechaCreacion())
                 .build();
     }

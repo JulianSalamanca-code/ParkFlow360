@@ -54,8 +54,16 @@ public class SecurityConfig {
                     .hasAnyRole("GUARDIA", "PLATAFORMA")
                 .requestMatchers(HttpMethod.PUT, "/api/ingresos/*/verificar")
                     .hasAnyRole("GUARDIA", "EMPRESA", "PLATAFORMA")
+                .requestMatchers(HttpMethod.PUT, "/api/ingresos/*/salida")
+                    .hasAnyRole("GUARDIA", "PLATAFORMA")
+                .requestMatchers(HttpMethod.GET, "/api/ingresos/activos")
+                    .hasAnyRole("CAJERO_PAGOS", "GUARDIA", "EMPRESA", "PLATAFORMA")
                 .requestMatchers(HttpMethod.GET, "/api/ingresos/*/estado-pago")
                     .hasAnyRole("GUARDIA", "EMPRESA", "CAJERO_PAGOS", "PLATAFORMA")
+
+                // ---------- Reportes: la empresa solo ve sus parqueaderos ----------
+                .requestMatchers("/api/reportes/**")
+                    .hasAnyRole("EMPRESA", "PLATAFORMA")
 
                 // ---------- Cajero: solo pagos ----------
                 .requestMatchers("/api/pagos/**")
@@ -66,7 +74,7 @@ public class SecurityConfig {
                     .hasAnyRole("EMPRESA", "PLATAFORMA")
 
                 // ---------- Plataforma: administración y supervisión ----------
-                .requestMatchers("/api/usuarios/**", "/api/reportes/**", "/api/ingresos/**",
+                .requestMatchers("/api/usuarios/**", "/api/ingresos/**",
                         "/api/espacios/**", "/api/tarifas/**", "/api/planos/**",
                         "/api/vehiculos/**")
                     .hasRole("PLATAFORMA")

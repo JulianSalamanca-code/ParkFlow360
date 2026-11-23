@@ -15,6 +15,7 @@ import com.parkflow360.modulos.tarifas.repository.TarifaRepository;
 import com.parkflow360.security.entity.Usuario;
 import com.parkflow360.security.repository.UsuarioRepository;
 import com.parkflow360.shared.service.AccesoParqueaderoService;
+import com.parkflow360.shared.service.ToleranciaSalidaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,6 +46,7 @@ public class FacturaService {
     private final UsuarioRepository usuarioRepository;
     private final SaldoService saldoService;
     private final AccesoParqueaderoService accesoParqueaderoService;
+    private final ToleranciaSalidaService toleranciaSalidaService;
 
     @Transactional(readOnly = true)
     public List<FacturaResponse> listarTodas(String email) {
@@ -97,46 +99,6 @@ public class FacturaService {
         return generarYCobrar(ingreso, calcularValorHora(ingreso));
     }
 
-    /**
-     * Ajusta la factura abierta al entrar con el valor real de la estancia.
-     * La diferencia se debita del saldo y se refleja en el mismo pago confirmado.
-     */
-    @Transactional
-    public FacturaResponse ajustarAlSalir(Ingreso ingreso) {
-        Optional<Factura> existente = facturaRepository.findByIngresoId(ingreso.getId());
-        if (existente.isEmpty()) {
-            return generarYCobrar(ingreso);
-        }
-
-        Factura factura = existente.get();
-        BigDecimal valorFinal = calcularValor(ingreso);
-        Pago pago = findPagoConfirmado(ingreso.getId()).orElse(null);
-        BigDecimal abonado = pago != null && pago.getValor() != null
-                ? pago.getValor() : BigDecimal.ZERO;
-        BigDecimal faltante = valorFinal.subtract(abonado);
-        if (faltante.compareTo(BigDecimal.ZERO) <= 0) {
-            return mapToResponse(factura, ingreso);
-        }
-
-        factura.setValor(valorFinal);
-        if (ingreso.getUsuarioId() == null
-                || !saldoService.debitarSiAlcanza(ingreso.getUsuarioId(), faltante,
-                        "FACTURA-" + factura.getId() + "-AJUSTE")) {
-            factura.setEstado(PENDIENTE);
-            facturaRepository.save(factura);
-            return mapToResponse(factura, ingreso);
-        }
-
-        if (pago != null) {
-            pago.setValor(abonado.add(faltante));
-            pagoRepository.save(pago);
-        } else {
-            registrarPago(ingreso, factura, "SALDO");
-        }
-        marcarPagada(factura);
-        return mapToResponse(factura, ingreso);
-    }
-
     private FacturaResponse generarYCobrar(Ingreso ingreso, BigDecimal valorHora) {
         Optional<Factura> existente = facturaRepository.findByIngresoId(ingreso.getId());
         if (existente.isPresent()) {
@@ -166,8 +128,9 @@ public class FacturaService {
     }
 
     /**
-     * Reintenta el cobro de una factura pendiente o abona una deuda de crédito.
-     * Mantiene la ruta POST /api/facturas/{id}/pagar como único punto de entrada.
+     * Punto único de cobro en pagaduría. Si el ingreso sigue activo, recalcula el valor
+     * de la estancia con la hora actual y debita únicamente el faltante, reutilizando
+     * el pago confirmado. Las deudas de crédito se siguen abonando desde esta misma ruta.
      */
     @Transactional
     public FacturaResponse pagar(String email, Long id) {
@@ -175,16 +138,21 @@ public class FacturaService {
         Ingreso ingreso = requireIngreso(factura.getIngresoId());
         accesoParqueaderoService.verificarAcceso(email, ingreso.getParqueaderoId());
 
-        if (PAGADA.equals(factura.getEstado())) {
+        boolean ingresoActivo = "ACTIVO".equalsIgnoreCase(ingreso.getEstado());
+        if (!ingresoActivo && PAGADA.equals(factura.getEstado())) {
             return abonarCredito(factura);
         }
 
+        BigDecimal valorActual = ingresoActivo ? calcularValor(ingreso) : factura.getValor();
         Pago pago = findPagoConfirmado(ingreso.getId()).orElse(null);
         BigDecimal abonado = pago != null && pago.getValor() != null
                 ? pago.getValor() : BigDecimal.ZERO;
-        BigDecimal faltante = factura.getValor().subtract(abonado);
+        BigDecimal faltante = valorActual.subtract(abonado);
+
         if (faltante.compareTo(BigDecimal.ZERO) <= 0) {
-            marcarPagada(factura);
+            if (PENDIENTE.equals(factura.getEstado())) {
+                marcarPagada(factura);
+            }
             return mapToResponse(factura, ingreso);
         }
 
@@ -193,9 +161,10 @@ public class FacturaService {
         }
         if (!saldoService.debitarSiAlcanza(factura.getUsuarioId(), faltante,
                 "FACTURA-" + factura.getId() + "-AJUSTE")) {
-            throw new IllegalArgumentException("Saldo insuficiente para pagar la factura.");
+            throw new IllegalArgumentException("Saldo insuficiente para pagar la estancia.");
         }
 
+        factura.setValor(valorActual);
         if (pago != null) {
             pago.setValor(abonado.add(faltante));
             pagoRepository.save(pago);
@@ -204,6 +173,11 @@ public class FacturaService {
         }
         marcarPagada(factura);
         return mapToResponse(factura, ingreso);
+    }
+
+    /** Valor vigente de la estancia; respeta el tipo de tarifa (HORA vs. valor único). */
+    public BigDecimal calcularValorActual(Ingreso ingreso) {
+        return calcularValor(ingreso);
     }
 
     /** Marca como pagada la factura de un ingreso cuando el cajero registra un pago confirmado. */
@@ -333,15 +307,40 @@ public class FacturaService {
         boolean vencido = credito != null && "PENDIENTE".equals(credito.getEstado())
                 && credito.getFechaLimite() != null
                 && credito.getFechaLimite().isBefore(LocalDateTime.now());
+
+        BigDecimal valorActual = factura.getValor();
+        if (ingreso != null && "ACTIVO".equalsIgnoreCase(ingreso.getEstado())) {
+            try {
+                valorActual = calcularValor(ingreso);
+            } catch (IllegalArgumentException ex) {
+                valorActual = factura.getValor();
+            }
+        }
+        Pago pago = ingreso != null ? findPagoConfirmado(ingreso.getId()).orElse(null) : null;
+        BigDecimal abonado = pago != null && pago.getValor() != null
+                ? pago.getValor() : BigDecimal.ZERO;
+        BigDecimal faltante = valorActual.subtract(abonado).max(BigDecimal.ZERO);
+        LocalDateTime fechaPago = factura.getFechaPago() != null
+                ? factura.getFechaPago()
+                : (pago != null ? pago.getFecha() : null);
+        boolean activo = ingreso != null && "ACTIVO".equalsIgnoreCase(ingreso.getEstado());
+        LocalDateTime fechaLimiteSalida = activo && PAGADA.equals(factura.getEstado())
+                ? toleranciaSalidaService.calcularFechaLimite(fechaPago, ingreso.getParqueaderoId())
+                : null;
+
         return FacturaResponse.builder()
                 .id(factura.getId())
                 .ingresoId(factura.getIngresoId())
                 .usuarioId(factura.getUsuarioId())
                 .parqueaderoId(ingreso != null ? ingreso.getParqueaderoId() : null)
+                .estadoIngreso(ingreso != null ? ingreso.getEstado() : null)
                 .valor(factura.getValor())
+                .valorActual(valorActual)
+                .faltante(faltante)
                 .estado(factura.getEstado())
                 .fechaEmision(factura.getFechaEmision())
-                .fechaPago(factura.getFechaPago())
+                .fechaPago(fechaPago)
+                .fechaLimiteSalida(fechaLimiteSalida)
                 .creditoId(credito != null ? credito.getId() : null)
                 .creditoPendiente(credito != null ? credito.getMontoPendiente() : null)
                 .creditoVencido(vencido)

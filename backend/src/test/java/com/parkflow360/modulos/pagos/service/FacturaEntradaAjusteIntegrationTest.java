@@ -37,6 +37,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -45,6 +46,7 @@ class FacturaEntradaAjusteIntegrationTest {
 
     private static final String EMAIL = "ajuste@test.com";
     private static final BigDecimal VALOR_HORA = new BigDecimal("2000.00");
+    private static final BigDecimal VALOR_DIA = new BigDecimal("15000.00");
 
     @Autowired
     private IngresoService ingresoService;
@@ -71,6 +73,7 @@ class FacturaEntradaAjusteIntegrationTest {
     @Autowired
     private PagoRepository pagoRepository;
 
+    private Long empresaId;
     private Long parqueaderoId;
     private Long tarifaHoraId;
     private Long tarifaDiaId;
@@ -82,8 +85,9 @@ class FacturaEntradaAjusteIntegrationTest {
                 .nombre("Empresa Ajuste")
                 .identificador("EMP-AJUSTE")
                 .build());
+        empresaId = empresa.getId();
         Parqueadero parqueadero = parqueaderoRepository.save(Parqueadero.builder()
-                .empresaId(empresa.getId())
+                .empresaId(empresaId)
                 .nombre("Parqueadero Ajuste")
                 .identificador("PQ-AJUSTE")
                 .build());
@@ -100,7 +104,7 @@ class FacturaEntradaAjusteIntegrationTest {
                 .parqueaderoId(parqueaderoId)
                 .nombre("Día")
                 .tipo("DIA")
-                .valor(new BigDecimal("15000.00"))
+                .valor(VALOR_DIA)
                 .duracion("1 día")
                 .build()).getId();
 
@@ -124,69 +128,112 @@ class FacturaEntradaAjusteIntegrationTest {
     }
 
     @Test
-    void salidaAjustaLaMismaFacturaYElMismoPagoConfirmado() {
+    void salidaDentroDeLaToleranciaNoCobraDiferenciaAunqueSeCruceLaHora() {
         recargar("10000.00");
         Long ingresoId = entrarConTarifa(tarifaHoraId, VALOR_HORA);
+        simularEstanciaDeHoras(ingresoId, 3);
 
-        Factura apertura = facturaRepository.findByIngresoId(ingresoId).orElseThrow();
-        assertThat(apertura.getValor()).isEqualByComparingTo(VALOR_HORA);
-        assertThat(apertura.getEstado()).isEqualTo("PAGADA");
-
-        simularEstanciaDeTresHoras(ingresoId);
         ingresoService.registrarSalida(EMAIL, ingresoId);
 
-        Factura factura = facturaRepository.findByIngresoId(ingresoId).orElseThrow();
-        assertThat(factura.getValor()).isEqualByComparingTo("6000.00");
+        Factura factura = obtenerFactura(ingresoId);
+        assertThat(factura.getValor()).isEqualByComparingTo(VALOR_HORA);
         assertThat(factura.getEstado()).isEqualTo("PAGADA");
         List<Pago> pagos = pagoRepository.findByIngresoId(ingresoId);
         assertThat(pagos).hasSize(1);
-        assertThat(pagos.get(0).getValor()).isEqualByComparingTo("6000.00");
-        assertThat(pagos.get(0).getEstadoPago()).isEqualTo("CONFIRMADO");
-        assertThat(saldoService.obtenerMiCuenta(EMAIL).getSaldo()).isEqualByComparingTo("4000.00");
+        assertThat(pagos.get(0).getValor()).isEqualByComparingTo(VALOR_HORA);
+        assertThat(saldoService.obtenerMiCuenta(EMAIL).getSaldo()).isEqualByComparingTo("8000.00");
     }
 
     @Test
-    void faltanteDelAjusteSeCobraConUnSoloPagoConfirmadoAlReintentar() {
-        recargar("3000.00");
+    void pagoEnPagaduriaRecalculaElValorYDebitaSoloElFaltante() {
+        recargar("10000.00");
         Long ingresoId = entrarConTarifa(tarifaHoraId, VALOR_HORA);
-        simularEstanciaDeTresHoras(ingresoId);
+        simularEstanciaDeHoras(ingresoId, 3);
+        Factura facturaInicial = obtenerFactura(ingresoId);
+
+        FacturaResponse cobro = facturaService.pagar(EMAIL, facturaInicial.getId());
+
+        assertThat(cobro.getValorActual()).isEqualByComparingTo("6000.00");
+        assertThat(cobro.getFaltante()).isEqualByComparingTo("0.00");
+        assertThat(cobro.getFechaLimiteSalida()).isNotNull();
+        Factura factura = obtenerFactura(ingresoId);
+        assertThat(factura.getValor()).isEqualByComparingTo("6000.00");
+        assertThat(factura.getEstado()).isEqualTo("PAGADA");
+        assertThat(pagoRepository.findByIngresoId(ingresoId)).hasSize(1);
+        assertThat(pagoRepository.findByIngresoId(ingresoId).get(0).getValor())
+                .isEqualByComparingTo("6000.00");
+        assertThat(saldoService.obtenerMiCuenta(EMAIL).getSaldo()).isEqualByComparingTo("4000.00");
+
+        ingresoService.registrarSalida(EMAIL, ingresoId);
+        assertThat(obtenerFactura(ingresoId).getValor()).isEqualByComparingTo("6000.00");
+    }
+
+    @Test
+    void salidaConToleranciaVencidaSeBloqueaHastaQueSeRehabiliteElPlazo() {
+        recargar("10000.00");
+        Long ingresoId = entrarConTarifa(tarifaHoraId, VALOR_HORA);
+        Factura factura = obtenerFactura(ingresoId);
+        configurarTolerancia(0);
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> ingresoService.registrarSalida(EMAIL, ingresoId));
+        assertThat(ex.getMessage()).contains("tolerancia");
+
+        configurarTolerancia(30);
+        ingresoService.registrarSalida(EMAIL, ingresoId);
+        assertThat(obtenerFactura(ingresoId).getId()).isEqualTo(factura.getId());
+        assertThat(ingresoRepository.findById(ingresoId).orElseThrow().getEstado())
+                .isEqualTo("FINALIZADO");
+    }
+
+    @Test
+    void tarifaDiaNoSeCobraPorHorasAlPagarNiAlSalir() {
+        recargar("20000.00");
+        Long ingresoId = entrarConTarifa(tarifaDiaId, VALOR_DIA);
+        simularEstanciaDeHoras(ingresoId, 10);
+        Factura facturaInicial = obtenerFactura(ingresoId);
+
+        FacturaResponse cobro = facturaService.pagar(EMAIL, facturaInicial.getId());
+
+        assertThat(cobro.getValorActual()).isEqualByComparingTo(VALOR_DIA);
+        assertThat(cobro.getFaltante()).isEqualByComparingTo("0.00");
 
         ingresoService.registrarSalida(EMAIL, ingresoId);
 
-        Factura pendiente = facturaRepository.findByIngresoId(ingresoId).orElseThrow();
-        assertThat(pendiente.getValor()).isEqualByComparingTo("6000.00");
-        assertThat(pendiente.getEstado()).isEqualTo("PENDIENTE");
-        List<Pago> pagos = pagoRepository.findByIngresoId(ingresoId);
-        assertThat(pagos).hasSize(1);
-        assertThat(pagos.get(0).getValor()).isEqualByComparingTo("2000.00");
+        assertThat(obtenerFactura(ingresoId).getValor()).isEqualByComparingTo(VALOR_DIA);
+        assertThat(pagoRepository.findByIngresoId(ingresoId)).hasSize(1);
+        assertThat(pagoRepository.findByIngresoId(ingresoId).get(0).getValor())
+                .isEqualByComparingTo(VALOR_DIA);
+        assertThat(saldoService.obtenerMiCuenta(EMAIL).getSaldo()).isEqualByComparingTo("5000.00");
+    }
+
+    @Test
+    void saldoInsuficienteAlPagarConservaUnSoloPagoYPermiteReintentar() {
+        recargar("3000.00");
+        Long ingresoId = entrarConTarifa(tarifaHoraId, VALOR_HORA);
+        simularEstanciaDeHoras(ingresoId, 3);
+        Factura pendiente = obtenerFactura(ingresoId);
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> facturaService.pagar(EMAIL, pendiente.getId()));
+        assertThat(ex.getMessage()).contains("Saldo insuficiente");
+
+        assertThat(obtenerFactura(ingresoId).getValor()).isEqualByComparingTo(VALOR_HORA);
+        assertThat(pagoRepository.findByIngresoId(ingresoId)).hasSize(1);
         assertThat(saldoService.obtenerMiCuenta(EMAIL).getSaldo()).isEqualByComparingTo("1000.00");
 
         recargar("5000.00");
-        FacturaResponse pagada = facturaService.pagar(EMAIL, pendiente.getId());
-
-        assertThat(pagada.getEstado()).isEqualTo("PAGADA");
-        assertThat(facturaRepository.findByIngresoId(ingresoId).orElseThrow().getValor())
-                .isEqualByComparingTo("6000.00");
+        FacturaResponse cobro = facturaService.pagar(EMAIL, pendiente.getId());
+        assertThat(cobro.getEstado()).isEqualTo("PAGADA");
+        assertThat(obtenerFactura(ingresoId).getValor()).isEqualByComparingTo("6000.00");
         assertThat(pagoRepository.findByIngresoId(ingresoId)).hasSize(1);
-        assertThat(pagoRepository.findByIngresoId(ingresoId).get(0).getValor())
-                .isEqualByComparingTo("6000.00");
         assertThat(saldoService.obtenerMiCuenta(EMAIL).getSaldo()).isEqualByComparingTo("2000.00");
     }
 
-    @Test
-    void tarifaNoHorariaNoDuplicaElValorAlSalir() {
-        recargar("20000.00");
-        Long ingresoId = entrarConTarifa(tarifaDiaId, new BigDecimal("15000.00"));
-
-        ingresoService.registrarSalida(EMAIL, ingresoId);
-
-        Factura factura = facturaRepository.findByIngresoId(ingresoId).orElseThrow();
-        assertThat(factura.getValor()).isEqualByComparingTo("15000.00");
-        assertThat(factura.getEstado()).isEqualTo("PAGADA");
-        assertThat(pagoRepository.findByIngresoId(ingresoId)).hasSize(1);
-        assertThat(pagoRepository.findByIngresoId(ingresoId).get(0).getValor())
-                .isEqualByComparingTo("15000.00");
-        assertThat(saldoService.obtenerMiCuenta(EMAIL).getSaldo()).isEqualByComparingTo("5000.00");
+    private void configurarTolerancia(int minutos) {
+        Empresa empresa = empresaRepository.findById(empresaId).orElseThrow();
+        empresa.setToleranciaSalidaMinutos(minutos);
+        empresaRepository.saveAndFlush(empresa);
     }
 
     private void recargar(String valor) {
@@ -207,9 +254,13 @@ class FacturaEntradaAjusteIntegrationTest {
         return reserva.getId();
     }
 
-    private void simularEstanciaDeTresHoras(Long ingresoId) {
+    private void simularEstanciaDeHoras(Long ingresoId, int horas) {
         Ingreso ingreso = ingresoRepository.findById(ingresoId).orElseThrow();
-        ingreso.setFechaLlegada(LocalDateTime.now().minusHours(3));
+        ingreso.setFechaLlegada(LocalDateTime.now().minusHours(horas));
         ingresoRepository.save(ingreso);
+    }
+
+    private Factura obtenerFactura(Long ingresoId) {
+        return facturaRepository.findByIngresoId(ingresoId).orElseThrow();
     }
 }

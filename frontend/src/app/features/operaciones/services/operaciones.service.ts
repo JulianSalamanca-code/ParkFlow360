@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, forkJoin, map } from 'rxjs';
+import { Observable, forkJoin, map, of, switchMap } from 'rxjs';
 import {
   AccionIngreso,
   ConfiguracionEmpresa,
   EmpresaResumen,
+  EstadoPagoOperativoResponse,
   IngresoOperativo,
   NovedadRequest,
   NovedadResponse,
@@ -14,13 +15,40 @@ import {
   ReporteOperativo
 } from '../models/operaciones.model';
 
+interface EmpresaApi {
+  readonly id: number;
+  readonly nombre: string;
+  readonly activo: boolean;
+  readonly toleranciaSalidaMinutos?: number;
+}
+
+interface FacturaApi {
+  readonly id: number;
+  readonly ingresoId: number;
+  readonly valor: number | null;
+  readonly valorActual?: number | null;
+  readonly faltante?: number | null;
+  readonly estado: string;
+  readonly estadoIngreso?: string;
+  readonly fechaEmision?: string | null;
+}
+
+interface IngresoApi {
+  readonly id: number;
+  readonly placa: string;
+  readonly espacioNumero?: string;
+  readonly fechaEntrada: string;
+  readonly estado: string;
+  readonly novedad?: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class OperacionesService {
   constructor(private http: HttpClient) {}
 
   getEmpresaResumen(): Observable<EmpresaResumen> {
     return forkJoin({
-      empresas: this.http.get<Array<{ id: number; nombre: string; activo: boolean }>>('/api/empresas/mias'),
+      empresas: this.http.get<EmpresaApi[]>('/api/empresas/mias'),
       parqueaderos: this.http.get<Array<{ id: number; nombre: string; activo: boolean; capacidadVehiculos: number | null }>>('/api/parqueaderos/mios'),
       espacios: this.http.get<Array<{ parqueaderoId: number | null; estado: string }>>('/api/espacios')
     }).pipe(map(({ empresas, parqueaderos, espacios }) => ({
@@ -58,58 +86,112 @@ export class OperacionesService {
   }
 
   getConfiguracion(): Observable<ConfiguracionEmpresa> {
-    return this.http.get<Array<{ nombre: string }>>('/api/empresas/mias').pipe(map(empresas => ({
+    return this.http.get<EmpresaApi[]>('/api/empresas/mias').pipe(map(empresas => ({
+      empresaId: empresas[0]?.id,
       razonSocial: empresas[0]?.nombre || '',
       correoContacto: '',
-      zonaHoraria: 'America/Bogota'
+      zonaHoraria: 'America/Bogota',
+      toleranciaSalidaMinutos: empresas[0]?.toleranciaSalidaMinutos ?? 30
+    })));
+  }
+
+  guardarConfiguracion(empresaId: number, toleranciaSalidaMinutos: number): Observable<ConfiguracionEmpresa> {
+    return this.http.put<EmpresaApi>(`/api/empresas/${empresaId}/configuracion`, {
+      toleranciaSalidaMinutos
+    }).pipe(map(empresa => ({
+      empresaId: empresa.id,
+      razonSocial: empresa.nombre,
+      correoContacto: '',
+      zonaHoraria: 'America/Bogota',
+      toleranciaSalidaMinutos: empresa.toleranciaSalidaMinutos ?? 30
     })));
   }
 
   getPagosPendientes(): Observable<PagoOperativo[]> {
-    return this.http.get<Array<{ id: number; ingresoId: number; valor: number | null; fechaEmision: string | null; estado: string }>>('/api/facturas')
-      .pipe(map(facturas => facturas
-        .filter(factura => factura.estado?.toUpperCase() === 'PENDIENTE')
-        .map(factura => ({
+    return forkJoin({
+      facturas: this.http.get<FacturaApi[]>('/api/facturas'),
+      ingresos: this.getIngresosActivosBasic()
+    }).pipe(map(({ facturas, ingresos }) => facturas
+      .filter(factura => factura.estado?.toUpperCase() === 'PENDIENTE'
+        || (factura.estado?.toUpperCase() === 'PAGADA'
+          && factura.estadoIngreso?.toUpperCase() === 'ACTIVO'
+          && (factura.faltante ?? 0) > 0))
+      .map(factura => {
+        const ingreso = ingresos.find(item => item.id === factura.ingresoId);
+        const esDiferencia = factura.estado?.toUpperCase() === 'PAGADA';
+        return {
           id: factura.id,
+          ingresoId: factura.ingresoId,
           referencia: `FACTURA-${factura.id}`,
-          monto: factura.valor ?? 0,
+          placa: ingreso?.placa,
+          cliente: ingreso?.cliente,
+          monto: esDiferencia ? (factura.faltante ?? 0) : (factura.valorActual ?? factura.valor ?? 0),
           fecha: factura.fechaEmision ?? '',
-          estado: 'PENDIENTE'
-        }))));
+          estado: 'PENDIENTE' as const,
+          esDiferencia
+        };
+      })));
   }
 
   getHistorialPagos(): Observable<PagoOperativo[]> {
     return this.http.get<Array<{ id: number; ingresoId: number; valor: number | null; fechaPago: string | null; estado: string }>>('/api/facturas')
       .pipe(map(facturas => facturas
-        .filter(factura => factura.estado?.toUpperCase() === 'PAGADO' || factura.estado?.toUpperCase() === 'CONFIRMADO')
+        .filter(factura => factura.estado?.toUpperCase() === 'PAGADA')
         .map(factura => ({
           id: factura.id,
+          ingresoId: factura.ingresoId,
           referencia: `FACTURA-${factura.id}`,
           monto: factura.valor ?? 0,
           fecha: factura.fechaPago ?? '',
-          estado: 'CONFIRMADO'
+          estado: 'CONFIRMADO' as const
         }))));
   }
 
   confirmarPago(id: number): Observable<PagoOperativo> {
-    return this.http.post<{ id: number; valor: number | null; fechaPago: string | null }>(`/api/facturas/${id}/pagar`, {})
+    return this.http.post<{ id: number; valor: number | null; valorActual?: number | null; fechaPago: string | null }>(`/api/facturas/${id}/pagar`, {})
       .pipe(map(factura => ({
         id: factura.id,
         referencia: `FACTURA-${factura.id}`,
-        monto: factura.valor ?? 0,
+        monto: factura.valorActual ?? factura.valor ?? 0,
         fecha: factura.fechaPago ?? '',
-        estado: 'CONFIRMADO'
+        estado: 'CONFIRMADO' as const
       })));
   }
 
   getIngresosActivos(): Observable<IngresoOperativo[]> {
-    return this.http.get<Array<{ id: number; placa: string; espacioNumero?: string; fechaEntrada: string; estado: string }>>('/api/ingresos/activos')
+    return this.getIngresosActivosBasic().pipe(
+      switchMap(ingresos => {
+        if (!ingresos.length) {
+          return of(ingresos);
+        }
+        return forkJoin(ingresos.map(ingreso => this.getEstadoPago(ingreso.id).pipe(
+          map(estado => ({ ...ingreso, ...estado }))
+        )));
+      })
+    );
+  }
+
+  getEstadoPago(ingresoId: number): Observable<Partial<IngresoOperativo>> {
+    return this.http.get<EstadoPagoOperativoResponse>(`/api/ingresos/${ingresoId}/estado-pago`)
+      .pipe(map(estado => ({
+        estadoPago: estado.estado,
+        puedeSalir: estado.puedeSalir,
+        minutosTolerancia: estado.minutosTolerancia,
+        fechaLimiteSalida: estado.fechaLimiteSalida ?? undefined,
+        valorActual: estado.valorActual ?? undefined,
+        faltante: estado.faltante ?? undefined
+      })));
+  }
+
+  private getIngresosActivosBasic(): Observable<IngresoOperativo[]> {
+    return this.http.get<IngresoApi[]>('/api/ingresos/activos')
       .pipe(map(items => items.map(item => ({
         id: item.id,
         placa: item.placa,
         espacio: item.espacioNumero,
         fechaIngreso: item.fechaEntrada,
-        estado: item.estado?.toUpperCase() === 'RESERVADO' ? 'ESPERANDO' : 'ACTIVO'
+        estado: item.estado?.toUpperCase() === 'RESERVADO' ? 'ESPERANDO' : 'ACTIVO',
+        novedad: item.novedad
       }))));
   }
 
@@ -117,13 +199,7 @@ export class OperacionesService {
     const endpoint = accion === 'VALIDAR_ENTRADA'
       ? `/api/ingresos/${id}/llegada`
       : `/api/ingresos/${id}/salida`;
-    return this.http.put<{
-      id: number;
-      placa: string;
-      espacioNumero?: string;
-      fechaEntrada: string;
-      estado: string;
-    }>(endpoint, {}).pipe(map(item => ({
+    return this.http.put<IngresoApi>(endpoint, {}).pipe(map(item => ({
       id: item.id,
       placa: item.placa,
       espacio: item.espacioNumero,
@@ -164,16 +240,12 @@ export class OperacionesService {
   }
 
   getNovedades(): Observable<NovedadResponse[]> {
-    return this.http.get<Array<{
-      id: number;
-      novedad?: string;
-      fechaEntrada: string;
-    }>>('/api/ingresos/activos').pipe(map(items =>
+    return this.getIngresosActivosBasic().pipe(map(items =>
       items.filter(item => !!item.novedad).map(item => ({
         id: item.id,
         ingresoId: item.id,
         descripcion: item.novedad || '',
-        fecha: item.fechaEntrada
+        fecha: item.fechaIngreso
       }))
     ));
   }

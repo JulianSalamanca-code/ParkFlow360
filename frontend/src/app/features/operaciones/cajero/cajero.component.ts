@@ -30,7 +30,7 @@ type CajeroView = 'pendientes' | 'historial';
 
       <div *ngIf="!loading && !errorMessage && pagos.length" class="card table-wrap">
         <table class="table" [attr.data-testid]="view === 'pendientes' ? 'cajero-pagos' : 'cajero-historial'">
-          <thead><tr><th>Referencia</th><th>Vehículo</th><th>Cliente</th><th>Hora</th><th>Valor</th><th>Estado / acción</th></tr></thead>
+          <thead><tr><th>Referencia</th><th>Vehículo</th><th>Cliente</th><th>Hora</th><th>Valor</th><th>Concepto / acción</th></tr></thead>
           <tbody>
             <tr *ngFor="let pago of pagos">
               <td class="mono">{{ pago.referencia }}</td>
@@ -39,12 +39,20 @@ type CajeroView = 'pendientes' | 'historial';
               <td>{{ pago.fecha }}</td>
               <td>{{ pago.monto | currency:'COP':'symbol-narrow':'1.0-0' }}</td>
               <td>
-                <button *ngIf="view === 'pendientes'" class="btn btn-primary btn-sm"
-                        type="button" [disabled]="confirmingId === pago.id"
-                        (click)="confirmar(pago)" [attr.data-testid]="'cajero-confirmar-' + pago.id">
-                  {{ confirmingId === pago.id ? 'Confirmando...' : 'Confirmar cobro' }}
-                </button>
-                <span *ngIf="view === 'historial'" class="badge badge-available">Confirmado</span>
+                <ng-container *ngIf="view === 'pendientes'; else estadoHistorial">
+                  <span *ngIf="pago.esDiferencia" class="badge badge-warning"
+                        [attr.data-testid]="'cajero-diferencia-' + pago.id">Tiempo adicional</span>
+                  <small *ngIf="pago.esDiferencia" class="diferencia">
+                    Se cobra únicamente la diferencia de la tolerancia vencida.
+                  </small>
+                  <button class="btn btn-primary btn-sm" type="button" [disabled]="confirmingId === pago.id"
+                          (click)="confirmar(pago)" [attr.data-testid]="'cajero-confirmar-' + pago.id">
+                    {{ confirmingId === pago.id ? 'Confirmando...' : pago.esDiferencia ? 'Cobrar diferencia' : 'Confirmar cobro' }}
+                  </button>
+                </ng-container>
+                <ng-template #estadoHistorial>
+                  <span class="badge badge-available">Confirmado</span>
+                </ng-template>
               </td>
             </tr>
           </tbody>
@@ -68,6 +76,7 @@ type CajeroView = 'pendientes' | 'historial';
     .empty { border-style: dashed; }
     .alert { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
     .alert-success { background: var(--pf-available-bg); border-color: var(--pf-available-border); color: var(--pf-available-text); }
+    .diferencia { display: block; margin: 4px 0 6px; color: var(--pf-muted); }
   `]
 })
 export class CajeroComponent {
@@ -105,7 +114,9 @@ export class CajeroComponent {
     this.operaciones.confirmarPago(pago.id).subscribe({
       next: () => {
         this.confirmingId = null;
-        this.successMessage = `Cobro ${pago.referencia} confirmado.`;
+        this.successMessage = pago.esDiferencia
+          ? `Diferencia de ${pago.referencia} cobrada; el guardia ya puede autorizar la salida.`
+          : `Cobro ${pago.referencia} confirmado.`;
         this.load();
       },
       error: () => {

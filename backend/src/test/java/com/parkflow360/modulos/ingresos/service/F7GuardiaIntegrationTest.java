@@ -91,6 +91,7 @@ class F7GuardiaIntegrationTest {
     @Autowired
     private CreditoRepository creditoRepository;
 
+    private Long empresaId;
     private Long parqueaderoId;
     private Long tarifaId;
     private Long usuarioId;
@@ -102,8 +103,9 @@ class F7GuardiaIntegrationTest {
                 .nombre("Empresa F7")
                 .identificador("EMP-F7")
                 .build());
+        empresaId = empresa.getId();
         Parqueadero parqueadero = parqueaderoRepository.save(Parqueadero.builder()
-                .empresaId(empresa.getId())
+                .empresaId(empresaId)
                 .nombre("Parqueadero F7")
                 .identificador("PQ-F7")
                 .build());
@@ -251,6 +253,42 @@ class F7GuardiaIntegrationTest {
         assertThat(estado.getEstado()).isEqualTo("AL_DIA");
         assertThat(estado.getFacturaId()).isEqualTo(factura.getId());
         assertThat(estado.getPagoId()).isNotNull();
+    }
+
+    @Test
+    void estadoPagoConFacturaPagadaExponeToleranciaYPuedeSalir() {
+        saldoService.recargar(USUARIO, RecargaRequest.builder().valor(VALOR_HORA).build());
+        Long ingresoId = crearIngreso("ACTIVO", "F7ABC12");
+        facturaService.generarYCobrar(ingresoRepository.findById(ingresoId).orElseThrow());
+
+        EstadoPagoResponse estado = estadoPagoService.obtener(GUARDIA, ingresoId);
+
+        assertThat(estado.getMinutosTolerancia()).isEqualTo(30);
+        assertThat(estado.getFechaPago()).isNotNull();
+        assertThat(estado.getFechaLimiteSalida()).isNotNull();
+        assertThat(estado.getValorActual()).isEqualByComparingTo(VALOR_HORA);
+        assertThat(estado.getFaltante()).isEqualByComparingTo("0.00");
+        assertThat(estado.isPuedeSalir()).isTrue();
+    }
+
+    @Test
+    void toleranciaVencidaBloqueaLaSalidaDelGuardia() {
+        saldoService.recargar(USUARIO, RecargaRequest.builder().valor(VALOR_HORA).build());
+        Long ingresoId = crearIngreso("ACTIVO", "F7ABC12");
+        facturaService.generarYCobrar(ingresoRepository.findById(ingresoId).orElseThrow());
+        Empresa empresa = empresaRepository.findById(empresaId).orElseThrow();
+        empresa.setToleranciaSalidaMinutos(0);
+        empresaRepository.saveAndFlush(empresa);
+
+        EstadoPagoResponse estado = estadoPagoService.obtener(GUARDIA, ingresoId);
+        assertThat(estado.getEstado()).isEqualTo("TOLERANCIA_VENCIDA");
+        assertThat(estado.isAlDia()).isFalse();
+        assertThat(estado.isPuedeSalir()).isFalse();
+        assertThat(estado.getMinutosTolerancia()).isZero();
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> ingresoService.registrarSalida(GUARDIA, ingresoId));
+        assertThat(ex.getMessage()).contains("tolerancia");
     }
 
     @Test

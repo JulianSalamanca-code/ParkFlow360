@@ -170,6 +170,10 @@
                     <excludes>
                         <exclude>**/*IntegrationTest.java</exclude>
                     </excludes>
+                    <!-- Byte Buddy de Spring Boot 3.2 requiere este flag bajo JDK 25. -->
+                    <systemPropertyVariables>
+                        <net.bytebuddy.experimental>true</net.bytebuddy.experimental>
+                    </systemPropertyVariables>
                 </configuration>
             </plugin>
             <plugin>
@@ -179,6 +183,9 @@
                     <includes>
                         <include>**/*IntegrationTest.java</include>
                     </includes>
+                    <systemPropertyVariables>
+                        <net.bytebuddy.experimental>true</net.bytebuddy.experimental>
+                    </systemPropertyVariables>
                 </configuration>
                 <executions>
                     <execution>

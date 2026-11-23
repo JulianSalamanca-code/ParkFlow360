@@ -8,47 +8,47 @@ export const routes: Routes = [
       .then(m => m.AUTH_ROUTES)
   },
 
-  // ---------------- ADMINISTRADOR ----------------
-  // El administrador NO registra vehículos ni reserva: opera y supervisa.
+  // ---------------- PLATAFORMA ----------------
+  // La plataforma NO registra vehículos ni reserva: opera y supervisa.
   {
     path: 'planos',
-    canActivate: [RoleGuard], data: { roles: ['ADMIN'] },
+    canActivate: [RoleGuard], data: { roles: ['PLATAFORMA'] },
     loadChildren: () => import('./features/planos/planos.routes')
       .then(m => m.PLANOS_ROUTES)
   },
   {
     path: 'espacios',
-    canActivate: [RoleGuard], data: { roles: ['ADMIN'] },
+    canActivate: [RoleGuard], data: { roles: ['PLATAFORMA'] },
     loadChildren: () => import('./features/espacios/espacios.routes')
       .then(m => m.ESPACIOS_ROUTES)
   },
   {
     path: 'tarifas',
-    canActivate: [RoleGuard], data: { roles: ['ADMIN'] },
+    canActivate: [RoleGuard], data: { roles: ['PLATAFORMA'] },
     loadChildren: () => import('./features/tarifas/tarifas.routes')
       .then(m => m.TARIFAS_ROUTES)
   },
   {
     path: 'ingresos',
-    canActivate: [RoleGuard], data: { roles: ['ADMIN'] },
+    canActivate: [RoleGuard], data: { roles: ['PLATAFORMA'] },
     loadChildren: () => import('./features/ingresos/ingresos.routes')
       .then(m => m.INGRESOS_ROUTES)
   },
   {
     path: 'pagos',
-    canActivate: [RoleGuard], data: { roles: ['ADMIN'] },
+    canActivate: [RoleGuard], data: { roles: ['PLATAFORMA'] },
     loadChildren: () => import('./features/pagos/pagos.routes')
       .then(m => m.PAGOS_ROUTES)
   },
   {
     path: 'reportes',
-    canActivate: [RoleGuard], data: { roles: ['ADMIN'] },
+    canActivate: [RoleGuard], data: { roles: ['PLATAFORMA'] },
     loadChildren: () => import('./features/reportes/reportes.routes')
       .then(m => m.REPORTES_ROUTES)
   },
   {
     path: 'usuarios',
-    canActivate: [RoleGuard], data: { roles: ['ADMIN'] },
+    canActivate: [RoleGuard], data: { roles: ['PLATAFORMA'] },
     loadChildren: () => import('./features/usuarios/usuarios.routes')
       .then(m => m.USUARIOS_ROUTES)
   },
@@ -85,9 +85,21 @@ export const routes: Routes = [
       .then(m => m.PagarComponent)
   },
 
+  // ---------------- ROLES EN PREPARACIÓN ----------------
+  {
+    path: 'proximamente',
+    canActivate: [RoleGuard], data: { roles: [] },
+    loadComponent: () => import('./features/proximamente/proximamente.component')
+      .then(m => m.ProximamenteComponent)
+  },
+
   {
     path: '',
     redirectTo: 'planos',
     pathMatch: 'full'
+  },
+  {
+    path: '**',
+    redirectTo: ''
   }
 ];

@@ -103,6 +103,12 @@ a { color: var(--pf-primary); text-decoration: none; }
   z-index: 50;
 }
 
+.sidebar-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 8px;
+}
+
 .main-area {
   flex: 1;
   min-width: 0;
@@ -461,15 +467,13 @@ a { color: var(--pf-primary); text-decoration: none; }
    Responsive
    ============================================================================ */
 
-.nav-toggle { display: none; }
 .nav-backdrop { display: none; }
+.bottom-nav { display: none; }
 
 @media (max-width: 900px) {
   .app-shell.authed .main-area { margin-left: 0; }
 
-  /* Menú móvil: drawer deslizante en vez de ocultar la navegación */
-  .nav-toggle { display: inline-flex; }
-
+  /* Menú móvil: drawer deslizante + barra inferior de accesos rápidos */
   .sidebar {
     transform: translateX(-100%);
     transition: transform 0.2s ease;
@@ -483,6 +487,59 @@ a { color: var(--pf-primary); text-decoration: none; }
     inset: 0;
     background: rgba(15, 23, 42, 0.45);
     z-index: 45;
+  }
+
+  .bottom-nav {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 46;
+    background: rgba(255, 255, 255, 0.97);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid var(--pf-outline-soft);
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+    box-shadow: 0 -4px 16px rgba(15, 23, 42, 0.06);
+  }
+
+  .bottom-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    min-height: 54px;
+    padding: 6px 2px;
+    border: 0;
+    border-radius: var(--pf-radius-chip);
+    background: none;
+    color: var(--pf-muted);
+    font-family: var(--pf-font);
+    font-size: 10.5px;
+    font-weight: 700;
+    text-align: center;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .bottom-nav-item .material-symbols-outlined { font-size: 22px; }
+
+  .bottom-nav-item.active {
+    color: var(--pf-primary);
+    background: var(--pf-primary-container);
+  }
+
+  .bottom-nav-label {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 1.1;
+  }
+
+  .app-shell.authed .content {
+    padding-bottom: calc(88px + env(safe-area-inset-bottom));
   }
 
   .user-meta { display: none; }

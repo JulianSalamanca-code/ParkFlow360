@@ -1,10 +1,9 @@
-import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { ToastService } from '../../../shared/services/toast.service';
-import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-login',
@@ -210,8 +209,6 @@ export class LoginComponent implements OnInit {
   form!: FormGroup;
   isLoading = false;
   errorMessage = '';
-  googleEnabled = false;
-  googleError = '';
 
   constructor(
     private fb: FormBuilder,
@@ -225,11 +222,6 @@ export class LoginComponent implements OnInit {
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required]]
     });
-
-    this.googleEnabled = !!environment.googleClientId;
-    if (this.googleEnabled) {
-      this.cargarGoogle();
-    }
   }
 
   login(): void {
@@ -261,5 +253,9 @@ export class LoginComponent implements OnInit {
     const state = Array.from(stateBytes, byte => byte.toString(16).padStart(2, '0')).join('');
     sessionStorage.setItem('google_oauth_state', state);
     window.location.assign(`/api/auth/google/authorize?state=${encodeURIComponent(state)}`);
+  }
+
+  private redirigir(): void {
+    this.router.navigateByUrl(this.authService.homeRoute());
   }
 }

@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { PagoService } from '../../pagos/services/pago.service';
 import { IngresoService } from '../../ingresos/services/ingreso.service';
 import { Pago } from '../../pagos/models/pago.model';
@@ -11,7 +10,7 @@ import { ToastService } from '../../../shared/services/toast.service';
 @Component({
   selector: 'app-pagar',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule],
   template: `
     <div class="page">
       <div class="page-header">
@@ -62,9 +61,9 @@ import { ToastService } from '../../../shared/services/toast.service';
                 </thead>
                 <tbody>
                   <tr *ngFor="let p of pagos">
-                    <td class="mono">{{ p.referencia || ('#' + p.id) }}</td>
+                    <td class="mono">#{{ p.id }}</td>
                     <td class="num">{{ p.valor | currency:'COP':'symbol-narrow':'1.0-0' }}</td>
-                    <td><span class="badge" [ngClass]="estadoBadge(p.estado)">{{ p.estado }}</span></td>
+                    <td><span class="badge" [ngClass]="estadoBadge(p.estadoPago)">{{ p.estadoPago || 'PENDIENTE' }}</span></td>
                     <td class="mono">{{ p.fecha | date:'short' }}</td>
                   </tr>
                   <tr *ngIf="pagos.length === 0">
@@ -142,8 +141,10 @@ export class PagarComponent implements OnInit {
 
   estadoBadge(estado?: string): string {
     switch ((estado || '').toUpperCase()) {
+      case 'CONFIRMADO':
       case 'PAGADO': return 'badge-available';
       case 'PENDIENTE': return 'badge-warning';
+      case 'FALLIDO':
       case 'RECHAZADO': return 'badge-occupied';
       default: return 'badge-neutral';
     }

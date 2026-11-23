@@ -2,7 +2,15 @@ import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { Observable, Subscription, interval } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { AuthService } from './auth/services/auth.service';
+import { roleLabel } from './core/auth/roles';
+import {
+  NavItem,
+  NavSection,
+  bottomItemsFor,
+  sidebarSectionsFor
+} from './core/navigation/nav.config';
 import { ToastContainerComponent } from './shared/components/toast-container/toast-container.component';
 import { ToastService } from './shared/services/toast.service';
 
@@ -16,8 +24,9 @@ import { ToastService } from './shared/services/toast.service';
 })
 export class AppComponent implements OnInit, OnDestroy {
   isAuthenticated$: Observable<boolean>;
-  isAdmin$: Observable<boolean>;
-  isUsuario$: Observable<boolean>;
+  homePath$: Observable<string>;
+  sidebarSections$: Observable<readonly NavSection[]>;
+  bottomItems$: Observable<readonly NavItem[]>;
   mobileNavOpen = false;
   clock = '';
   today = '';
@@ -25,8 +34,13 @@ export class AppComponent implements OnInit, OnDestroy {
 
   constructor(private authService: AuthService, private router: Router, private toast: ToastService) {
     this.isAuthenticated$ = this.authService.isAuthenticated$;
-    this.isAdmin$ = this.authService.isAdmin$;
-    this.isUsuario$ = this.authService.isUsuario$;
+    this.homePath$ = this.authService.homeRoute$;
+    this.sidebarSections$ = this.authService.rol$.pipe(
+      map(rol => sidebarSectionsFor(rol))
+    );
+    this.bottomItems$ = this.authService.rol$.pipe(
+      map(rol => bottomItemsFor(rol))
+    );
   }
 
   get userName(): string {
@@ -34,7 +48,7 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   get userRole(): string {
-    return this.authService.getUser()?.rol || 'Usuario';
+    return roleLabel(this.authService.getRol()) || 'Usuario';
   }
 
   ngOnInit(): void {

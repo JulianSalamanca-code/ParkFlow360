@@ -12,6 +12,7 @@ import { Tarifa } from '../../tarifas/models/tarifa.model';
 import { Vehiculo } from '../../vehiculos/models/vehiculo.model';
 import { TicketComponent } from '../../../shared/components/ticket/ticket.component';
 import { ToastService } from '../../../shared/services/toast.service';
+import { modalidadFromTipo } from '../../../shared/utils/modalidad';
 
 @Component({
   selector: 'app-reservar',
@@ -93,9 +94,9 @@ import { ToastService } from '../../../shared/services/toast.service';
             [categoria]="categoriaSeleccionada"
             [espacio]="espacioLabel"
             [tarifaValor]="tarifaValor"
-            [modalidad]="'POR HORAS'"
+            [modalidad]="modalidad"
             [operador]="nombreCliente"
-            [novedad]="$safeNavigationMigration(form.get('novedad')?.value)"
+            [novedad]="novedadPreview"
             [fecha]="fechaTicket"
           ></app-ticket>
         </div>
@@ -190,9 +191,22 @@ export class ReservarComponent implements OnInit {
   }
 
   get tarifaValor(): number | null {
-    const id = this.form?.get('tarifaId')?.value;
-    const t = this.tarifas.find(x => x.id === id);
+    const t = this.tarifaSeleccionada;
     return t ? Number(t.valor) : null;
+  }
+
+  get tarifaSeleccionada(): Tarifa | undefined {
+    const id = this.form?.get('tarifaId')?.value;
+    return this.tarifas.find(t => t.id === id);
+  }
+
+  /** RN-12: la modalidad se deriva del tipo de tarifa seleccionada. */
+  get modalidad(): string {
+    return modalidadFromTipo(this.tarifaSeleccionada?.tipo);
+  }
+
+  get novedadPreview(): string {
+    return this.form?.get('novedad')?.value || '';
   }
 
   reservar(): void {
@@ -221,7 +235,7 @@ export class ReservarComponent implements OnInit {
       espacioNumero: espacio?.numero,
       tarifaId: this.form.get('tarifaId')?.value || undefined,
       tarifaValor: this.tarifaValor ?? undefined,
-      modalidad: 'POR HORAS',
+      modalidad: this.modalidad,
       novedad: this.form.get('novedad')?.value
     };
 

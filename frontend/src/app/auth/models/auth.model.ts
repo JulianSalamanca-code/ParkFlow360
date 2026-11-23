@@ -10,3 +10,9 @@ export interface LoginResponse {
   rol: string;
   nombre: string;
 }
+
+export interface RegistroRequest {
+  nombre: string;
+  email: string;
+  password: string;
+}

@@ -10,6 +10,7 @@ import { Espacio } from '../../../espacios/models/espacio.model';
 import { Tarifa } from '../../../tarifas/models/tarifa.model';
 import { TicketComponent } from '../../../../shared/components/ticket/ticket.component';
 import { ToastService } from '../../../../shared/services/toast.service';
+import { modalidadFromTipo } from '../../../../shared/utils/modalidad';
 
 @Component({
   selector: 'app-ingreso-form',
@@ -104,13 +105,13 @@ import { ToastService } from '../../../../shared/services/toast.service';
           <app-ticket
             [titulo]="folio ? 'TICKET INGRESO' : 'PREVISUALIZACIÓN'"
             [folio]="folio || 'TK-PREVIEW'"
-            [placa]="$safeNavigationMigration(form.get('placa')?.value)"
-            [categoria]="$safeNavigationMigration(form.get('categoria')?.value)"
+            [placa]="placaPreview"
+            [categoria]="categoriaPreview"
             [espacio]="espacioLabel"
             [tarifaValor]="tarifaValor"
-            [modalidad]="'POR HORAS'"
+            [modalidad]="modalidad"
             [operador]="operador"
-            [novedad]="$safeNavigationMigration(form.get('novedad')?.value)"
+            [novedad]="novedadPreview"
             [fecha]="fechaTicket"
           ></app-ticket>
 
@@ -210,9 +211,30 @@ export class IngresoFormComponent implements OnInit {
   }
 
   get tarifaValor(): number | null {
-    const id = this.form?.get('tarifaId')?.value;
-    const t = this.tarifas.find(x => x.id === id);
+    const t = this.tarifaSeleccionada;
     return t ? Number(t.valor) : null;
+  }
+
+  get tarifaSeleccionada(): Tarifa | undefined {
+    const id = this.form?.get('tarifaId')?.value;
+    return this.tarifas.find(t => t.id === id);
+  }
+
+  /** RN-12: la modalidad se deriva del tipo de tarifa seleccionada. */
+  get modalidad(): string {
+    return modalidadFromTipo(this.tarifaSeleccionada?.tipo);
+  }
+
+  get placaPreview(): string {
+    return this.form?.get('placa')?.value || '';
+  }
+
+  get categoriaPreview(): string {
+    return this.form?.get('categoria')?.value || 'CARRO';
+  }
+
+  get novedadPreview(): string {
+    return this.form?.get('novedad')?.value || '';
   }
 
   guardar(): void {
@@ -230,7 +252,7 @@ export class IngresoFormComponent implements OnInit {
       espacioNumero: espacio?.numero,
       tarifaId: this.form.get('tarifaId')?.value || undefined,
       tarifaValor: this.tarifaValor ?? undefined,
-      modalidad: 'POR HORAS',
+      modalidad: this.modalidad,
       novedad: this.form.get('novedad')?.value
     };
 

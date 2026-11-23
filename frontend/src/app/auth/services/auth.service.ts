@@ -2,7 +2,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
-import { LoginRequest, LoginResponse } from '../models/auth.model';
+import { LoginRequest, LoginResponse, RegistroRequest } from '../models/auth.model';
+import { Rol, homeRouteForRol, normalizeRol } from '../../core/auth/roles';
 
 @Injectable({
   providedIn: 'root'
@@ -15,10 +16,22 @@ export class AuthService {
   private isAuthenticatedSubject = new BehaviorSubject<boolean>(this.hasToken());
   public isAuthenticated$ = this.isAuthenticatedSubject.asObservable();
 
-  private rolSubject = new BehaviorSubject<string>(this.getRol());
-  public rol$ = this.rolSubject.asObservable();
-  public isAdmin$ = this.rolSubject.pipe(map(r => (r || '').toUpperCase() === 'ADMIN'));
-  public isUsuario$ = this.rolSubject.pipe(map(r => (r || '').toUpperCase() === 'USUARIO'));
+  private rolSubject = new BehaviorSubject<Rol | null>(this.getRol());
+  public rol$: Observable<Rol | null> = this.rolSubject.asObservable();
+
+  public isPlataforma$ = this.hasRole$('PLATAFORMA');
+  public isEmpresa$ = this.hasRole$('EMPRESA');
+  public isCajero$ = this.hasRole$('CAJERO_PAGOS');
+  public isGuardia$ = this.hasRole$('GUARDIA');
+  public isUsuario$ = this.hasRole$('USUARIO');
+
+  /** @deprecated usar `isPlataforma$`. Se conserva por compatibilidad. */
+  public isAdmin$ = this.isPlataforma$;
+
+  /** Ruta inicial del rol actual, útil para redirecciones tras el login. */
+  public homeRoute$: Observable<string> = this.rol$.pipe(
+    map(rol => homeRouteForRol(rol))
+  );
 
   constructor(private http: HttpClient) {}
 
@@ -35,14 +48,9 @@ export class AuthService {
     );
   }
 
-  registrar(registroData: any): Observable<LoginResponse> {
+  registrar(registroData: RegistroRequest): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${this.apiUrl}/registro`, registroData).pipe(
-      tap(response => {
-        this.setToken(response.token);
-        this.setUser(response);
-        this.isAuthenticatedSubject.next(true);
-        this.rolSubject.next(response.rol);
-      })
+      tap(response => this.handleSession(response))
     );
   }
 
@@ -50,12 +58,7 @@ export class AuthService {
     return this.http.get<LoginResponse>(`${this.apiUrl}/google/callback`, {
       params: { code }
     }).pipe(
-      tap(response => {
-        this.setToken(response.token);
-        this.setUser(response);
-        this.isAuthenticatedSubject.next(true);
-        this.rolSubject.next(response.rol);
-      })
+      tap(response => this.handleSession(response))
     );
   }
 
@@ -63,7 +66,7 @@ export class AuthService {
     localStorage.removeItem(this.tokenKey);
     localStorage.removeItem(this.userKey);
     this.isAuthenticatedSubject.next(false);
-    this.rolSubject.next('');
+    this.rolSubject.next(null);
   }
 
   getToken(): string | null {
@@ -72,30 +75,51 @@ export class AuthService {
 
   getUser(): LoginResponse | null {
     const user = localStorage.getItem(this.userKey);
-    return user ? JSON.parse(user) : null;
+    return user ? JSON.parse(user) as LoginResponse : null;
   }
 
-  getRol(): string {
-    return this.getUser()?.rol || '';
+  /** Rol canónico del usuario (los tokens `ADMIN` se leen como `PLATAFORMA`). */
+  getRol(): Rol | null {
+    return normalizeRol(this.getUser()?.rol);
+  }
+
+  hasRole(rol: string | null | undefined): boolean {
+    const esperado = normalizeRol(rol);
+    return !!esperado && this.getRol() === esperado;
+  }
+
+  hasAnyRole(roles: readonly string[]): boolean {
+    const actual = this.getRol();
+    return !!actual && roles.some(rol => normalizeRol(rol) === actual);
+  }
+
+  /** Ruta inicial según el rol actual. */
+  homeRoute(): string {
+    return homeRouteForRol(this.getRol());
   }
 
   isLoggedIn(): boolean {
     return this.hasToken();
   }
 
+  /** @deprecated usar `hasRole('PLATAFORMA')`. */
   isAdmin(): boolean {
-    return this.getRol().toUpperCase() === 'ADMIN';
+    return this.hasRole('PLATAFORMA');
   }
 
   isUsuario(): boolean {
-    return this.getRol().toUpperCase() === 'USUARIO';
+    return this.hasRole('USUARIO');
+  }
+
+  private hasRole$(rol: Rol): Observable<boolean> {
+    return this.rol$.pipe(map(actual => actual === rol));
   }
 
   private handleSession(response: LoginResponse): void {
     this.setToken(response.token);
     this.setUser(response);
     this.isAuthenticatedSubject.next(true);
-    this.rolSubject.next(response.rol);
+    this.rolSubject.next(normalizeRol(response.rol));
   }
 
   private hasToken(): boolean {

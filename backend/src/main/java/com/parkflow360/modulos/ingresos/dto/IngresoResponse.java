@@ -33,4 +33,7 @@ public class IngresoResponse {
     private String estadoPago;
     private LocalDateTime fechaEntrada;
     private LocalDateTime fechaSalida;
+    private LocalDateTime fechaReserva;
+    private LocalDateTime fechaLimiteLlegada;
+    private LocalDateTime fechaLlegada;
 }

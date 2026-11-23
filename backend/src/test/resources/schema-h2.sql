@@ -19,3 +19,7 @@ ALTER TABLE facturas
 CREATE INDEX IF NOT EXISTS idx_facturas_usuario ON facturas(usuario_id);
 CREATE INDEX IF NOT EXISTS idx_creditos_usuario ON creditos(usuario_id);
 CREATE INDEX IF NOT EXISTS idx_movimientos_saldo_usuario ON movimientos_saldo(usuario_id);
+
+-- Hito 3: consulta del job de expiración de reservas.
+CREATE INDEX IF NOT EXISTS idx_ingresos_estado_limite_llegada
+    ON ingresos(estado, fecha_limite_llegada);

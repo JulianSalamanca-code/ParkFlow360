@@ -29,12 +29,12 @@ class PostgresMigrationIntegrationTest {
     private JdbcTemplate jdbcTemplate;
 
     @Test
-    void flywayAplicaV18SobrePostgresReal() {
+    void flywayAplicaV19SobrePostgresReal() {
         MigrationInfo[] aplicadas = flyway.info().applied();
 
         assertThat(aplicadas).isNotEmpty();
         MigrationInfo ultima = aplicadas[aplicadas.length - 1];
-        assertThat(ultima.getVersion().getVersion()).isEqualTo("18");
+        assertThat(ultima.getVersion().getVersion()).isEqualTo("19");
         assertThat(ultima.getState()).isEqualTo(MigrationState.SUCCESS);
     }
 
@@ -62,5 +62,23 @@ class PostgresMigrationIntegrationTest {
                 """, String.class);
         assertThat(indices).containsExactlyInAnyOrder(
                 "uq_facturas_ingreso", "uq_creditos_pendientes_usuario", "uq_pagos_ingreso_confirmado");
+    }
+
+    @Test
+    void v19CreaColumnasEIndiceDeHoraDeEspera() {
+        List<String> columnas = jdbcTemplate.queryForList("""
+                SELECT column_name FROM information_schema.columns
+                WHERE table_schema = 'public' AND table_name = 'ingresos'
+                  AND column_name IN ('fecha_reserva', 'fecha_limite_llegada', 'fecha_llegada')
+                """, String.class);
+        assertThat(columnas).containsExactlyInAnyOrder(
+                "fecha_reserva", "fecha_limite_llegada", "fecha_llegada");
+
+        List<String> indices = jdbcTemplate.queryForList("""
+                SELECT indexname FROM pg_indexes
+                WHERE schemaname = 'public'
+                  AND indexname = 'idx_ingresos_estado_limite_llegada'
+                """, String.class);
+        assertThat(indices).containsExactly("idx_ingresos_estado_limite_llegada");
     }
 }

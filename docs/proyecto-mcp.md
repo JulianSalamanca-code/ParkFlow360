@@ -1,74 +1,74 @@
-# ParkFlow360 - Manual de Contexto del Proyecto (MCP)
+# ParkFlow360 — Manual de Contexto del Proyecto (MCP)
 
-## Estado del Proyecto
+> Documento vivo de contexto. Fuente de verdad: el código y [`AGENTS.md`](../AGENTS.md).  
+> Funcionalidades previstas: [`ESPECIFICACIONES_PARKFLOW360.md`](ESPECIFICACIONES_PARKFLOW360.md).
+
+## Estado del proyecto
+
 - **Nombre:** ParkFlow360
-- **Tipo:** SaaS de gestión de parqueaderos para empresas y universidades
+- **Tipo:** SaaS multiempresa de gestión de parqueaderos
 - **Repositorio:** JulianSalamanca-code/ParkFlow360
-- **Rama actual:** juliansalamanca-code-diagramas-cr-adr-proyecto
-- **Estado:** En desarrollo activo
-- **Monorepo:** Sí - Frontend + Backend
+- **Rama de trabajo actual:** `docs/especificaciones-y-agentes`
+- **Monorepo:** sí (`backend/` + `frontend/`)
+- **Estado:** en desarrollo; las funcionalidades F0–F10 de la spec están pendientes
 
-## Tecnologías Usadas
+## Tecnologías
 
 ### Backend
-- **Lenguaje:** Java 17
-- **Framework:** Spring Boot 3.x
-- **Seguridad:** Spring Security + JWT
-- **ORM:** Spring Data JPA
-- **Migraciones:** Flyway
-- **Base de datos:** PostgreSQL 15+
-- **Infraestructura:** Docker Compose
+
+- Java 17, Spring Boot 3.2.5, Maven (sin wrapper)
+- Spring Security stateless + JWT (JJWT 0.12.5), Google OAuth2 con flujo manual
+- Spring Data JPA, Flyway (migraciones existentes V1–V16)
+- PostgreSQL 15
 
 ### Frontend
-- **Framework:** Angular 17+
-- **Despliegue:** Netlify (estático)
 
-### Infraestructura / DevOps
-- **Contenedores:** Docker
-- **Backend hosting:** Railway / Render
-- **Base de datos cloud:** Supabase PostgreSQL
-- **CI/CD:** Netlify para frontend
+- Angular 22.2.x (standalone), TypeScript ~6.0.3, RxJS 7.8, Cypress 16.2
+- Node 22, pnpm (Netlify usa `pnpm-lock.yaml`)
 
-## Arquitectura General
-Monorepo con separación clara:
-- `backend/` → API REST Spring Boot
-- `frontend/` → SPA Angular
-- `docker-compose.yml` → PostgreSQL local
+### Infraestructura
 
-Comunicación: Frontend → API REST → PostgreSQL
+- Backend: Render · Frontend: Netlify · Base de datos: Supabase PostgreSQL
+- Docker Compose solo levanta PostgreSQL local en `:5432`
 
-## Módulos del Sistema
+## Arquitectura
 
-1. **Vehículos** - CRUD de vehículos (placa, tipo, color, modelo)
-2. **Espacios** - Gestión de espacios (número, tipo, estado, piso)
-3. **Tarifas** - Tarifas por hora/día/semana/mes
-4. **Pagos** - Registro de pagos con métodos EFECTIVO/TARJETA/TRANSFERENCIA/QR
-5. **Reportes** - Reportes generales, espacios por estado, ingresos por período
-6. **Seguridad** - Autenticación JWT, roles ADMIN/USER
+`frontend` (`:4200`, proxy `/api` → `:8080`) → API REST Spring Boot (`:8080`) → PostgreSQL.
 
-## Cómo se usa
+Backend: `com.parkflow360` con `config/`, `security/` y `modulos/<dominio>/{controller,dto,entity,repository,service}`; `shared/exception` para el manejo global de errores.
 
-### Flujo de usuario
-1. Login vía `POST /api/auth/login` → recibe JWT
-2. Navegación por módulos según rol
-3. CRUD de entidades con validaciones
-4. Generación de reportes
+Frontend: `src/app/{auth,core,features,shared}`, rutas lazy con `RoleGuard`, servicios HTTP con URLs relativas `/api/...`.
 
-### Despliegue
-- Frontend → Netlify con `netlify.toml`
-- Backend → Railway/Render con variables de entorno
-- DB → Supabase
+## Módulos existentes
 
-### Requisitos locales
-- Java 17+, Node.js 18+, Maven 3.9+, Docker opcional
+1. **Vehículos**: CRUD con validación de placa `^[A-Z]{3}-[A-Z0-9]{3}$`.
+2. **Espacios**: CRUD, estados `LIBRE`/`RESERVADO`/`OCUPADO`, planos e importación CSV.
+3. **Tarifas**: CRUD con tipos `HORA`, `DIA`, `SEMANA`, `MES`, `MOMENTO`.
+4. **Ingresos**: reservas, ingresos, salidas y liberación de espacios.
+5. **Pagos**: registro manual (métodos EFECTIVO/TARJETA/TRANSFERENCIA/QR; estados `CONFIRMADO`/`FALLIDO`).
+6. **Reportes**: general, espacios por estado e ingresos por período.
+7. **Seguridad y usuarios**: JWT, Google OAuth y roles actuales `ADMIN`/`USUARIO`.
+
+## Módulos previstos (no implementados)
+
+`saldos`, `creditos`, `facturas`, `empresas`, `parqueaderos`, además de los roles `PLATAFORMA`, `EMPRESA`, `CAJERO_PAGOS` y `GUARDIA`. Ver la spec.
+
+## Flujo actual del usuario
+
+1. `POST /api/auth/login` o inicio con Google (`GET /api/auth/google/authorize` → callback frontend `/auth/google/callback`).
+2. Navegación según rol (`RoleGuard`): administrador → `/vehiculos`; usuario → `/mis-parqueos`.
+3. Reserva (`POST /api/ingresos/reservar`), registro de pagos y salida (`PUT /api/ingresos/{id}/salida`).
 
 ## Endpoints principales
-- `/api/vehiculos`
-- `/api/espacios`
-- `/api/tarifas`
-- `/api/pagos`
-- `/api/reportes`
-- `/api/auth/login`
+
+- `/api/auth`: `login`, `registro`, `google/authorize`, `google/callback`
+- `/api/vehiculos`, `/api/espacios`, `/api/tarifas`, `/api/ingresos`, `/api/pagos`, `/api/reportes`, `/api/usuarios`
+- Rutas compartidas ADMIN/USUARIO: `/api/vehiculos/mios`, `/api/ingresos/mios`, `/api/ingresos/reservar`, `GET /api/espacios/**`, `GET /api/tarifas/**`
+
+## Requisitos locales
+
+Java 17+, Maven 3.9+, Node 22, pnpm, Docker opcional.
 
 ## Notas
-Proyecto privado y confidencial. Documentación generada automáticamente para visualización.
+
+Proyecto privado y confidencial. Los documentos históricos están clasificados en [`INDICE_DOCUMENTACION.md`](INDICE_DOCUMENTACION.md).

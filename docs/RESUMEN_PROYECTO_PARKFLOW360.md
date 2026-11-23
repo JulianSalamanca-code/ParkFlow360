@@ -1,5 +1,7 @@
 # RESUMEN DEL PROYECTO — ParkFlow360
 
+> **Documento histórico (2026-10-27).** Refleja el estado de esa fecha (Angular 17, migraciones V1–V8, supuestas pruebas unitarias). No es estado vigente: consulta [`AGENTS.md`](../AGENTS.md) y [`ESPECIFICACIONES_PARKFLOW360.md`](ESPECIFICACIONES_PARKFLOW360.md).
+
 ## 1. Estado actual del proyecto
 
 ### 1.1 Estructura actual

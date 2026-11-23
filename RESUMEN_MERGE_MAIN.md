@@ -1,5 +1,7 @@
 # Resumen de Merge a Main
 
+> **Documento histórico (2026-10-28).** Registro de los merges de esa fecha; no refleja el estado actual del repositorio ni la configuración vigente de OAuth. Consulta [`AGENTS.md`](AGENTS.md) y [`SOLUCION_GOOGLE_OAUTH.md`](SOLUCION_GOOGLE_OAUTH.md).
+
 ## Fecha: 2026-10-28
 
 ## Ramas mergeadas a main:

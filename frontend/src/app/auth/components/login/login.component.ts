@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -235,8 +235,7 @@ export class LoginComponent implements OnInit {
         this.isLoading = false;
         const nombre = this.authService.getUser()?.nombre || '';
         this.toast.success(`¡Bienvenido${nombre ? ', ' + nombre : ''}!`);
-        const rol = this.authService.getRol().toUpperCase();
-        this.router.navigate([rol === 'ADMIN' ? '/vehiculos' : '/mis-parqueos']);
+        this.redirigir();
       },
       error: (err) => {
         this.errorMessage = err.error?.message || 'Error al iniciar sesión';
@@ -254,5 +253,9 @@ export class LoginComponent implements OnInit {
     const state = Array.from(stateBytes, byte => byte.toString(16).padStart(2, '0')).join('');
     sessionStorage.setItem('google_oauth_state', state);
     window.location.assign(`/api/auth/google/authorize?state=${encodeURIComponent(state)}`);
+  }
+
+  private redirigir(): void {
+    this.router.navigateByUrl(this.authService.homeRoute());
   }
 }

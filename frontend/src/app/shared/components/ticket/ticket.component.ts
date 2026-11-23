@@ -49,8 +49,8 @@ import { CommonModule } from '@angular/common';
       </div>
 
       <div class="row"><span class="bold">ESPACIO ASIGNADO:</span><span class="bay mono">{{ espacio || '---' }}</span></div>
-      <div class="row small"><span>TARIFA BASE:</span><strong>{{ (tarifaValor || 0) | currency:'COP':'symbol-narrow':'1.0-0' }} / hora o fracción</strong></div>
-      <div class="row small"><span>MODALIDAD:</span><strong>{{ modalidad || 'POR HORAS' }}</strong></div>
+      <div class="row small"><span>TARIFA BASE:</span><strong>{{ (tarifaValor || 0) | currency:'COP':'symbol-narrow':'1.0-0' }}</strong></div>
+      <div class="row small"><span>MODALIDAD:</span><strong>{{ modalidad || '—' }}</strong></div>
 
       <div class="divider"></div>
 

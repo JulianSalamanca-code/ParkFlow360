@@ -40,4 +40,12 @@ export class VehiculoService {
   crearMio(vehiculo: VehiculoRequest): Observable<Vehiculo> {
     return this.http.post<Vehiculo>(`${this.apiUrl}/mios`, vehiculo);
   }
+
+  actualizarMio(id: number, vehiculo: VehiculoRequest): Observable<Vehiculo> {
+    return this.http.put<Vehiculo>(`${this.apiUrl}/mios/${id}`, vehiculo);
+  }
+
+  eliminarMio(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/mios/${id}`);
+  }
 }

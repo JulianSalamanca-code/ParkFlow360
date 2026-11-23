@@ -122,8 +122,7 @@ export class GoogleCallbackComponent implements OnInit {
       next: () => {
         const nombre = this.authService.getUser()?.nombre || '';
         this.toast.success(`¡Bienvenido${nombre ? ', ' + nombre : ''}!`);
-        const rol = this.authService.getRol().toUpperCase();
-        this.router.navigate([rol === 'ADMIN' ? '/vehiculos' : '/mis-parqueos']);
+        this.router.navigateByUrl(this.authService.homeRoute());
       },
       error: (err) => {
         this.error = err.error?.message || 'Error al completar inicio con Google';

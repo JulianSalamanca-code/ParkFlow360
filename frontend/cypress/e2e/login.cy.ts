@@ -2,7 +2,7 @@
 
 describe('Login', () => {
   beforeEach(() => {
-    cy.visit('/login')
+    cy.visit('/auth/login')
   })
 
   it('should display login page with all elements', () => {
@@ -28,7 +28,7 @@ describe('Login', () => {
   it('should login successfully as admin', () => {
     cy.loginAsAdmin()
     cy.shouldBeLoggedIn()
-    cy.shouldBeOnPage('/vehiculos')
+    cy.shouldBeOnPage('/planos')
   })
 
   it('should show error for invalid credentials', () => {

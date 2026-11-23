@@ -30,8 +30,28 @@ public class Pago {
     @Column(name = "tarifa_id")
     private Long tarifaId;
 
+    @Column(name = "parqueadero_id")
+    private Long parqueaderoId;
+
     @Column(name = "ingreso_id")
     private Long ingresoId;
+
+    @Column(name = "usuario_id")
+    private Long usuarioId;
+
+    @Builder.Default
+    @Column(length = 20)
+    private String estado = "PAGADO";
+
+    @Column(length = 100)
+    private String referencia;
+
+    @Column(name = "wompi_transaction_id", length = 100)
+    private String wompiTransactionId;
+
+    @Builder.Default
+    @Column(length = 10)
+    private String moneda = "COP";
 
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal valor;
@@ -51,6 +71,12 @@ public class Pago {
         fecha = LocalDateTime.now();
         if (estadoPago == null) {
             estadoPago = "CONFIRMADO";
+        }
+        if (estado == null) {
+            estado = "PAGADO";
+        }
+        if (moneda == null) {
+            moneda = "COP";
         }
     }
 }

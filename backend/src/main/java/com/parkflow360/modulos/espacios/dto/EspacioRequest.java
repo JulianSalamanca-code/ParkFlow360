@@ -14,6 +14,8 @@ import lombok.NoArgsConstructor;
 @Builder
 public class EspacioRequest {
 
+    private Long parqueaderoId;
+
     @NotBlank(message = "El número es obligatorio")
     @Size(max = 20, message = "El número no puede tener más de 20 caracteres")
     private String numero;
@@ -28,4 +30,13 @@ public class EspacioRequest {
 
     @NotNull(message = "El piso es obligatorio")
     private Integer piso;
+
+    // ---- Ubicación opcional dentro de un plano ----
+    private Long planoId;
+    private Integer fila;
+    private Integer columna;
+    private Double posX;
+    private Double posY;
+    private Double ancho;
+    private Double alto;
 }

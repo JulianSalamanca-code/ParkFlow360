@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -35,11 +36,22 @@ public class Usuario {
     @Column(name = "google_id", unique = true)
     private String googleId;
 
+    @Builder.Default
+    @Column(length = 20)
+    private String proveedor = "LOCAL";
+
+    @Builder.Default
+    @Column(nullable = false, precision = 12, scale = 2)
+    private BigDecimal saldo = BigDecimal.ZERO;
+
     @Column(name = "fecha_creacion", updatable = false)
     private LocalDateTime fechaCreacion;
 
     @PrePersist
     protected void onCreate() {
         fechaCreacion = LocalDateTime.now();
+        if (proveedor == null) {
+            proveedor = "LOCAL";
+        }
     }
 }

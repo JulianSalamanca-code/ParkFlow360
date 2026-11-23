@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 @Builder
 public class TarifaResponse {
     private Long id;
+    private Long parqueaderoId;
     private String nombre;
     private String tipo;
     private BigDecimal valor;

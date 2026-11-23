@@ -1,7 +1,9 @@
 <div class="app-shell" [ngClass]="{ authed: isAuthenticated$ | async }">
-  <aside class="sidebar" *ngIf="isAuthenticated$ | async">
-    <div>
-      <div class="brand" [routerLink]="(isAdmin$ | async) ? '/vehiculos' : '/mis-parqueos'">
+  <div class="nav-backdrop" *ngIf="mobileNavOpen" (click)="closeMobileNav()"></div>
+
+  <aside id="app-sidebar" class="sidebar" *ngIf="isAuthenticated$ | async" [class.open]="mobileNavOpen">
+    <div class="sidebar-scroll">
+      <div class="brand" [routerLink]="(homePath$ | async) || '/'" (click)="closeMobileNav()">
         <span class="brand-mark">P</span>
         <div>
           <div class="brand-name">ParkFlow</div>
@@ -9,50 +11,15 @@
         </div>
       </div>
 
-      <!-- Navegación ADMIN -->
-      <ng-container *ngIf="isAdmin$ | async">
-        <div class="nav-section-label">Operación Central</div>
+      <ng-container *ngFor="let section of sidebarSections$ | async">
+        <div class="nav-section-label">{{ section.label }}</div>
         <nav class="nav">
-          <a routerLink="/vehiculos" routerLinkActive="active">
-            <span class="material-symbols-outlined">directions_car</span> Vehículos
-          </a>
-          <a routerLink="/espacios" routerLinkActive="active">
-            <span class="material-symbols-outlined">local_parking</span> Espacios
-          </a>
-          <a routerLink="/tarifas" routerLinkActive="active">
-            <span class="material-symbols-outlined">sell</span> Tarifas
-          </a>
-          <a routerLink="/ingresos" routerLinkActive="active">
-            <span class="material-symbols-outlined">receipt_long</span> Ingresos
-          </a>
-          <a routerLink="/pagos" routerLinkActive="active">
-            <span class="material-symbols-outlined">point_of_sale</span> Pagos
-          </a>
-          <a routerLink="/reportes" routerLinkActive="active">
-            <span class="material-symbols-outlined">analytics</span> Reportes
-          </a>
-        </nav>
-
-        <div class="nav-section-label">Administración</div>
-        <nav class="nav">
-          <a routerLink="/usuarios" routerLinkActive="active">
-            <span class="material-symbols-outlined">manage_accounts</span> Usuarios
-          </a>
-        </nav>
-      </ng-container>
-
-      <!-- Navegación USUARIO -->
-      <ng-container *ngIf="isUsuario$ | async">
-        <div class="nav-section-label">Mi Cuenta</div>
-        <nav class="nav">
-          <a routerLink="/reservar" routerLinkActive="active">
-            <span class="material-symbols-outlined">add_circle</span> Reservar Parqueadero
-          </a>
-          <a routerLink="/mis-parqueos" routerLinkActive="active">
-            <span class="material-symbols-outlined">local_parking</span> Mis Parqueos
-          </a>
-          <a routerLink="/mis-vehiculos" routerLinkActive="active">
-            <span class="material-symbols-outlined">directions_car</span> Mis Vehículos
+          <a *ngFor="let item of section.items"
+             [routerLink]="item.path"
+             routerLinkActive="active"
+             (click)="closeMobileNav()"
+             [attr.data-testid]="item.dataTestId">
+            <span class="material-symbols-outlined">{{ item.icon }}</span> {{ item.label }}
           </a>
         </nav>
       </ng-container>
@@ -89,7 +56,8 @@
           <div class="role">{{ userRole }}</div>
         </div>
         <div class="avatar">{{ (userName || 'U').charAt(0) }}</div>
-        <button class="btn btn-ghost btn-sm" (click)="logout()" title="Cerrar sesión">
+        <button class="btn btn-ghost btn-sm" (click)="logout()" title="Cerrar sesión"
+                [attr.data-testid]="'btn-logout'">
           <span class="material-symbols-outlined">logout</span>
         </button>
       </div>
@@ -99,6 +67,28 @@
       <router-outlet></router-outlet>
     </main>
   </div>
+
+  <nav class="bottom-nav" *ngIf="isAuthenticated$ | async" [attr.data-testid]="'bottom-nav'">
+    <a *ngFor="let item of bottomItems$ | async"
+       class="bottom-nav-item"
+       [routerLink]="item.path"
+       routerLinkActive="active"
+       (click)="closeMobileNav()"
+       [attr.data-testid]="'bottom-nav-item-' + item.id">
+      <span class="material-symbols-outlined">{{ item.icon }}</span>
+      <span class="bottom-nav-label">{{ item.shortLabel }}</span>
+    </a>
+
+    <button type="button" class="bottom-nav-item bottom-nav-menu"
+            (click)="toggleMobileNav()"
+            [attr.aria-expanded]="mobileNavOpen"
+            aria-controls="app-sidebar"
+            [attr.aria-label]="mobileNavOpen ? 'Cerrar menú' : 'Abrir menú'"
+            [attr.data-testid]="'nav-hamburger'">
+      <span class="material-symbols-outlined">{{ mobileNavOpen ? 'close' : 'menu' }}</span>
+      <span class="bottom-nav-label">Menú</span>
+    </button>
+  </nav>
 </div>
 
 <app-toast-container></app-toast-container>

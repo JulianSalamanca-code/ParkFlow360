@@ -12,6 +12,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * El catálogo de vehículos lo administra el CLIENTE (rol USUARIO) sobre sus
+ * propios vehículos. El ADMIN únicamente consulta el catálogo.
+ */
 @RestController
 @RequestMapping("/api/vehiculos")
 @RequiredArgsConstructor
@@ -19,7 +23,7 @@ public class VehiculoController {
 
     private final VehiculoService vehiculoService;
 
-    // ---------- Usuario (cliente): solo sus vehículos ----------
+    // ---------- Cliente (rol USUARIO): sus propios vehículos ----------
 
     @GetMapping("/mios")
     public ResponseEntity<List<VehiculoResponse>> misVehiculos(Authentication auth) {
@@ -33,7 +37,21 @@ public class VehiculoController {
         return new ResponseEntity<>(vehiculoService.crearParaUsuario(auth.getName(), request), HttpStatus.CREATED);
     }
 
-    // ---------- Administrador ----------
+    @PutMapping("/mios/{id}")
+    public ResponseEntity<VehiculoResponse> actualizarMiVehiculo(
+            Authentication auth,
+            @PathVariable Long id,
+            @Valid @RequestBody VehiculoRequest request) {
+        return ResponseEntity.ok(vehiculoService.actualizarParaUsuario(auth.getName(), id, request));
+    }
+
+    @DeleteMapping("/mios/{id}")
+    public ResponseEntity<Void> eliminarMiVehiculo(Authentication auth, @PathVariable Long id) {
+        vehiculoService.eliminarParaUsuario(auth.getName(), id);
+        return ResponseEntity.noContent().build();
+    }
+
+    // ---------- Administrador: solo lectura del catálogo ----------
 
     @GetMapping
     public ResponseEntity<List<VehiculoResponse>> listarTodos() {
@@ -43,23 +61,5 @@ public class VehiculoController {
     @GetMapping("/{id}")
     public ResponseEntity<VehiculoResponse> obtenerPorId(@PathVariable Long id) {
         return ResponseEntity.ok(vehiculoService.obtenerPorId(id));
-    }
-
-    @PostMapping
-    public ResponseEntity<VehiculoResponse> crear(@Valid @RequestBody VehiculoRequest request) {
-        return new ResponseEntity<>(vehiculoService.crear(request), HttpStatus.CREATED);
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<VehiculoResponse> actualizar(
-            @PathVariable Long id,
-            @Valid @RequestBody VehiculoRequest request) {
-        return ResponseEntity.ok(vehiculoService.actualizar(id, request));
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminar(@PathVariable Long id) {
-        vehiculoService.eliminar(id);
-        return ResponseEntity.noContent().build();
     }
 }

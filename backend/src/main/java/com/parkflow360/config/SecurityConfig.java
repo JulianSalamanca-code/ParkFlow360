@@ -28,26 +28,56 @@ public class SecurityConfig {
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // Público
+                // ---------- Público ----------
                 .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/pagos/wompi/webhook").permitAll()
 
-                // Compartido (ADMIN y USUARIO)
-                .requestMatchers(
-                    "/api/vehiculos/mios",
-                    "/api/ingresos/mios",
-                    "/api/ingresos/reservar"
-                ).hasAnyRole("ADMIN", "USUARIO")
-                .requestMatchers(HttpMethod.GET, "/api/espacios/**", "/api/tarifas/**")
-                    .hasAnyRole("ADMIN", "USUARIO")
+                // ---------- Cliente (USUARIO) ----------
+                .requestMatchers("/api/vehiculos/mios", "/api/vehiculos/mios/**").hasRole("USUARIO")
+                .requestMatchers("/api/ingresos/mios", "/api/ingresos/reservar").hasRole("USUARIO")
+                .requestMatchers("/api/pagos/online", "/api/pagos/mios").hasRole("USUARIO")
+                .requestMatchers("/api/saldos/**").hasAnyRole("USUARIO", "PLATAFORMA")
+                .requestMatchers("/api/facturas/**").hasAnyRole("USUARIO", "CAJERO_PAGOS", "PLATAFORMA")
+                .requestMatchers(HttpMethod.POST, "/api/creditos").hasRole("USUARIO")
+                .requestMatchers("/api/creditos/**").hasAnyRole("USUARIO", "CAJERO_PAGOS", "PLATAFORMA")
 
-                // Solo ADMIN
-                .requestMatchers("/api/usuarios/**").hasRole("ADMIN")
-                .requestMatchers("/api/reportes/**").hasRole("ADMIN")
-                .requestMatchers("/api/pagos/**").hasRole("ADMIN")
-                .requestMatchers("/api/vehiculos/**").hasRole("ADMIN")
-                .requestMatchers("/api/ingresos/**").hasRole("ADMIN")
-                .requestMatchers("/api/espacios/**").hasRole("ADMIN")
-                .requestMatchers("/api/tarifas/**").hasRole("ADMIN")
+                // ---------- Vinculación y catálogo compartido ----------
+                .requestMatchers("/api/parqueaderos/vincular", "/api/parqueaderos/mios")
+                    .hasAnyRole("USUARIO", "EMPRESA", "PLATAFORMA", "CAJERO_PAGOS", "GUARDIA")
+                .requestMatchers(HttpMethod.GET, "/api/parqueaderos/*/tipos")
+                    .hasAnyRole("USUARIO", "EMPRESA", "PLATAFORMA", "CAJERO_PAGOS", "GUARDIA")
+                .requestMatchers(HttpMethod.GET, "/api/espacios/**", "/api/tarifas/**", "/api/planos/**")
+                    .hasAnyRole("USUARIO", "EMPRESA", "PLATAFORMA", "CAJERO_PAGOS", "GUARDIA")
+
+                // ---------- Guardia: campo, sin gestión de pagos ----------
+                .requestMatchers(HttpMethod.PUT, "/api/ingresos/*/llegada")
+                    .hasAnyRole("GUARDIA", "PLATAFORMA")
+                .requestMatchers(HttpMethod.PUT, "/api/ingresos/*/verificar")
+                    .hasAnyRole("GUARDIA", "EMPRESA", "PLATAFORMA")
+                .requestMatchers(HttpMethod.PUT, "/api/ingresos/*/salida")
+                    .hasAnyRole("GUARDIA", "PLATAFORMA")
+                .requestMatchers(HttpMethod.GET, "/api/ingresos/activos")
+                    .hasAnyRole("CAJERO_PAGOS", "GUARDIA", "EMPRESA", "PLATAFORMA")
+                .requestMatchers(HttpMethod.GET, "/api/ingresos/*/estado-pago")
+                    .hasAnyRole("GUARDIA", "EMPRESA", "CAJERO_PAGOS", "PLATAFORMA")
+
+                // ---------- Reportes: la empresa solo ve sus parqueaderos ----------
+                .requestMatchers("/api/reportes/**")
+                    .hasAnyRole("EMPRESA", "PLATAFORMA")
+
+                // ---------- Cajero: solo pagos ----------
+                .requestMatchers("/api/pagos/**")
+                    .hasAnyRole("CAJERO_PAGOS", "PLATAFORMA")
+
+                // ---------- Empresa: sus parqueaderos ----------
+                .requestMatchers("/api/empresas/**", "/api/parqueaderos/**")
+                    .hasAnyRole("EMPRESA", "PLATAFORMA")
+
+                // ---------- Plataforma: administración y supervisión ----------
+                .requestMatchers("/api/usuarios/**", "/api/ingresos/**",
+                        "/api/espacios/**", "/api/tarifas/**", "/api/planos/**",
+                        "/api/vehiculos/**")
+                    .hasRole("PLATAFORMA")
 
                 .requestMatchers("/api/**").authenticated()
                 .anyRequest().permitAll()

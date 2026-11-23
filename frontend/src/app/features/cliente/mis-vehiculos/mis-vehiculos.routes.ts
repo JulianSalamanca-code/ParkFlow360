@@ -10,5 +10,10 @@ export const MIS_VEHICULOS_ROUTES: Routes = [
     path: 'nuevo',
     loadComponent: () => import('./components/mis-vehiculos-form/mis-vehiculos-form.component')
       .then(m => m.MisVehiculosFormComponent)
+  },
+  {
+    path: 'editar/:id',
+    loadComponent: () => import('./components/mis-vehiculos-form/mis-vehiculos-form.component')
+      .then(m => m.MisVehiculosFormComponent)
   }
 ];

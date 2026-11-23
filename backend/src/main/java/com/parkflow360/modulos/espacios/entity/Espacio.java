@@ -20,7 +20,10 @@ public class Espacio {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 20)
+    @Column(name = "parqueadero_id")
+    private Long parqueaderoId;
+
+    @Column(nullable = false, length = 20)
     private String numero;
 
     @Column(nullable = false, length = 50)
@@ -31,6 +34,29 @@ public class Espacio {
 
     @Column
     private Integer piso;
+
+    // ---- Ubicación dentro de un plano ----
+
+    @Column(name = "plano_id")
+    private Long planoId;
+
+    @Column
+    private Integer fila;
+
+    @Column
+    private Integer columna;
+
+    @Column(name = "pos_x")
+    private Double posX;
+
+    @Column(name = "pos_y")
+    private Double posY;
+
+    @Column
+    private Double ancho;
+
+    @Column
+    private Double alto;
 
     @Column(name = "fecha_creacion", updatable = false)
     private LocalDateTime fechaCreacion;

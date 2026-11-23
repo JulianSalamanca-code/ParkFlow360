@@ -206,7 +206,7 @@ export class RegistroComponent implements OnInit {
       next: () => {
         this.isLoading = false;
         this.toast.success('¡Cuenta creada exitosamente!');
-        this.router.navigate(['/mis-parqueos']);
+        this.router.navigateByUrl(this.authService.homeRoute());
       },
       error: (err) => {
         this.errorMessage = err.error?.message || 'Error al crear la cuenta';

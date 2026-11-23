@@ -20,6 +20,8 @@
     
     <properties>
         <java.version>17</java.version>
+        <!-- Versión compatible con JDK 17 y con JDK 25 (entorno local actual). -->
+        <lombok.version>1.18.38</lombok.version>
         <testcontainers.version>1.19.7</testcontainers.version>
         <postgresql.version>42.7.3</postgresql.version>
     </properties>
@@ -56,6 +58,13 @@
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <version>${postgresql.version}</version>
+        </dependency>
+
+        <!-- Base en memoria para pruebas rápidas (perfil "test") -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
         </dependency>
         
         <!-- Flyway -->
@@ -158,6 +167,13 @@
                     <includes>
                         <include>**/*Test.java</include>
                     </includes>
+                    <excludes>
+                        <exclude>**/*IntegrationTest.java</exclude>
+                    </excludes>
+                    <!-- Byte Buddy de Spring Boot 3.2 requiere este flag bajo JDK 25. -->
+                    <systemPropertyVariables>
+                        <net.bytebuddy.experimental>true</net.bytebuddy.experimental>
+                    </systemPropertyVariables>
                 </configuration>
             </plugin>
             <plugin>
@@ -167,6 +183,9 @@
                     <includes>
                         <include>**/*IntegrationTest.java</include>
                     </includes>
+                    <systemPropertyVariables>
+                        <net.bytebuddy.experimental>true</net.bytebuddy.experimental>
+                    </systemPropertyVariables>
                 </configuration>
                 <executions>
                     <execution>

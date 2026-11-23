@@ -1,5 +1,6 @@
 package com.parkflow360.security.controller;
 
+import com.parkflow360.security.dto.GoogleLoginRequest;
 import com.parkflow360.security.dto.LoginRequest;
 import com.parkflow360.security.dto.LoginResponse;
 import com.parkflow360.security.dto.RegistroRequest;
@@ -30,6 +31,12 @@ public class AuthController {
     @PostMapping("/registro")
     public ResponseEntity<LoginResponse> registrar(@Valid @RequestBody RegistroRequest request) {
         return ResponseEntity.ok(registroService.registrar(request));
+    }
+
+    /** Login con el ID token (credential) emitido por Google Identity Services. */
+    @PostMapping("/google")
+    public ResponseEntity<LoginResponse> loginConGoogle(@Valid @RequestBody GoogleLoginRequest request) {
+        return ResponseEntity.ok(authService.loginConGoogle(request));
     }
 
     @GetMapping("/google/authorize")

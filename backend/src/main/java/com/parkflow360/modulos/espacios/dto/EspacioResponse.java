@@ -13,9 +13,19 @@ import java.time.LocalDateTime;
 @Builder
 public class EspacioResponse {
     private Long id;
+    private Long parqueaderoId;
     private String numero;
     private String tipo;
     private String estado;
     private Integer piso;
+
+    private Long planoId;
+    private Integer fila;
+    private Integer columna;
+    private Double posX;
+    private Double posY;
+    private Double ancho;
+    private Double alto;
+
     private LocalDateTime fechaCreacion;
 }

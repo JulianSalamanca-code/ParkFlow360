@@ -1,7 +1,7 @@
 # Backlog nuevo — ParkFlow360
 
 > Historias derivadas del plan [`ESPECIFICACIONES_PARKFLOW360.md`](ESPECIFICACIONES_PARKFLOW360.md).  
-> Estado: **pendiente de implementación**. El backlog original de 18 historias se conserva en [`HISTORIAL_USUARIO_PARKFLOW360.md`](../04-historico/HISTORIAL_USUARIO_PARKFLOW360.md) como documento histórico.
+> Estado: **implementado** (F0–F11). El estado por funcionalidad está en la tabla maestra de la [especificación](ESPECIFICACIONES_PARKFLOW360.md). El backlog original de 18 historias se conserva en [`HISTORIAL_USUARIO_PARKFLOW360.md`](../04-historico/HISTORIAL_USUARIO_PARKFLOW360.md) como documento histórico.
 
 ## Resumen
 
@@ -18,6 +18,7 @@
 | HU-N09 | Vinculación a varios parqueaderos | USUARIO | 4 | F8 |
 | HU-N10 | Menú inferior responsive | Todos | 5 | F9 |
 | HU-N11 | Pruebas y documentación del plan | Equipo | 5 | F10 |
+| HU-N12 | Pagaduría, salida y tolerancia por empresa | CAJERO_PAGOS, GUARDIA, EMPRESA | 11 | F11 |
 
 ## HU-N01 — Migrar el rol ADMIN a PLATAFORMA
 
@@ -33,11 +34,11 @@
 - Criterios: recarga mayor a cero; saldo nunca negativo; cada movimiento registra saldo anterior y posterior.
 - Reglas: RN-01. Ver F1.
 
-## HU-N03 — Pago automático al salir o expirar
+## HU-N03 — Recibo al entrar y cobro en pagaduría
 
-**Como** usuario, **quiero** que se genere una factura y se cobre con mi saldo al terminar la estancia **para** no depender del cajero.
+**Como** usuario, **quiero** que se abra un recibo al llegar y pagarlo en pagaduría antes de salir **para** que el guardia pueda autorizar mi salida.
 
-- Criterios: factura única por ingreso; se genera al salir o al expirar la reserva; con saldo suficiente se crea un pago `CONFIRMADO`; si no alcanza, la factura queda pendiente y no se crea el pago.
+- Criterios: factura única por ingreso, abierta al registrar la llegada con 1 unidad de tarifa; `reservar` no factura; el cajero confirma el cobro con `POST /api/facturas/{id}/pagar`, recalculando el valor si el ingreso está `ACTIVO` y debitando solo el faltante; sin saldo suficiente la factura queda `PENDIENTE`.
 - Reglas: RN-02, RN-03, RN-04, RN-05. Ver F2.
 
 ## HU-N04 — Crédito del faltante y bloqueo por deuda
@@ -59,7 +60,7 @@
 **Como** empresa, **quiero** crear parqueaderos con nombre, identificador único, capacidad y cupos por tipo de vehículo **para** gestionar mi operación.
 
 - Criterios: identificador único; capacidad de vehículos; tipos con cupo fijo o ilimitado; espacios únicos por parqueadero.
-- Reglas: RN-13, RN-14. Ver F5.
+- Reglas: RN-14, RN-15. Ver F5.
 
 ## HU-N07 — Usuario de pagos por parqueadero
 
@@ -80,7 +81,7 @@
 **Como** usuario, **quiero** vincularme a varios parqueaderos mediante su identificador **para** usar cualquiera de ellos sin cambiar de cuenta.
 
 - Criterios: vinculación por identificador; solo se ven los parqueaderos propios; el rol sigue siendo `USUARIO` en todos.
-- Reglas: RN-15. Ver F8.
+- Reglas: RN-16. Ver F8.
 
 ## HU-N10 — Menú inferior responsive
 
@@ -93,5 +94,12 @@
 
 **Como** equipo, **queremos** pruebas automáticas y documentación actualizada **para** verificar las nuevas reglas de negocio.
 
-- Criterios: primeros tests unitarios del backend; specs Cypress de recarga, deuda y menú inferior; columna `Estado` de la spec actualizada al cerrar cada fase.
+- Criterios: tests de integración del backend y specs Cypress del flujo de pagaduría; columna `Estado` de la spec actualizada al cerrar cada fase.
 - Ver F10.
+
+## HU-N12 — Pagaduría, salida y tolerancia por empresa
+
+**Como** empresa, **quiero** fijar una tolerancia de salida que aplique a todos mis parqueaderos **para** que el guardia autorice la salida sin cobros sorpresa dentro del plazo.
+
+- Criterios: tolerancia de 0–240 minutos por empresa (por defecto 30) vía `PUT /api/empresas/{id}/configuracion`; se cuenta desde `fecha_pago` y se reinicia con cada cobro; dentro de la tolerancia no se cobra extra aunque se cruce la hora; si vence, se bloquea la salida y el cajero cobra solo la diferencia; las tarifas `DIA`, `SEMANA`, `MES` y `MOMENTO` conservan su valor único.
+- Reglas: RN-13, RN-17, RN-18. Ver F11.

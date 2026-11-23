@@ -1,16 +1,16 @@
 # ParkFlow360 — Manual de Contexto del Proyecto (MCP)
 
 > Documento vivo de contexto. Fuente de verdad: el código y [`AGENTS.md`](../../AGENTS.md).  
-> Funcionalidades previstas: [`ESPECIFICACIONES_PARKFLOW360.md`](../01-especificaciones/ESPECIFICACIONES_PARKFLOW360.md).
+> Cobertura funcional: [`ESPECIFICACIONES_PARKFLOW360.md`](../01-especificaciones/ESPECIFICACIONES_PARKFLOW360.md).
 
 ## Estado del proyecto
 
 - **Nombre:** ParkFlow360
 - **Tipo:** SaaS multiempresa de gestión de parqueaderos
 - **Repositorio:** JulianSalamanca-code/ParkFlow360
-- **Rama de trabajo actual:** `docs/especificaciones-y-agentes`
+- **Rama de trabajo actual:** `dev`
 - **Monorepo:** sí (`backend/` + `frontend/`)
-- **Estado:** en desarrollo; las funcionalidades F0–F10 de la spec están pendientes
+- **Estado:** en desarrollo; F0–F11 están implementados. Pendientes: CI, despliegue y cierre de deuda técnica (ver `AGENTS.md`).
 
 ## Tecnologías
 
@@ -18,7 +18,7 @@
 
 - Java 17, Spring Boot 3.2.5, Maven (sin wrapper)
 - Spring Security stateless + JWT (JJWT 0.12.5), Google OAuth2 con flujo manual
-- Spring Data JPA, Flyway (migraciones existentes V1–V16)
+- Spring Data JPA, Flyway (migraciones existentes V1–V20)
 - PostgreSQL 15
 
 ### Frontend
@@ -44,26 +44,28 @@ Frontend: `src/app/{auth,core,features,shared}`, rutas lazy con `RoleGuard`, ser
 1. **Vehículos**: CRUD con validación de placa `^[A-Z]{3}-[A-Z0-9]{3}$`.
 2. **Espacios**: CRUD, estados `LIBRE`/`RESERVADO`/`OCUPADO`, planos e importación CSV.
 3. **Tarifas**: CRUD con tipos `HORA`, `DIA`, `SEMANA`, `MES`, `MOMENTO`.
-4. **Ingresos**: reservas, ingresos, salidas y liberación de espacios.
-5. **Pagos**: registro manual (métodos EFECTIVO/TARJETA/TRANSFERENCIA/QR; estados `CONFIRMADO`/`FALLIDO`).
-6. **Reportes**: general, espacios por estado e ingresos por período.
-7. **Seguridad y usuarios**: JWT, Google OAuth y roles actuales `ADMIN`/`USUARIO`.
+4. **Ingresos**: reservas, llegada del guardia, salidas autorizadas y liberación de espacios.
+5. **Pagos y facturas**: recibo al entrar, cobro del faltante en pagaduría, pagos y créditos.
+6. **Saldos**: recarga y movimientos con saldo anterior y posterior.
+7. **Empresas y parqueaderos**: identificador único, cupos por tipo de vehículo y tolerancia de salida por empresa.
+8. **Reportes**: general, espacios por estado e ingresos por período, filtrados por parqueadero.
+9. **Seguridad y usuarios**: JWT, Google OAuth y roles vigentes `PLATAFORMA` (alias `ADMIN`), `EMPRESA`, `CAJERO_PAGOS`, `GUARDIA` y `USUARIO`.
 
-## Módulos previstos (no implementados)
+## Cobertura funcional
 
-`saldos`, `creditos`, `facturas`, `empresas`, `parqueaderos`, además de los roles `PLATAFORMA`, `EMPRESA`, `CAJERO_PAGOS` y `GUARDIA`. Ver la spec.
+F0–F11 están implementados (tabla maestra en la [especificación](../01-especificaciones/ESPECIFICACIONES_PARKFLOW360.md)). Quedan pendientes CI, despliegue y cierre de deuda técnica; ver `AGENTS.md`.
 
-## Flujo actual del usuario
+## Flujo actual
 
 1. `POST /api/auth/login` o inicio con Google (`GET /api/auth/google/authorize` → callback frontend `/auth/google/callback`).
-2. Navegación según rol (`RoleGuard`): administrador → `/vehiculos`; usuario → `/mis-parqueos`.
-3. Reserva (`POST /api/ingresos/reservar`), registro de pagos y salida (`PUT /api/ingresos/{id}/salida`).
+2. Navegación según rol (`RoleGuard`): plataforma → `/planos`, empresa → `/empresa`, cajero → `/cajero/pagos`, guardia → `/guardia/ingresos`, usuario → `/mis-parqueos`.
+3. Reserva (`POST /api/ingresos/reservar`), llegada registrada por el guardia (`PUT /api/ingresos/{id}/llegada`, abre el recibo), cobro en pagaduría (`POST /api/facturas/{id}/pagar`) y salida autorizada por el guardia (`PUT /api/ingresos/{id}/salida`) dentro de la tolerancia.
 
 ## Endpoints principales
 
 - `/api/auth`: `login`, `registro`, `google/authorize`, `google/callback`
-- `/api/vehiculos`, `/api/espacios`, `/api/tarifas`, `/api/ingresos`, `/api/pagos`, `/api/reportes`, `/api/usuarios`
-- Rutas compartidas ADMIN/USUARIO: `/api/vehiculos/mios`, `/api/ingresos/mios`, `/api/ingresos/reservar`, `GET /api/espacios/**`, `GET /api/tarifas/**`
+- `/api/vehiculos`, `/api/espacios`, `/api/tarifas`, `/api/ingresos`, `/api/pagos`, `/api/facturas`, `/api/saldos`, `/api/creditos`, `/api/empresas`, `/api/parqueaderos`, `/api/reportes`, `/api/usuarios`
+- Rutas por rol: `/api/vehiculos/mios`, `/api/ingresos/mios`, `/api/ingresos/reservar`, `/api/ingresos/activos`, `/api/ingresos/{id}/estado-pago`, `GET /api/espacios/**`, `GET /api/tarifas/**`
 
 ## Requisitos locales
 

@@ -75,7 +75,7 @@ Reglas transversales de roles:
 | RN-17 | El guardia solo autoriza la salida si la factura está `PAGADA`, existe un `Pago` `CONFIRMADO` y la tolerancia sigue vigente. El usuario **no** registra su propia salida. Mensajes: `"El conductor debe pagar en pagaduría antes de salir del parqueadero."` y `"La tolerancia de salida venció; debe cancelar el tiempo adicional en pagaduría."` |
 | RN-18 | `EMPRESA` ve reportes únicamente de sus parqueaderos; `PLATAFORMA` ve todos. El filtrado se hace en backend desde la vinculación. |
 
-## 5. Modelo de datos y migraciones previstas
+## 5. Modelo de datos y migraciones
 
 Las migraciones `V17` a `V20` ya están en el repositorio y no se reescriben. La última es `V20`; cualquier cambio posterior agregará `V21` o superior.
 
@@ -107,7 +107,7 @@ Las migraciones `V17` a `V20` ya están en el repositorio y no se reescriben. La
 - Restricción `ck_empresas_tolerancia_salida`: valor entre `0` y `240`.
 - El contador del guardia se calcula como `fecha_pago + tolerancia_salida_minutos`.
 
-## 6. Endpoints previstos
+## 6. Endpoints
 
 | Método y ruta | Roles | Descripción | Fase |
 |---|---|---|---|
@@ -193,13 +193,13 @@ Los endpoints actuales de vehículos, espacios, tarifas, ingresos, pagos, report
 
 | ID | Funcionalidad | Descripción | Roles | Backend | Frontend | Fase | Estado |
 |---|---|---|---|---|---|---|---|
-| F0 | Migración de roles | Renombrar `ADMIN` a `PLATAFORMA` y ajustar accesos | `PLATAFORMA` | V17: UPDATE de roles; `SecurityConfig`, `JwtService`, seed | `RoleGuard`, menú y textos | 0 | Pendiente |
-| F1 | Saldo y recarga | Recarga con ledger de movimientos | `USUARIO`, `PLATAFORMA` | V18: `saldo`, `movimientos_saldo`; `/api/saldos/*` | Ruta `/mi-saldo` | 1 | Pendiente |
+| F0 | Migración de roles | Renombrar `ADMIN` a `PLATAFORMA` y ajustar accesos | `PLATAFORMA` | V17: UPDATE de roles; `SecurityConfig`, `JwtService`, seed | `RoleGuard`, menú y textos | 0 | Implementado |
+| F1 | Saldo y recarga | Recarga con ledger de movimientos | `USUARIO`, `PLATAFORMA` | V18: `saldo`, `movimientos_saldo`; `/api/saldos/*` | Ruta `/mi-saldo` | 1 | Implementado |
 | F2 | Factura y cobro en pagaduría | Recibo al llegar; cobro del faltante con saldo y reutilización del pago | `USUARIO`, `CAJERO_PAGOS`, `PLATAFORMA` | V18 + V20: `facturas`; `FacturaService.pagar()` recalcula con `now` si el ingreso está `ACTIVO` | Cobros pendientes del cajero y aviso en `mis-parqueos` | 1, 11 | Implementado |
-| F3 | Crédito y bloqueo | Faltante, 1 activo, 3 días, sin intereses; deuda bloquea reservar | `USUARIO`, `CAJERO_PAGOS` | V18: `creditos`; `POST /api/creditos`; 403 en `reservar()` | Pantalla de deuda y fecha límite | 2 | Pendiente |
-| F4 | Hora de espera y no-show | Llegada marcada por guardia; cobro de 1 h solo con tarifa `HORA` | `GUARDIA`, `USUARIO`, `CAJERO_PAGOS` | V19: fechas en `ingresos`; `PUT /api/ingresos/{id}/llegada`; job `@Scheduled` | Botón "Registrar llegada" y contador | 3 | Pendiente |
-| F5 | Empresas y parqueaderos | Nombre, identificador único, capacidad y tipos con cupo fijo/ilimitado | `PLATAFORMA`, `EMPRESA` | V17: `empresas`, `parqueaderos`, `parqueaderos_tipos_vehiculo`; `parqueadero_id` en espacios/planos/ingresos/pagos | Panel de alta y configuración | 4 | Pendiente |
-| F6 | Usuario de pagos | Creado con el parqueadero (email y contraseña temporal del formulario); gestiona pagos de su único parqueadero | `CAJERO_PAGOS`, `EMPRESA`, `PLATAFORMA` | V17: usuario + asignación 1:1; filtro de pagos por parqueadero | Vista de pagos del cajero | 4 | Pendiente |
+| F3 | Crédito y bloqueo | Faltante, 1 activo, 3 días, sin intereses; deuda bloquea reservar | `USUARIO`, `CAJERO_PAGOS` | V18: `creditos`; `POST /api/creditos`; 403 en `reservar()` | Pantalla de deuda y fecha límite | 2 | Implementado |
+| F4 | Hora de espera y no-show | Llegada marcada por guardia; cobro de 1 h solo con tarifa `HORA` | `GUARDIA`, `USUARIO`, `CAJERO_PAGOS` | V19: fechas en `ingresos`; `PUT /api/ingresos/{id}/llegada`; job `@Scheduled` | Botón "Registrar llegada" y contador | 3 | Implementado |
+| F5 | Empresas y parqueaderos | Nombre, identificador único, capacidad y tipos con cupo fijo/ilimitado | `PLATAFORMA`, `EMPRESA` | V17: `empresas`, `parqueaderos`, `parqueaderos_tipos_vehiculo`; `parqueadero_id` en espacios/planos/ingresos/pagos | Panel de alta y configuración | 4 | Implementado |
+| F6 | Usuario de pagos | Creado con el parqueadero (email y contraseña temporal del formulario); gestiona pagos de su único parqueadero | `CAJERO_PAGOS`, `EMPRESA`, `PLATAFORMA` | V17: usuario + asignación 1:1; filtro de pagos por parqueadero | Vista de pagos del cajero | 4 | Implementado |
 | F7 | Guardias | Verificación de datos, llegada, estado de pago y autorización de salida | `GUARDIA`, `EMPRESA`, `PLATAFORMA` | V17 + V20: `PUT /api/ingresos/{id}/salida` valida pago y tolerancia; `estado-pago` expone contador | Badge de pago, contador y botón bloqueado | 4, 11 | Implementado |
 | F8 | Vinculación múltiple | El usuario se vincula por identificador y ve solo sus parqueaderos | `USUARIO`, `EMPRESA` | V17: `parqueadero_usuarios`; filtros por parqueadero en servicios | Selector de parqueadero | 4 | Implementado |
 | F9 | Menú inferior responsive | Ítems clave + hamburguesa abajo | Todos | — | `app.component.html`, `styles.css` | 5 | Implementado |

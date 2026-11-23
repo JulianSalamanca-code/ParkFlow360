@@ -1,9 +1,9 @@
 # Plan de implementación — ParkFlow360
 
 **Fecha:** 2026-11-22  
-**Estado:** pendiente de ejecutar.
+**Estado:** hitos 1–4 ejecutados e integrados en `dev`; pendiente el cierre (CI y despliegue).
 
-Este documento convierte la tabla F0–F10 de la [especificación](ESPECIFICACIONES_PARKFLOW360.md) en un plan para dos personas. Las historias están en el [backlog nuevo](BACKLOG_NUEVO.md) y las convenciones en [`AGENTS.md`](../../AGENTS.md).
+Este documento convierte la tabla F0–F11 de la [especificación](ESPECIFICACIONES_PARKFLOW360.md) en un plan para dos personas. Las historias están en el [backlog nuevo](BACKLOG_NUEVO.md) y las convenciones en [`AGENTS.md`](../../AGENTS.md).
 
 ---
 
@@ -62,7 +62,7 @@ Si se prefiere dividir por funcionalidad en vez de por capas, la regla que no de
 - Pantalla de deuda con fecha límite.
 - Aviso de cobro en `mis-parqueos`.
 
-**Punto crítico:** hoy `registrarSalida()` exige un pago confirmado *antes* de finalizar. Hay que invertirlo: primero se genera la factura y luego se intenta cobrar con saldo.
+**Punto crítico (resuelto):** el recibo se abre al registrar la llegada, no al salir. El cajero confirma el cobro en pagaduría con `POST /api/facturas/{id}/pagar` (recalcula y debita el faltante), y `registrarSalida()` valida pago confirmado y tolerancia vigente. Ver F2 y F11.
 
 **Merge:** backend → `dev` → checks → frontend → `dev`.
 
@@ -83,39 +83,42 @@ Si se prefiere dividir por funcionalidad en vez de por capas, la regla que no de
 
 **Merge:** backend → `dev` → checks → frontend → `dev`.
 
-### Hito 4 — Cierre (F9, F10)
+### Hito 4 — Cierre (F9, F10, F11)
 
 - B: menú inferior responsive con hamburguesa por rol y specs Cypress nuevas.
-- A: primeros tests `*Test.java` (`mvn test` / `mvn verify`).
+- A: primeros tests `*Test.java` (`mvn test` / `mvn verify`) y migración `V20` de tolerancia por empresa.
+- B: flujo de pagaduría, autorización de salida y vista de configuración de tolerancia.
 - Ambos: actualizar la columna `Estado` de la spec, `README.md` y `AGENTS.md` si cambió algo.
 - Integración final: `docker compose up -d`, backend, frontend y E2E completo.
 
 ## 4. Reglas para no chocarse
 
-1. **Un solo dueño de las migraciones**: la persona A crea V17, V18 y V19. Nunca se editan V1–V16.
+1. **Un solo dueño de las migraciones**: la persona A crea V17–V20. Nunca se editan V1–V16.
 2. **Archivos sensibles con dueño único**: `SecurityConfig`, `IngresoService` y `PagoService` los toca solo A; `app.routes.ts`, `app.component.html`, `AuthService` y `RoleGuard` los toca solo B.
 3. **Contrato antes de codificar**: al inicio de cada hito acuerdan los endpoints y DTOs de la sección 6 de la spec y no los cambian a mitad de hito.
 4. **Ramas cortas desde `dev`**, PR a `dev`, integración frecuente.
 5. **Documentación fuera de las ramas de funcionalidad**: se actualiza al cerrar cada hito, no mientras se programa.
 6. **Checks antes de integrar**: A corre `mvn test` / `mvn verify`; B corre `pnpm build` y `pnpm e2e`.
 
-## 5. Riesgos que ya conocemos
+## 5. Riesgos resueltos y supervivientes
 
-- `PagoService.crear()` hoy prohíbe un segundo pago por ingreso: hay que redefinirlo con facturas.
-- Usar `findByIdForUpdate` y `facturas.ingreso_id` único para idempotencia en cobros y expiración.
-- `ADMIN` debe seguir funcionando un tiempo para no invalidar tokens vigentes.
-- Deuda vencida no debe bloquear recarga, pago ni consultas; solo reservar.
-- `mvn` no está disponible en todos los entornos; la persona A necesita tenerlo instalado.
+- [x] `PagoService.crear()` prohibía un segundo pago por ingreso: se resolvió reutilizando el pago confirmado y debitando solo el faltante.
+- [x] Idempotencia de cobros y expiración mediante bloqueo y `facturas.ingreso_id` único.
+- [x] `ADMIN` sigue funcionando como alias de `PLATAFORMA` para no invalidar tokens vigentes.
+- [x] Deuda vencida bloquea únicamente `POST /api/ingresos/reservar`.
+- [ ] `mvn` no está disponible en todos los entornos; la persona A necesita tenerlo instalado.
+- [ ] Sin CI: los checks se ejecutan manualmente y no se exigen en cada PR.
 
-## 6. Checklist de cierre de cada hito
+## 6. Checklist de cierre
 
-- [ ] Ninguna persona editó un archivo fuera de su capa asignada.
-- [ ] Solo la persona A tocó `db/migration/`.
-- [ ] Endpoints y DTOs usados coinciden con la sección 6 de la spec.
-- [ ] Backend integrado en `dev` con sus checks en verde.
-- [ ] Frontend integrado en `dev` con sus checks en verde.
-- [ ] Columna `Estado` de la spec actualizada.
-- [ ] Worktree/rama del hito cerrada y siguiente creada desde `dev`.
+- [x] Endpoints y DTOs usados coinciden con la sección 6 de la spec.
+- [x] Backend integrado en `dev` con `mvn test` / `mvn verify` en verde.
+- [x] Frontend integrado en `dev` con `pnpm build` y el E2E del flujo nuevo en verde.
+- [x] Columna `Estado` de la spec actualizada (F0–F11).
+- [x] Worktree/rama de cada hito cerrada mediante PR a `dev`.
+- [ ] E2E completo con backend y PostgreSQL levantados.
+- [ ] Pipeline de CI que ejecute los checks en cada PR.
+- [ ] Validación del despliegue (Netlify / Render / Supabase).
 
 ---
 

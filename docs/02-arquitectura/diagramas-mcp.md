@@ -34,7 +34,7 @@ Los actores y decisiones nuevas corresponden al plan descrito en
 - Contenedor: monorepo ParkFlow360.
 - Componentes: frontend Angular, backend Spring Boot y PostgreSQL.
 - Módulos actuales: Vehículos, Espacios, Tarifas, Ingresos, Pagos, Reportes, Usuarios y Seguridad.
-- Módulos previstos: Saldos/Créditos y Empresas/Parqueaderos.
+- Módulos implementados: Saldos/Créditos, Facturas, Empresas/Parqueaderos y Tolerancia de salida.
 
 **Decisiones documentadas:**
 
@@ -43,10 +43,10 @@ Los actores y decisiones nuevas corresponden al plan descrito en
 - ADR-003: JWT y Google OAuth.
 - ADR-004: PostgreSQL + Flyway.
 - ADR-005: despliegue separado (Netlify / Render / Supabase).
-- ADR-006: modelo multiempresa (propuesta).
-- ADR-007: cobro automático con saldo y crédito (propuesta).
-- ADR-008: hora de espera y no-show (propuesta).
-- ADR-009: roles por responsabilidad (propuesta).
+- ADR-006: modelo multiempresa.
+- ADR-007: cobro con saldo, facturas, crédito y pagaduría.
+- ADR-008: hora de espera y no-show.
+- ADR-009: roles por responsabilidad y tolerancia de salida.
 
 ## Cómo visualizar
 

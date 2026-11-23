@@ -3,8 +3,8 @@
 ## Descripción
 
 Diagrama de componentes C4 Level 2 y decisiones de arquitectura. Los módulos
-`saldos`, `creditos`, `empresas` y `parqueaderos` son **previstos** (ver
-[`especificación`](../01-especificaciones/ESPECIFICACIONES_PARKFLOW360.md)); hoy no existen en el código.
+`saldos`, `creditos`, `empresas` y `parqueaderos` están implementados (ver
+[`especificación`](../01-especificaciones/ESPECIFICACIONES_PARKFLOW360.md) y `AGENTS.md`).
 
 %%{init: {'theme':'dark','themeVariables':{'primaryColor':'#1e293b','primaryTextColor':'#e2e8f0','lineColor':'#94a3b8','tertiaryColor':'#334155','background':'#0f172a'}}}%%
 ```mermaid
@@ -76,7 +76,7 @@ graph TD
 ### ADR-004: PostgreSQL + Flyway
 **Decisión:** PostgreSQL con migraciones versionadas Flyway.  
 **Justificación:** consistencia de datos y versionado del esquema.  
-**Estado:** aceptada; migraciones actuales V1–V16.
+**Estado:** aceptada; migraciones actuales V1–V20.
 
 ### ADR-005: Despliegue separado
 **Decisión:** frontend en Netlify, backend en Render y base de datos en Supabase.  

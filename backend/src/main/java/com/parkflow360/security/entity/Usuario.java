@@ -35,6 +35,10 @@ public class Usuario {
     @Column(name = "google_id", unique = true)
     private String googleId;
 
+    @Builder.Default
+    @Column(length = 20)
+    private String proveedor = "LOCAL";
+
     @Column(name = "fecha_creacion", updatable = false)
     private LocalDateTime fechaCreacion;
 

@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.parkflow360.modulos.pagos.dto.PagoOnlineRequest;
 import com.parkflow360.modulos.pagos.dto.PagoOnlineResponse;
 import com.parkflow360.modulos.pagos.dto.PagoResponse;
+import com.parkflow360.modulos.espacios.repository.EspacioRepository;
+import com.parkflow360.modulos.ingresos.repository.IngresoRepository;
 import com.parkflow360.modulos.pagos.entity.Pago;
 import com.parkflow360.modulos.pagos.repository.PagoRepository;
 import com.parkflow360.security.entity.Usuario;
@@ -34,6 +36,8 @@ public class WompiService {
     private final PagoRepository pagoRepository;
     private final PagoService pagoService;
     private final UsuarioRepository usuarioRepository;
+    private final IngresoRepository ingresoRepository;
+    private final EspacioRepository espacioRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Value("${wompi.public-key:}")
@@ -65,8 +69,10 @@ public class WompiService {
                 .longValueExact();
 
         String referencia = "PF-" + System.currentTimeMillis() + "-" + usuario.getId();
+        Long parqueaderoId = resolverParqueadero(request);
 
         Pago pago = Pago.builder()
+                .parqueaderoId(parqueaderoId)
                 .valor(request.getValor())
                 .estado("PENDIENTE")
                 .referencia(referencia)
@@ -141,6 +147,23 @@ public class WompiService {
     }
 
     // ---------- Helpers ----------
+
+    private Long resolverParqueadero(PagoOnlineRequest request) {
+        if (request.getIngresoId() != null) {
+            Long desdeIngreso = ingresoRepository.findById(request.getIngresoId())
+                    .map(ingreso -> ingreso.getParqueaderoId())
+                    .orElse(null);
+            if (desdeIngreso != null) {
+                return desdeIngreso;
+            }
+        }
+        if (request.getEspacioId() != null) {
+            return espacioRepository.findById(request.getEspacioId())
+                    .map(espacio -> espacio.getParqueaderoId())
+                    .orElse(null);
+        }
+        return null;
+    }
 
     private String buildCheckoutUrl(String referencia, long valorEnCentavos) {
         String firma = sha256(referencia + valorEnCentavos + currency + integritySecret);

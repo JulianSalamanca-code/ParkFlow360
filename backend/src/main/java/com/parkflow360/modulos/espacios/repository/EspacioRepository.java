@@ -16,6 +16,13 @@ public interface EspacioRepository extends JpaRepository<Espacio, Long> {
     boolean existsByNumero(String numero);
     List<Espacio> findByEstado(String estado);
     List<Espacio> findByPiso(Integer piso);
+    List<Espacio> findByPlanoId(Long planoId);
+    long countByPlanoId(Long planoId);
+    List<Espacio> findByParqueaderoId(Long parqueaderoId);
+    List<Espacio> findByParqueaderoIdIn(Collection<Long> parqueaderoIds);
+    boolean existsByParqueaderoIdAndNumero(Long parqueaderoId, String numero);
+    boolean existsByParqueaderoIdAndNumeroIgnoreCase(Long parqueaderoId, String numero);
+    long countByParqueaderoIdAndTipo(Long parqueaderoId, String tipo);
 
     @Query("SELECT e FROM Espacio e WHERE UPPER(e.numero) IN :numeros")
     List<Espacio> findAllByNumeroIgnoreCaseIn(@Param("numeros") Collection<String> numeros);

@@ -16,6 +16,8 @@ import java.math.BigDecimal;
 @Builder
 public class IngresoRequest {
 
+    private Long parqueaderoId;
+
     @NotBlank(message = "La placa es obligatoria")
     @Size(max = 20, message = "La placa no puede tener más de 20 caracteres")
     private String placa;

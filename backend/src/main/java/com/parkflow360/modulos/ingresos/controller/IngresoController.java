@@ -8,7 +8,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -18,8 +25,6 @@ import java.util.List;
 public class IngresoController {
 
     private final IngresoService ingresoService;
-
-    // ---------- Usuario (cliente): solo sus parqueos ----------
 
     @GetMapping("/mios")
     public ResponseEntity<List<IngresoResponse>> misIngresos(Authentication auth) {
@@ -33,51 +38,61 @@ public class IngresoController {
         return new ResponseEntity<>(ingresoService.reservar(auth.getName(), request), HttpStatus.CREATED);
     }
 
-    // ---------- Administrador ----------
-
     @GetMapping
-    public ResponseEntity<List<IngresoResponse>> listarTodos() {
-        return ResponseEntity.ok(ingresoService.listarTodos());
+    public ResponseEntity<List<IngresoResponse>> listarTodos(Authentication auth) {
+        return ResponseEntity.ok(ingresoService.listarTodos(auth.getName()));
     }
 
     @GetMapping("/activos")
-    public ResponseEntity<List<IngresoResponse>> listarActivos() {
-        return ResponseEntity.ok(ingresoService.listarActivos());
+    public ResponseEntity<List<IngresoResponse>> listarActivos(Authentication auth) {
+        return ResponseEntity.ok(ingresoService.listarActivos(auth.getName()));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<IngresoResponse> obtenerPorId(@PathVariable Long id) {
-        return ResponseEntity.ok(ingresoService.obtenerPorId(id));
+    public ResponseEntity<IngresoResponse> obtenerPorId(
+            @PathVariable Long id,
+            Authentication auth) {
+        return ResponseEntity.ok(ingresoService.obtenerPorId(auth.getName(), id));
     }
 
     @GetMapping("/folio/{folio}")
-    public ResponseEntity<IngresoResponse> obtenerPorFolio(@PathVariable String folio) {
-        return ResponseEntity.ok(ingresoService.obtenerPorFolio(folio));
+    public ResponseEntity<IngresoResponse> obtenerPorFolio(
+            @PathVariable String folio,
+            Authentication auth) {
+        return ResponseEntity.ok(ingresoService.obtenerPorFolio(auth.getName(), folio));
     }
 
     @PostMapping
-    public ResponseEntity<IngresoResponse> crear(@Valid @RequestBody IngresoRequest request) {
-        return new ResponseEntity<>(ingresoService.crear(request), HttpStatus.CREATED);
+    public ResponseEntity<IngresoResponse> crear(
+            Authentication auth,
+            @Valid @RequestBody IngresoRequest request) {
+        return new ResponseEntity<>(ingresoService.crear(auth.getName(), request), HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}/salida")
-    public ResponseEntity<IngresoResponse> registrarSalida(@PathVariable Long id) {
-        return ResponseEntity.ok(ingresoService.registrarSalida(id));
+    public ResponseEntity<IngresoResponse> registrarSalida(
+            @PathVariable Long id,
+            Authentication auth) {
+        return ResponseEntity.ok(ingresoService.registrarSalida(auth.getName(), id));
     }
 
     @PutMapping("/{id}/liberar")
-    public ResponseEntity<IngresoResponse> liberar(@PathVariable Long id) {
-        return ResponseEntity.ok(ingresoService.liberar(id));
+    public ResponseEntity<IngresoResponse> liberar(
+            @PathVariable Long id,
+            Authentication auth) {
+        return ResponseEntity.ok(ingresoService.liberar(auth.getName(), id));
     }
 
     @PutMapping("/espacio/{espacioId}/liberar")
-    public ResponseEntity<IngresoResponse> liberarPorEspacio(@PathVariable Long espacioId) {
-        return ResponseEntity.ok(ingresoService.liberarPorEspacio(espacioId));
+    public ResponseEntity<IngresoResponse> liberarPorEspacio(
+            @PathVariable Long espacioId,
+            Authentication auth) {
+        return ResponseEntity.ok(ingresoService.liberarPorEspacio(auth.getName(), espacioId));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminar(@PathVariable Long id) {
-        ingresoService.eliminar(id);
+    public ResponseEntity<Void> eliminar(@PathVariable Long id, Authentication auth) {
+        ingresoService.eliminar(auth.getName(), id);
         return ResponseEntity.noContent().build();
     }
 }

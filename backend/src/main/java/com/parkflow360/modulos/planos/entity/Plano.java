@@ -20,6 +20,9 @@ public class Plano {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "parqueadero_id")
+    private Long parqueaderoId;
+
     @Column(nullable = false, length = 100)
     private String nombre;
 

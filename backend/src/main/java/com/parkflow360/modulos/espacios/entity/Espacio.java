@@ -20,7 +20,10 @@ public class Espacio {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 20)
+    @Column(name = "parqueadero_id")
+    private Long parqueaderoId;
+
+    @Column(nullable = false, length = 20)
     private String numero;
 
     @Column(nullable = false, length = 50)

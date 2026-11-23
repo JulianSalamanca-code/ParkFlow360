@@ -69,10 +69,23 @@ public class Ingreso {
     @Column(name = "fecha_salida")
     private LocalDateTime fechaSalida;
 
+    @Column(name = "fecha_reserva", updatable = false)
+    private LocalDateTime fechaReserva;
+
+    @Column(name = "fecha_limite_llegada", updatable = false)
+    private LocalDateTime fechaLimiteLlegada;
+
+    @Column(name = "fecha_llegada")
+    private LocalDateTime fechaLlegada;
+
     @PrePersist
     protected void onCreate() {
+        LocalDateTime ahora = LocalDateTime.now();
         if (fechaEntrada == null) {
-            fechaEntrada = LocalDateTime.now();
+            fechaEntrada = ahora;
+        }
+        if (fechaReserva == null) {
+            fechaReserva = ahora;
         }
         if (estado == null) {
             estado = "ACTIVO";

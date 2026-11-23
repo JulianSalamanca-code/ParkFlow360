@@ -1,5 +1,6 @@
 package com.parkflow360.security.dto;
 
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,8 +12,14 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class GoogleLoginRequest {
-
-    /** ID token (credential) emitido por Google Identity Services en el frontend. */
-    @NotBlank(message = "El token de Google es obligatorio")
-    private String credential;
+    
+    @NotBlank(message = "Email es requerido")
+    @Email(message = "Email debe ser válido")
+    private String email;
+    
+    @NotBlank(message = "Nombre es requerido")
+    private String nombre;
+    
+    @NotBlank(message = "Google ID es requerido")
+    private String googleId;
 }

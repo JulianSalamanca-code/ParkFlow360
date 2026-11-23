@@ -27,6 +27,10 @@ export class EspacioService {
     return this.http.post<Espacio>(this.apiUrl, espacio);
   }
 
+  importar(espacios: EspacioRequest[]): Observable<Espacio[]> {
+    return this.http.post<Espacio[]>(`${this.apiUrl}/importar`, espacios);
+  }
+
   actualizar(id: number, espacio: EspacioRequest): Observable<Espacio> {
     return this.http.put<Espacio>(`${this.apiUrl}/${id}`, espacio);
   }

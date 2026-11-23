@@ -35,6 +35,30 @@ export class AuthService {
     );
   }
 
+  registrar(registroData: any): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(`${this.apiUrl}/registro`, registroData).pipe(
+      tap(response => {
+        this.setToken(response.token);
+        this.setUser(response);
+        this.isAuthenticatedSubject.next(true);
+        this.rolSubject.next(response.rol);
+      })
+    );
+  }
+
+  handleGoogleCallback(code: string): Observable<LoginResponse> {
+    return this.http.get<LoginResponse>(`${this.apiUrl}/google/callback`, {
+      params: { code }
+    }).pipe(
+      tap(response => {
+        this.setToken(response.token);
+        this.setUser(response);
+        this.isAuthenticatedSubject.next(true);
+        this.rolSubject.next(response.rol);
+      })
+    );
+  }
+
   logout(): void {
     localStorage.removeItem(this.tokenKey);
     localStorage.removeItem(this.userKey);

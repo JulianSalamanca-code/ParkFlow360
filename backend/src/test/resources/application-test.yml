@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: ParkFlow360-Test
+
+  datasource:
+    url: jdbc:tc:postgresql:15:///parkflow360
+    username: parkflow360
+    password: parkflow360
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+
+  flyway:
+    enabled: false
+
+server:
+  port: 0
+
+jwt:
+  secret: test-secret-key-for-testing-purposes-only
+  expiration: 86400000
+
+app:
+  cors:
+    allowed-origins: http://localhost:4200

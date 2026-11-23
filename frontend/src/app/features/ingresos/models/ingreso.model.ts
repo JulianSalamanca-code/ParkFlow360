@@ -13,6 +13,9 @@ export interface Ingreso {
   novedad?: string;
   estado: string;
   usuarioId?: number;
+  pagoId?: number | null;
+  pagoRegistrado: boolean;
+  estadoPago?: 'CONFIRMADO' | 'FALLIDO' | null;
   fechaEntrada: string;
   fechaSalida?: string;
 }

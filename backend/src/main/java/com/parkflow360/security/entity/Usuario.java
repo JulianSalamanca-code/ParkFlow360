@@ -23,8 +23,7 @@ public class Usuario {
     @Column(nullable = false, unique = true, length = 100)
     private String email;
 
-    /** Puede ser nulo para cuentas creadas con Google. */
-    @Column(nullable = true)
+    @Column
     private String password;
 
     @Column(nullable = false, length = 50)
@@ -33,10 +32,7 @@ public class Usuario {
     @Column(length = 100)
     private String nombre;
 
-    @Column(length = 20)
-    private String proveedor;
-
-    @Column(name = "google_id", length = 100)
+    @Column(name = "google_id", unique = true)
     private String googleId;
 
     @Column(name = "fecha_creacion", updatable = false)

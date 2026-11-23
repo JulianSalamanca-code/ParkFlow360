@@ -1,7 +1,11 @@
 package com.parkflow360.modulos.ingresos.repository;
 
 import com.parkflow360.modulos.ingresos.entity.Ingreso;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
@@ -23,4 +27,8 @@ public interface IngresoRepository extends JpaRepository<Ingreso, Long> {
     boolean existsByEspacioIdAndEstadoIn(Long espacioId, Collection<String> estados);
     boolean existsByVehiculoIdAndEstadoIn(Long vehiculoId, Collection<String> estados);
     boolean existsByUsuarioIdAndEstadoIn(Long usuarioId, Collection<String> estados);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT i FROM Ingreso i WHERE i.id = :id")
+    Optional<Ingreso> findByIdForUpdate(@Param("id") Long id);
 }

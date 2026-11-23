@@ -2,6 +2,11 @@ import { Routes } from '@angular/router';
 
 export const ESPACIOS_ROUTES: Routes = [
   {
+    path: 'importar',
+    loadComponent: () => import('./components/espacio-import/espacio-import.component')
+      .then(m => m.EspacioImportComponent)
+  },
+  {
     path: '',
     loadComponent: () => import('./components/espacio-list/espacio-list.component')
       .then(m => m.EspacioListComponent)

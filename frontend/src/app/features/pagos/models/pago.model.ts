@@ -1,41 +1,21 @@
 export interface Pago {
   id: number;
-  vehiculoId?: number;
-  espacioId?: number;
-  tarifaId?: number;
-  valor: number;
-  fecha: string;
-  metodoPago?: string;
-  estado?: string;
-  referencia?: string;
-  wompiTransactionId?: string;
-  moneda?: string;
-  usuarioId?: number;
-  ingresoId?: number;
-}
-
-export interface PagoRequest {
   vehiculoId: number;
   espacioId: number;
   tarifaId: number;
+  ingresoId?: number | null;
   valor: number;
+  fecha: string;
   metodoPago: string;
+  estadoPago?: 'CONFIRMADO' | 'FALLIDO';
 }
 
-export interface PagoOnlineRequest {
-  valor: number;
+export interface PagoRequest {
   ingresoId?: number;
   vehiculoId?: number;
   espacioId?: number;
   tarifaId?: number;
-}
-
-export interface PagoOnlineResponse {
-  pagoId: number;
-  referencia: string;
-  checkoutUrl: string;
   valor: number;
-  valorEnCentavos: number;
-  moneda: string;
-  estado: string;
+  metodoPago: string;
+  estadoPago: 'CONFIRMADO' | 'FALLIDO';
 }

@@ -30,6 +30,9 @@ public class Pago {
     @Column(name = "tarifa_id")
     private Long tarifaId;
 
+    @Column(name = "ingreso_id")
+    private Long ingresoId;
+
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal valor;
 
@@ -39,35 +42,15 @@ public class Pago {
     @Column(name = "metodo_pago", length = 50)
     private String metodoPago;
 
-    /** PENDIENTE | PAGADO | RECHAZADO | EFECTIVO */
-    @Column(length = 20)
-    private String estado;
-
-    @Column(length = 100)
-    private String referencia;
-
-    @Column(name = "wompi_transaction_id", length = 100)
-    private String wompiTransactionId;
-
-    @Column(length = 10)
-    private String moneda;
-
-    @Column(name = "usuario_id")
-    private Long usuarioId;
-
-    @Column(name = "ingreso_id")
-    private Long ingresoId;
+    @Builder.Default
+    @Column(name = "estado_pago", nullable = false, length = 20)
+    private String estadoPago = "CONFIRMADO";
 
     @PrePersist
     protected void onCreate() {
-        if (fecha == null) {
-            fecha = LocalDateTime.now();
-        }
-        if (estado == null) {
-            estado = "PAGADO";
-        }
-        if (moneda == null) {
-            moneda = "COP";
+        fecha = LocalDateTime.now();
+        if (estadoPago == null) {
+            estadoPago = "CONFIRMADO";
         }
     }
 }

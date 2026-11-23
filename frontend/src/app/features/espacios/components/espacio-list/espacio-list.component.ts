@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { EspacioService } from '../../services/espacio.service';
@@ -10,6 +10,7 @@ import { IngresoService } from '../../../ingresos/services/ingreso.service';
   selector: 'app-espacio-list',
   standalone: true,
   imports: [CommonModule, RouterLink],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="page">
       <div class="page-header">
@@ -17,33 +18,38 @@ import { IngresoService } from '../../../ingresos/services/ingreso.service';
           <h1>Espacios</h1>
           <p>Disponibilidad y estado de los espacios de parqueo</p>
         </div>
-        <a routerLink="/espacios/nuevo" class="btn btn-primary">
-          <span class="material-symbols-outlined">add</span> Nuevo Espacio
-        </a>
+        <div class="page-actions">
+          <a routerLink="/espacios/importar" class="btn btn-secondary" data-testid="btn-importar-espacios">
+            <span class="material-symbols-outlined">upload_file</span> Importar plano / CSV
+          </a>
+          <a routerLink="/espacios/nuevo" class="btn btn-primary" [attr.data-testid]="'btn-nuevo-espacio'">
+            <span class="material-symbols-outlined">add</span> Nuevo Espacio
+          </a>
+        </div>
       </div>
 
-      <div class="metrics">
+      <div class="metrics" [attr.data-testid]="'metrics-container'">
         <div class="metric">
           <div class="label">Capacidad Total</div>
-          <div class="value">{{ espacios.length }}</div>
+          <div class="value" [attr.data-testid]="'total-espacios'">{{ espacios.length }}</div>
         </div>
         <div class="metric metric-available">
           <div class="label">Disponibles</div>
-          <div class="value">{{ contarPorEstado('LIBRE') }}</div>
+          <div class="value" [attr.data-testid]="'total-libres'">{{ contarPorEstado('LIBRE') }}</div>
         </div>
         <div class="metric metric-occupied">
           <div class="label">Ocupados</div>
-          <div class="value">{{ contarPorEstado('OCUPADO') }}</div>
+          <div class="value" [attr.data-testid]="'total-ocupados'">{{ contarPorEstado('OCUPADO') }}</div>
         </div>
         <div class="metric metric-warning">
           <div class="label">Reservados</div>
-          <div class="value">{{ contarPorEstado('RESERVADO') }}</div>
+          <div class="value" [attr.data-testid]="'total-reservados'">{{ contarPorEstado('RESERVADO') }}</div>
         </div>
       </div>
 
       <div class="card">
         <div class="table-wrap">
-          <table class="table">
+          <table class="table" [attr.data-testid]="'espacios-table'">
             <thead>
               <tr>
                 <th>Número</th>
@@ -54,40 +60,43 @@ import { IngresoService } from '../../../ingresos/services/ingreso.service';
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let espacio of espacios">
-                <td><span class="plate">{{ espacio.numero }}</span></td>
-                <td><span class="badge badge-neutral">{{ espacio.tipo }}</span></td>
+              <tr *ngFor="let espacio of espacios" [attr.data-testid]="'espacio-row-' + espacio.id">
+                <td><span class="plate" [attr.data-testid]="'numero-' + espacio.id">{{ espacio.numero }}</span></td>
+                <td><span class="badge badge-neutral" [attr.data-testid]="'tipo-' + espacio.id">{{ espacio.tipo }}</span></td>
                 <td>
-                  <span class="badge" [ngClass]="getEstadoClass(espacio.estado)">
+                  <span class="badge" [ngClass]="getEstadoClass(espacio.estado)" [attr.data-testid]="'estado-' + espacio.id">
                     {{ espacio.estado }}
                   </span>
                 </td>
-                <td class="num">{{ espacio.piso }}</td>
+                <td class="num" [attr.data-testid]="'piso-' + espacio.id">{{ espacio.piso }}</td>
                 <td>
                   <div class="table-actions">
-                    <a [routerLink]="['/espacios/editar', espacio.id]" class="btn btn-sm btn-secondary">
+                    <a [routerLink]="['/espacios/editar', espacio.id]" class="btn btn-sm btn-secondary" [attr.data-testid]="'btn-editar-' + espacio.id">
                       <span class="material-symbols-outlined">edit</span> Editar
                     </a>
                     <button *ngIf="espacio.estado === 'RESERVADO' || espacio.estado === 'OCUPADO'"
                             (click)="liberar(espacio)" class="btn btn-sm btn-warning"
-                            title="Liberar reserva / parqueo">
+                            title="Liberar reserva / parqueo" [attr.data-testid]="'btn-liberar-' + espacio.id">
                       <span class="material-symbols-outlined">event_busy</span> Liberar
                     </button>
-                    <button (click)="eliminar(espacio.id)" class="btn btn-sm btn-danger">
+                    <button (click)="eliminar(espacio.id)" class="btn btn-sm btn-danger" [attr.data-testid]="'btn-eliminar-' + espacio.id">
                       <span class="material-symbols-outlined">delete</span>
                     </button>
                   </div>
                 </td>
               </tr>
               <tr *ngIf="espacios.length === 0">
-                <td colspan="5" class="table-empty">No hay espacios registrados</td>
+                <td colspan="5" class="table-empty" [attr.data-testid]="'empty-state'">No hay espacios registrados</td>
               </tr>
             </tbody>
           </table>
         </div>
       </div>
     </div>
-  `
+  `,
+  styles: [`
+    .page-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+  `]
 })
 export class EspacioListComponent implements OnInit {
   espacios: Espacio[] = [];

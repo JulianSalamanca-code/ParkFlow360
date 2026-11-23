@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -28,7 +28,8 @@ import { environment } from '../../../../environments/environment';
           <div class="form-group">
             <label for="email">Usuario / Correo</label>
             <input id="email" type="email" formControlName="email" class="form-control"
-                   placeholder="operador@parkflow360.com" autocomplete="username" />
+                   placeholder="operador@parkflow360.com" autocomplete="username"
+                   [attr.data-testid]="'email-input'" />
             <div *ngIf="form.get('email')?.invalid && form.get('email')?.touched" class="field-error">
               Ingresa un correo válido
             </div>
@@ -37,32 +38,40 @@ import { environment } from '../../../../environments/environment';
           <div class="form-group">
             <label for="password">Contraseña</label>
             <input id="password" type="password" formControlName="password" class="form-control"
-                   placeholder="••••••••" autocomplete="current-password" />
+                   placeholder="••••••••" autocomplete="current-password"
+                   [attr.data-testid]="'password-input'" />
             <div *ngIf="form.get('password')?.invalid && form.get('password')?.touched" class="field-error">
               La contraseña es obligatoria
             </div>
           </div>
 
-          <div *ngIf="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
+          <div *ngIf="errorMessage" class="alert alert-danger" [attr.data-testid]="'error-message'">{{ errorMessage }}</div>
 
-          <button type="submit" class="btn btn-primary btn-block" [disabled]="form.invalid || isLoading">
+          <button type="submit" class="btn btn-primary btn-block" [disabled]="form.invalid || isLoading"
+                  [attr.data-testid]="'login-button'">
             <span class="material-symbols-outlined">{{ isLoading ? 'progress_activity' : 'login' }}</span>
             {{ isLoading ? 'Validando...' : 'Iniciar Turno' }}
           </button>
         </form>
 
-        <div class="login-divider"><span>o</span></div>
+        <div class="divider">
+          <span>O</span>
+        </div>
 
-        <!-- Botón oficial de Google (Google Identity Services) -->
-        <div id="google-btn" class="google-btn" [class.hidden]="!googleEnabled"></div>
-
-        <!-- Botón de respaldo mientras no se configura el Client ID -->
-        <button *ngIf="!googleEnabled" type="button" class="btn btn-secondary btn-block google-fallback"
-                (click)="googleNoConfigurado()">
-          <span class="material-symbols-outlined">account_circle</span> Continuar con Google
+        <button type="button" class="btn btn-google btn-block" (click)="loginWithGoogle()" [disabled]="isLoading">
+          <span class="material-symbols-outlined">account_circle</span>
+          Continuar con Google
         </button>
 
-        <p *ngIf="googleError" class="field-error">{{ googleError }}</p>
+        <div class="login-footer">
+          <span>¿No tienes cuenta?</span>
+          <a routerLink="/auth/registro" class="link-register">Regístrate aquí</a>
+        </div>
+
+        <div class="login-footer">
+          <span>¿Olvidaste tu contraseña?</span>
+          <a routerLink="/auth/recuperar" class="link-register">Recupérala aquí</a>
+        </div>
 
         <div class="login-foot">
           <span class="online-dot"></span>
@@ -95,6 +104,7 @@ import { environment } from '../../../../environments/environment';
       </div>
     </div>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     .login-page {
       min-height: 100vh;
@@ -124,23 +134,35 @@ import { environment } from '../../../../environments/environment';
 
     .btn-block { width: 100%; padding: 13px; font-size: 15px; margin-top: 6px; }
 
-    .login-divider {
-      display: flex; align-items: center; gap: 12px;
-      margin: 20px 0; color: var(--pf-muted); font-size: 12px; text-transform: uppercase;
-      letter-spacing: 0.08em;
+    .divider {
+      display: flex; align-items: center; text-align: center; margin: 20px 0;
+      color: var(--pf-muted); font-size: 12px;
     }
-    .login-divider::before, .login-divider::after {
-      content: ''; flex: 1; height: 1px; background: var(--pf-outline-soft);
+    .divider::before, .divider::after {
+      content: ''; flex: 1; border-bottom: 1px solid var(--pf-border);
     }
+    .divider span { padding: 0 10px; }
 
-    .google-btn { display: flex; justify-content: center; min-height: 44px; }
-    .google-btn.hidden { display: none; }
-    .google-fallback { margin-top: 4px; }
+    .btn-google {
+      background: #fff; color: #333; border: 1px solid var(--pf-border);
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-google:hover { background: #f5f5f5; }
 
     .login-foot {
       display: flex; align-items: center; gap: 8px;
       margin-top: 28px; color: var(--pf-muted); font-size: 12px;
     }
+
+    .login-footer {
+      display: flex; justify-content: center; align-items: center; gap: 8px;
+      margin-top: 20px; color: var(--pf-muted); font-size: 14px;
+    }
+
+    .link-register {
+      color: var(--pf-primary); text-decoration: none; font-weight: 600;
+    }
+    .link-register:hover { text-decoration: underline; }
 
     .login-side {
       background:
@@ -231,61 +253,13 @@ export class LoginComponent implements OnInit {
     });
   }
 
-  /** Carga el SDK de Google Identity Services y dibuja el botón oficial. */
-  private cargarGoogle(): void {
-    const w = window as any;
-    const render = () => {
-      try {
-        w.google.accounts.id.initialize({
-          client_id: environment.googleClientId,
-          callback: (resp: any) => this.loginGoogle(resp.credential)
-        });
-        w.google.accounts.id.renderButton(
-          document.getElementById('google-btn'),
-          { theme: 'outline', size: 'large', width: 360, text: 'continue_with' }
-        );
-      } catch (e) {
-        this.googleError = 'No se pudo inicializar el inicio de sesión con Google.';
-      }
-    };
-
-    if (w.google?.accounts?.id) {
-      setTimeout(render, 0);
-      return;
-    }
-
-    const script = document.createElement('script');
-    script.src = 'https://accounts.google.com/gsi/client';
-    script.async = true;
-    script.defer = true;
-    script.onload = () => setTimeout(render, 0);
-    script.onerror = () => this.googleError = 'No se pudo cargar Google. Revisa tu conexión.';
-    document.head.appendChild(script);
-  }
-
-  private loginGoogle(credential: string): void {
+  loginWithGoogle(): void {
     this.isLoading = true;
-    this.googleError = '';
-    this.authService.loginConGoogle(credential).subscribe({
-      next: () => {
-        this.isLoading = false;
-        this.toast.success('Sesión iniciada con Google.');
-        this.redirigir();
-      },
-      error: (err) => {
-        this.isLoading = false;
-        this.googleError = err.error?.message || 'No se pudo iniciar sesión con Google.';
-      }
-    });
-  }
+    this.errorMessage = '';
 
-  private redirigir(): void {
-    const rol = this.authService.getRol().toUpperCase();
-    this.router.navigate([rol === 'ADMIN' ? '/planos' : '/mis-parqueos']);
-  }
-
-  googleNoConfigurado(): void {
-    this.googleError = 'Falta configurar el Client ID de Google (environment.ts).';
-    this.toast.info('Falta configurar googleClientId en environment.ts para habilitar Google.');
+    const stateBytes = crypto.getRandomValues(new Uint8Array(32));
+    const state = Array.from(stateBytes, byte => byte.toString(16).padStart(2, '0')).join('');
+    sessionStorage.setItem('google_oauth_state', state);
+    window.location.assign(`/api/auth/google/authorize?state=${encodeURIComponent(state)}`);
   }
 }

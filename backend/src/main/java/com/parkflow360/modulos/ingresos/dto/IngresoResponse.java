@@ -27,6 +27,9 @@ public class IngresoResponse {
     private String novedad;
     private String estado;
     private Long usuarioId;
+    private Long pagoId;
+    private boolean pagoRegistrado;
+    private String estadoPago;
     private LocalDateTime fechaEntrada;
     private LocalDateTime fechaSalida;
 }

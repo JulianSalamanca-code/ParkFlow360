@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReporteService } from '../../services/reporte.service';
 import { Reporte } from '../../models/reporte.model';
@@ -7,6 +7,7 @@ import { Reporte } from '../../models/reporte.model';
   selector: 'app-reporte-list',
   standalone: true,
   imports: [CommonModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="page">
       <div class="page-header">

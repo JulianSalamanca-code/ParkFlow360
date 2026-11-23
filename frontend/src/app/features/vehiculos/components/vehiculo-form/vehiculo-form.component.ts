@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -10,6 +10,7 @@ import { ToastService } from '../../../../shared/services/toast.service';
   selector: 'app-vehiculo-form',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="page">
       <div class="page-header">
@@ -20,45 +21,44 @@ import { ToastService } from '../../../../shared/services/toast.service';
       </div>
 
       <div class="form-card">
-        <form [formGroup]="form" (ngSubmit)="guardar()">
+        <form [formGroup]="form" (ngSubmit)="guardar()" [attr.data-testid]="'vehiculo-form'">
           <div class="form-group">
             <label for="placa">Placa</label>
-            <input id="placa" type="text" formControlName="placa" class="form-control mono-input" placeholder="ABC123" />
-            <div *ngIf="form.get('placa')?.invalid && form.get('placa')?.touched" class="field-error">
-              La placa es obligatoria
+            <input id="placa" type="text" formControlName="placa" class="form-control mono-input" placeholder="ABC-123" [attr.data-testid]="'input-placa'" maxlength="7" />
+            <div *ngIf="form.get('placa')?.invalid && form.get('placa')?.touched" class="field-error" [attr.data-testid]="'error-placa'">
+              <span *ngIf="form.get('placa')?.errors?.['required']">La placa es obligatoria</span>
+              <span *ngIf="form.get('placa')?.errors?.['pattern']">Formato inválido. Use AAA-000 o AAA-00A</span>
             </div>
           </div>
 
           <div class="form-group">
             <label for="tipo">Tipo</label>
-            <select id="tipo" formControlName="tipo" class="form-control">
+            <select id="tipo" formControlName="tipo" class="form-control" [attr.data-testid]="'select-tipo'">
               <option value="">Seleccione...</option>
-              <option value="CARRO">Carro</option>
+              <option value="VEHICULO">Vehículo</option>
               <option value="MOTO">Moto</option>
-              <option value="CAMIONETA">Camioneta</option>
-              <option value="CAMIÓN">Camión</option>
-              <option value="OTRO">Otro</option>
+              <option value="VEHICULO_ELECTRICO">Vehículo Eléctrico</option>
             </select>
-            <div *ngIf="form.get('tipo')?.invalid && form.get('tipo')?.touched" class="field-error">
+            <div *ngIf="form.get('tipo')?.invalid && form.get('tipo')?.touched" class="field-error" [attr.data-testid]="'error-tipo'">
               El tipo es obligatorio
             </div>
           </div>
 
           <div class="form-group">
             <label for="color">Color</label>
-            <input id="color" type="text" formControlName="color" class="form-control" placeholder="Rojo" />
+            <input id="color" type="text" formControlName="color" class="form-control" placeholder="Rojo" [attr.data-testid]="'input-color'" />
           </div>
 
           <div class="form-group">
             <label for="modelo">Modelo</label>
-            <input id="modelo" type="text" formControlName="modelo" class="form-control" placeholder="Toyota Corolla" />
+            <input id="modelo" type="text" formControlName="modelo" class="form-control" placeholder="Toyota Corolla" [attr.data-testid]="'input-modelo'" />
           </div>
 
           <div class="form-actions">
-            <button type="submit" class="btn btn-primary" [disabled]="form.invalid">
+            <button type="submit" class="btn btn-primary" [disabled]="form.invalid" [attr.data-testid]="'btn-guardar'">
               <span class="material-symbols-outlined">save</span> Guardar
             </button>
-            <a routerLink="/vehiculos" class="btn btn-secondary">Cancelar</a>
+            <a routerLink="/vehiculos" class="btn btn-secondary" [attr.data-testid]="'btn-cancelar'">Cancelar</a>
           </div>
         </form>
       </div>
@@ -80,8 +80,8 @@ export class VehiculoFormComponent implements OnInit {
 
   ngOnInit(): void {
     this.form = this.fb.group({
-      placa: ['', [Validators.required, Validators.maxLength(20)]],
-      tipo: ['', [Validators.required, Validators.maxLength(50)]],
+      placa: ['', [Validators.required, Validators.pattern(/^[A-Z]{3}-[A-Z0-9]{3}$/), Validators.maxLength(7)]],
+      tipo: ['', [Validators.required, Validators.pattern(/^(VEHICULO|MOTO|VEHICULO_ELECTRICO)$/)]],
       color: ['', [Validators.maxLength(50)]],
       modelo: ['', [Validators.maxLength(100)]]
     });

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -95,13 +95,14 @@ import { ToastService } from '../../../shared/services/toast.service';
             [tarifaValor]="tarifaValor"
             [modalidad]="'POR HORAS'"
             [operador]="nombreCliente"
-            [novedad]="form.get('novedad')?.value"
+            [novedad]="$safeNavigationMigration(form.get('novedad')?.value)"
             [fecha]="fechaTicket"
           ></app-ticket>
         </div>
       </div>
     </div>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     .ingreso-grid {
       display: grid;

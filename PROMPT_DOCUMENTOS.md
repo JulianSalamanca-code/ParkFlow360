@@ -1,6 +1,6 @@
 # PROMPT MAESTRO — Documentación del proyecto ParkFlow360
 
-Este archivo es el **índice y contexto global**. Los documentos del curso ya están generados en la carpeta [`docs/`](docs/) como archivos `.docx`. Las secciones de abajo siguen sirviendo como guía de contenido y como contexto para regenerar o actualizar cualquier documento pegándolo en una IA y guardando como `.docx` (o exportando a PDF cuando se indique).
+Este archivo es el **índice y contexto global**. Los documentos del curso ya están generados en la carpeta [`docs/05-entregables-docx/`](docs/05-entregables-docx/) como archivos `.docx`. Las secciones de abajo siguen sirviendo como guía de contenido y como contexto para regenerar o actualizar cualquier documento pegándolo en una IA y guardando como `.docx` (o exportando a PDF cuando se indique).
 
 ---
 
@@ -81,14 +81,14 @@ Este archivo es el **índice y contexto global**. Los documentos del curso ya es
 
 | N.º | Documento | Archivo generado |
 |---:|---|---|
-| 1 | Ficha de proyecto | [`docs/GS_Ficha_Proyecto_ParkFlow360.docx`](docs/GS_Ficha_Proyecto_ParkFlow360.docx) |
-| 2 | Modelo de proceso | [`docs/GS_Modelo_Proceso_ParkFlow360.docx`](docs/GS_Modelo_Proceso_ParkFlow360.docx) |
-| 3 | Acta de constitución (10 campos) | [`docs/GS_Acta_Constitucion_ParkFlow360.docx`](docs/GS_Acta_Constitucion_ParkFlow360.docx) |
-| 4 | Estándares del equipo | [`docs/GS_Estandares_ParkFlow360.docx`](docs/GS_Estandares_ParkFlow360.docx) |
-| 5 | Tablero (GitHub Projects) | [`docs/GS_Tablero_ParkFlow360.docx`](docs/GS_Tablero_ParkFlow360.docx) |
-| 6 | **Taller 5 — Plan de control de calidad** | [`docs/GS_Control_De_Calidad_ParkFlow360.docx`](docs/GS_Control_De_Calidad_ParkFlow360.docx) |
-| 7 | Estado real contra el acta | [`docs/GS_Estado_Real_vs_Acta_ParkFlow360.docx`](docs/GS_Estado_Real_vs_Acta_ParkFlow360.docx) |
-| 8 | Backlogs estimados | [`docs/GS_Backlogs_Estimados_ParkFlow360.docx`](docs/GS_Backlogs_Estimados_ParkFlow360.docx) |
+| 1 | Ficha de proyecto | [`docs/05-entregables-docx/GS_Ficha_Proyecto_ParkFlow360_actualizado.docx`](docs/05-entregables-docx/GS_Ficha_Proyecto_ParkFlow360_actualizado.docx) |
+| 2 | Modelo de proceso | [`docs/05-entregables-docx/GS_Modelo_Proceso_ParkFlow360.docx`](docs/05-entregables-docx/GS_Modelo_Proceso_ParkFlow360.docx) |
+| 3 | Acta de constitución (10 campos) | [`docs/05-entregables-docx/GS_Acta_Constitucion_ParkFlow360.docx`](docs/05-entregables-docx/GS_Acta_Constitucion_ParkFlow360.docx) |
+| 4 | Estándares del equipo | [`docs/05-entregables-docx/GS_Estandares_ParkFlow360.docx`](docs/05-entregables-docx/GS_Estandares_ParkFlow360.docx) |
+| 5 | Tablero (GitHub Projects) | [`docs/05-entregables-docx/GS_Tablero_ParkFlow360.docx`](docs/05-entregables-docx/GS_Tablero_ParkFlow360.docx) |
+| 6 | **Taller 5 — Plan de control de calidad** | [`docs/05-entregables-docx/GS_Control_De_Calidad_ParkFlow360_actualizado.docx`](docs/05-entregables-docx/GS_Control_De_Calidad_ParkFlow360_actualizado.docx) |
+| 7 | Estado real contra el acta | [`docs/05-entregables-docx/GS_Estado_Real_vs_Acta_ParkFlow360.docx`](docs/05-entregables-docx/GS_Estado_Real_vs_Acta_ParkFlow360.docx) |
+| 8 | Backlogs estimados | [`docs/05-entregables-docx/GS_Backlogs_Estimados_ParkFlow360.docx`](docs/05-entregables-docx/GS_Backlogs_Estimados_ParkFlow360.docx) |
 
 > **Alcance actualizado:** el proyecto ahora incluye **plano interactivo con generación de espacios en bloque**, **inicio de sesión con Google** y **pago en línea con Wompi**; el administrador ya no registra vehículos ni reserva (eso es función del cliente). Los documentos 1, 3, 6 y 8 ya reflejan este alcance.
 

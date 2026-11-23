@@ -4,6 +4,8 @@
 **Estado:** pendiente de implementación.  
 **Nota:** este documento describe el **modelo objetivo**. El código es la fuente de verdad del estado actual (ver `AGENTS.md`); ninguna de las funcionalidades de aquí existe hoy en el repositorio.
 
+La ejecución por hitos está en [`PLAN_IMPLEMENTACION.md`](PLAN_IMPLEMENTACION.md).
+
 ---
 
 ## 1. Contexto y objetivos

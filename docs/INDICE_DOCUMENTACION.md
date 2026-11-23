@@ -13,6 +13,7 @@ Clasificación de los documentos del repositorio. Los binarios `.docx` no se edi
 | `docs/INDICE_DOCUMENTACION.md` | Este índice. |
 | `docs/01-especificaciones/ESPECIFICACIONES_PARKFLOW360.md` | Especificación normativa y tabla de implementación F0–F10. |
 | `docs/01-especificaciones/BACKLOG_NUEVO.md` | Historias derivadas del plan F0–F10. |
+| `docs/01-especificaciones/PLAN_IMPLEMENTACION.md` | Plan de ejecución por hitos para dos personas. |
 | `docs/02-arquitectura/proyecto-mcp.md` | Manual de contexto del proyecto. |
 | `docs/02-arquitectura/diagrama-contexto-cr.md` | Diagrama C4 de contexto. |
 | `docs/02-arquitectura/diagrama-arquitectura-adr.md` | Diagrama C4 de componentes y ADR. |

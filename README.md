@@ -45,6 +45,7 @@ Comandos de verificación: `mvn test` / `mvn verify` en backend; `pnpm build` y 
 - `AGENTS.md`: convenciones y reglas de negocio para agentes.
 - `docs/01-especificaciones/ESPECIFICACIONES_PARKFLOW360.md`: especificaciones y tabla de implementación.
 - `docs/01-especificaciones/BACKLOG_NUEVO.md`: historias derivadas del plan.
+- `docs/01-especificaciones/PLAN_IMPLEMENTACION.md`: plan de ejecución por hitos para dos personas.
 - `docs/INDICE_DOCUMENTACION.md`: clasificación de documentos vivos e históricos.
 
 ## Contribución

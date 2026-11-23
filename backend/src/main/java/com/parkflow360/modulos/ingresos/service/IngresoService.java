@@ -223,6 +223,25 @@ public class IngresoService {
         return mapToResponse(ingreso);
     }
 
+    /**
+     * RN-10/RN-11: cancela las reservas vencidas, libera el espacio y factura una hora
+     * únicamente para tarifas por horas. El bloqueo pesimista evita dobles cobros.
+     */
+    @Transactional
+    public int expirarReservasVencidas(LocalDateTime ahora) {
+        List<Ingreso> vencidas = ingresoRepository.findReservasVencidasParaExpirar(ahora);
+        for (Ingreso ingreso : vencidas) {
+            ingreso.setEstado("CANCELADO");
+            ingreso.setFechaSalida(ahora);
+            ingresoRepository.save(ingreso);
+            marcarEspacio(ingreso.getEspacioId(), "LIBRE");
+            if (esTarifaHora(ingreso)) {
+                facturaService.generarYCobrarHoraDeEspera(ingreso);
+            }
+        }
+        return vencidas.size();
+    }
+
     @Transactional
     public IngresoResponse liberar(String email, Long id) {
         Ingreso ingreso = requireIngreso(id);
@@ -266,6 +285,13 @@ public class IngresoService {
             throw new IllegalArgumentException("No se puede eliminar una estancia que tiene un pago asociado.");
         }
         ingresoRepository.deleteById(id);
+    }
+
+    private boolean esTarifaHora(Ingreso ingreso) {
+        return ingreso.getTarifaId() != null
+                && tarifaRepository.findById(ingreso.getTarifaId())
+                        .map(tarifa -> "HORA".equalsIgnoreCase(tarifa.getTipo()))
+                        .orElse(false);
     }
 
     /** RN-12: la modalidad se deriva del tipo de tarifa, no de un valor fijo enviado por el cliente. */

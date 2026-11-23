@@ -50,9 +50,12 @@ public class SecurityConfig {
                     .hasAnyRole("USUARIO", "EMPRESA", "PLATAFORMA", "CAJERO_PAGOS", "GUARDIA")
 
                 // ---------- Guardia: campo, sin gestión de pagos ----------
-                .requestMatchers("/api/ingresos/*/llegada", "/api/ingresos/*/verificar",
-                        "/api/ingresos/*/estado-pago")
-                    .hasAnyRole("GUARDIA", "CAJERO_PAGOS", "PLATAFORMA")
+                .requestMatchers(HttpMethod.PUT, "/api/ingresos/*/llegada")
+                    .hasAnyRole("GUARDIA", "PLATAFORMA")
+                .requestMatchers(HttpMethod.PUT, "/api/ingresos/*/verificar")
+                    .hasAnyRole("GUARDIA", "EMPRESA", "PLATAFORMA")
+                .requestMatchers(HttpMethod.GET, "/api/ingresos/*/estado-pago")
+                    .hasAnyRole("GUARDIA", "EMPRESA", "CAJERO_PAGOS", "PLATAFORMA")
 
                 // ---------- Cajero: solo pagos ----------
                 .requestMatchers("/api/pagos/**")

@@ -1,7 +1,10 @@
 package com.parkflow360.modulos.ingresos.controller;
 
+import com.parkflow360.modulos.ingresos.dto.EstadoPagoResponse;
 import com.parkflow360.modulos.ingresos.dto.IngresoRequest;
 import com.parkflow360.modulos.ingresos.dto.IngresoResponse;
+import com.parkflow360.modulos.ingresos.dto.VerificarIngresoRequest;
+import com.parkflow360.modulos.ingresos.service.EstadoPagoService;
 import com.parkflow360.modulos.ingresos.service.IngresoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +28,7 @@ import java.util.List;
 public class IngresoController {
 
     private final IngresoService ingresoService;
+    private final EstadoPagoService estadoPagoService;
 
     @GetMapping("/mios")
     public ResponseEntity<List<IngresoResponse>> misIngresos(Authentication auth) {
@@ -81,6 +85,21 @@ public class IngresoController {
             @PathVariable Long id,
             Authentication auth) {
         return ResponseEntity.ok(ingresoService.registrarLlegada(auth.getName(), id));
+    }
+
+    @PutMapping("/{id}/verificar")
+    public ResponseEntity<IngresoResponse> verificar(
+            @PathVariable Long id,
+            Authentication auth,
+            @Valid @RequestBody VerificarIngresoRequest request) {
+        return ResponseEntity.ok(ingresoService.verificar(auth.getName(), id, request));
+    }
+
+    @GetMapping("/{id}/estado-pago")
+    public ResponseEntity<EstadoPagoResponse> estadoPago(
+            @PathVariable Long id,
+            Authentication auth) {
+        return ResponseEntity.ok(estadoPagoService.obtener(auth.getName(), id));
     }
 
     @PutMapping("/{id}/liberar")

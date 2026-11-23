@@ -5,6 +5,7 @@ import com.parkflow360.modulos.creditos.service.CreditoService;
 import com.parkflow360.modulos.espacios.repository.EspacioRepository;
 import com.parkflow360.modulos.ingresos.dto.IngresoRequest;
 import com.parkflow360.modulos.ingresos.dto.IngresoResponse;
+import com.parkflow360.modulos.ingresos.dto.VerificarIngresoRequest;
 import com.parkflow360.modulos.ingresos.entity.Ingreso;
 import com.parkflow360.modulos.ingresos.repository.IngresoRepository;
 import com.parkflow360.modulos.pagos.repository.PagoRepository;
@@ -13,6 +14,8 @@ import com.parkflow360.modulos.tarifas.entity.Tarifa;
 import com.parkflow360.modulos.tarifas.repository.TarifaRepository;
 import com.parkflow360.security.entity.Usuario;
 import com.parkflow360.security.repository.UsuarioRepository;
+import com.parkflow360.modulos.vehiculos.entity.Vehiculo;
+import com.parkflow360.modulos.vehiculos.repository.VehiculoRepository;
 import com.parkflow360.shared.service.AccesoParqueaderoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -40,6 +43,7 @@ public class IngresoService {
     private final PagoRepository pagoRepository;
     private final EspacioRepository espacioRepository;
     private final UsuarioRepository usuarioRepository;
+    private final VehiculoRepository vehiculoRepository;
     private final TarifaRepository tarifaRepository;
     private final AccesoParqueaderoService accesoParqueaderoService;
     private final FacturaService facturaService;
@@ -158,6 +162,7 @@ public class IngresoService {
                 .operador(request.getOperador())
                 .novedad(request.getNovedad())
                 .estado("ACTIVO")
+                .fechaLlegada(LocalDateTime.now())
                 .build();
 
         ingreso = ingresoRepository.save(ingreso);
@@ -165,6 +170,7 @@ public class IngresoService {
         ingreso = ingresoRepository.save(ingreso);
 
         marcarEspacio(request.getEspacioId(), "OCUPADO");
+        facturaService.generarYCobrarUnaHora(ingreso);
 
         return mapToResponse(ingreso);
     }
@@ -184,14 +190,15 @@ public class IngresoService {
         ingreso = ingresoRepository.save(ingreso);
 
         marcarEspacio(ingreso.getEspacioId(), "LIBRE");
-        facturaService.generarYCobrar(ingreso);
+        facturaService.ajustarAlSalir(ingreso);
 
         return mapToResponse(ingreso);
     }
 
     /**
-     * RN-09/RN-11: registra la llegada del guardia. Dentro del límite no genera cargo;
-     * fuera de él factura una hora y deja la estancia activa.
+     * RN-09/RN-11: registra la llegada del guardia y abre la factura con una unidad
+     * de tarifa. Tanto puntual como tardía, la hora de espera queda incluida en esa
+     * única factura, que se ajustará al valor real al registrar la salida.
      */
     @Transactional
     public IngresoResponse registrarLlegada(String email, Long id) {
@@ -207,18 +214,11 @@ public class IngresoService {
             throw new IllegalArgumentException("Solo se puede registrar la llegada de una reserva vigente.");
         }
 
-        LocalDateTime ahora = LocalDateTime.now();
-        LocalDateTime limite = ingreso.getFechaLimiteLlegada();
-        boolean llegadaTardia = limite != null && ahora.isAfter(limite);
-
-        ingreso.setFechaLlegada(ahora);
+        ingreso.setFechaLlegada(LocalDateTime.now());
         ingreso.setEstado("ACTIVO");
         ingreso = ingresoRepository.save(ingreso);
         marcarEspacio(ingreso.getEspacioId(), "OCUPADO");
-
-        if (llegadaTardia) {
-            facturaService.generarYCobrarHoraDeEspera(ingreso);
-        }
+        facturaService.generarYCobrarUnaHora(ingreso);
 
         return mapToResponse(ingreso);
     }
@@ -236,10 +236,86 @@ public class IngresoService {
             ingresoRepository.save(ingreso);
             marcarEspacio(ingreso.getEspacioId(), "LIBRE");
             if (esTarifaHora(ingreso)) {
-                facturaService.generarYCobrarHoraDeEspera(ingreso);
+                facturaService.generarYCobrarUnaHora(ingreso);
             }
         }
         return vencidas.size();
+    }
+
+    /**
+     * F7: el guardia (o supervisor) verifica los datos del vehículo y completa
+     * únicamente los campos que estaban vacíos, sin sobrescribir información válida.
+     */
+    @Transactional
+    public IngresoResponse verificar(String email, Long id, VerificarIngresoRequest request) {
+        Ingreso ingreso = ingresoRepository.findByIdForUpdate(id)
+                .orElseThrow(() -> new NoSuchElementException("Ingreso no encontrado con id: " + id));
+        accesoParqueaderoService.verificarAcceso(email, ingreso.getParqueaderoId());
+
+        if (!"RESERVADO".equalsIgnoreCase(ingreso.getEstado())
+                && !"ACTIVO".equalsIgnoreCase(ingreso.getEstado())) {
+            throw new IllegalArgumentException("Solo se puede verificar un ingreso reservado o activo.");
+        }
+
+        if (request.getVehiculoId() != null) {
+            Vehiculo vehiculo = vehiculoRepository.findById(request.getVehiculoId())
+                    .orElseThrow(() -> new NoSuchElementException(
+                            "Vehículo no encontrado con id: " + request.getVehiculoId()));
+            validarVehiculo(ingreso, vehiculo);
+            if (!tieneTexto(ingreso.getPlaca())) {
+                ingreso.setPlaca(vehiculo.getPlaca());
+            }
+            if (ingreso.getVehiculoId() == null) {
+                ingreso.setVehiculoId(vehiculo.getId());
+            }
+        }
+
+        if (tieneTexto(request.getPlaca())) {
+            String placa = request.getPlaca().trim().toUpperCase();
+            if (tieneTexto(ingreso.getPlaca()) && !ingreso.getPlaca().equalsIgnoreCase(placa)) {
+                throw new IllegalArgumentException("La placa no coincide con la registrada en el ingreso.");
+            }
+            Vehiculo vehiculo = vehiculoRepository.findByPlaca(placa).orElse(null);
+            if (vehiculo != null) {
+                validarVehiculo(ingreso, vehiculo);
+                if (ingreso.getVehiculoId() == null) {
+                    ingreso.setVehiculoId(vehiculo.getId());
+                }
+            }
+            if (!tieneTexto(ingreso.getPlaca())) {
+                ingreso.setPlaca(placa);
+            }
+        }
+
+        completarSiVacio(ingreso.getCategoria(), request.getCategoria(), ingreso::setCategoria);
+        completarSiVacio(ingreso.getEspacioNumero(), request.getEspacioNumero(), ingreso::setEspacioNumero);
+        completarSiVacio(ingreso.getOperador(), request.getOperador(), ingreso::setOperador);
+        completarSiVacio(ingreso.getNovedad(), request.getNovedad(), ingreso::setNovedad);
+
+        return mapToResponse(ingresoRepository.save(ingreso));
+    }
+
+    private void validarVehiculo(Ingreso ingreso, Vehiculo vehiculo) {
+        if (ingreso.getUsuarioId() != null && vehiculo.getUsuarioId() != null
+                && !ingreso.getUsuarioId().equals(vehiculo.getUsuarioId())) {
+            throw new IllegalArgumentException("El vehículo no pertenece al usuario del ingreso.");
+        }
+        if (ingreso.getVehiculoId() != null && !ingreso.getVehiculoId().equals(vehiculo.getId())) {
+            throw new IllegalArgumentException("El vehículo no coincide con el registrado en el ingreso.");
+        }
+        if (tieneTexto(ingreso.getPlaca()) && !ingreso.getPlaca().equalsIgnoreCase(vehiculo.getPlaca())) {
+            throw new IllegalArgumentException("La placa del vehículo no coincide con la registrada en el ingreso.");
+        }
+    }
+
+    private void completarSiVacio(String actual, String nuevo, java.util.function.Consumer<String> setter) {
+        if (!tieneTexto(actual) && tieneTexto(nuevo)) {
+            setter.accept(nuevo.trim());
+        }
+    }
+
+    private boolean tieneTexto(String valor) {
+        return valor != null && !valor.isBlank();
     }
 
     @Transactional

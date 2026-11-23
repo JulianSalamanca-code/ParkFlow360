@@ -33,6 +33,12 @@ public class AuthController {
         return ResponseEntity.ok(registroService.registrar(request));
     }
 
+    /** Login con el ID token (credential) emitido por Google Identity Services. */
+    @PostMapping("/google")
+    public ResponseEntity<LoginResponse> loginConGoogle(@Valid @RequestBody GoogleLoginRequest request) {
+        return ResponseEntity.ok(authService.loginConGoogle(request));
+    }
+
     @GetMapping("/google/authorize")
     public ResponseEntity<Void> googleAuthorize(@RequestParam String state) {
         String authorizationUrl = googleAuthService.getAuthorizationUrl(state);

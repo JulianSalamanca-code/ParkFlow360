@@ -2,9 +2,22 @@ spring:
   application:
     name: ParkFlow360
 
+  mail:
+    host: ${MAIL_HOST:}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    from: ${MAIL_FROM:no-reply@parkflow360.com}
+    properties:
+      mail:
+        smtp:
+          auth: ${MAIL_SMTP_AUTH:true}
+          starttls:
+            enable: ${MAIL_SMTP_STARTTLS_ENABLE:true}
+
   datasource:
-    url: ${DB_URL:jdbc:postgresql://aws-0-us-west-2.pooler.supabase.com:6543/postgres?prepareThreshold=0}
-    username: ${DB_USERNAME:postgres.pmijcynowbvxvqrratst}
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/parkflow360}
+    username: ${DB_USERNAME:parkflow360}
     password: ${DB_PASSWORD:${SUPABASE_PASSWORD:}}
     driver-class-name: org.postgresql.Driver
 
@@ -45,7 +58,7 @@ jwt:
 
 # Login con Google (Google Identity Services)
 google:
-  client-id: ${GOOGLE_CLIENT_ID:290726857250-a25817snjik3qjn649n49drhrev92lvh.apps.googleusercontent.com}
+  client-id: ${GOOGLE_CLIENT_ID:}
 
 # Pago en línea con Wompi
 wompi:

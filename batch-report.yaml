@@ -1,0 +1,131 @@
+batch_id: "B01"
+completed_tasks:
+  - "T001"
+  - "T002"
+  - "T003"
+  - "T004"
+  - "T005"
+  - "T006"
+  - "T007"
+  - "T008"
+  - "T009"
+  - "T010"
+  - "T011"
+  - "T012"
+  - "T013"
+  - "T014"
+  - "T015"
+  - "T017"
+  - "T018"
+blocked_tasks:
+  - task_id: "T016"
+    reason: "No se proporcionaron credenciales SMTP ni proveedor externo."
+    required_task_ids: ["T016"]
+  - task_id: "T019"
+    reason: "Chrome no está instalado en las rutas esperadas del entorno; Cypress no puede ejecutarse."
+    required_task_ids: ["T019"]
+  - task_id: "T020"
+    reason: "No se confirmó el despliegue externo ni se dispuso de credenciales SMTP reales."
+    required_task_ids: ["T020"]
+files_changed:
+  T001:
+    - file: "frontend/src/app/auth/components/login/login.component.ts"
+      change_type: "modified"
+      description: "Importa RouterLink para navegación de autenticación"
+  T004:
+    - file: "frontend/src/app/auth/components/registro/registro.component.ts"
+      change_type: "modified"
+      description: "Normaliza email y nombre antes del registro"
+  T006:
+    - file: "backend/src/main/java/com/parkflow360/security/service/RegistroService.java"
+      change_type: "modified"
+      description: "Normaliza email y nombre y conserva el rol USUARIO"
+  T008:
+    - file: "backend/src/main/resources/db/migration/V21__recuperacion_password.sql"
+      change_type: "created"
+      description: "Crea persistencia para tokens temporales de recuperación"
+  T009:
+    - file: "backend/src/main/java/com/parkflow360/security/entity/PasswordResetToken.java"
+      change_type: "created"
+      description: "Define entidad del token"
+  T010:
+    - file: "backend/src/main/java/com/parkflow360/security/controller/AuthController.java"
+      change_type: "modified"
+      description: "Expone solicitud y restablecimiento"
+  T013:
+    - file: "frontend/src/app/auth/auth.routes.ts"
+      change_type: "modified"
+      description: "Añade rutas recuperar y restablecer"
+  T014:
+    - file: "frontend/src/app/auth/components/recuperar/recuperar.component.ts"
+      change_type: "created"
+      description: "Pantalla de solicitud"
+  T014b:
+    - file: "frontend/src/app/auth/components/restablecer/restablecer.component.ts"
+      change_type: "created"
+      description: "Pantalla de restablecimiento"
+upstream_artifacts_consumed:
+  T001:
+    - artifact: "plan.md"
+      used_for: "Plan de navegación de autenticación"
+  T008:
+    - artifact: "plan.md"
+      used_for: "Migración V21 y persistencia segura"
+evidence_mapping:
+  T001:
+    - upstream: "plan.md#Step 1"
+      output: "frontend/src/app/auth/components/login/login.component.ts"
+      evidence: "Build Angular aprobado"
+  T010:
+    - upstream: "plan.md#Step 4"
+      output: "backend/src/main/java/com/parkflow360/security/controller/AuthController.java"
+      evidence: "Compilación Maven aprobada"
+traceability:
+  - requirement: "REQ-AUTH-001"
+    plan_item: "2.1"
+    task: "T004"
+    files: ["frontend/src/app/auth/components/registro/registro.component.ts", "backend/src/main/java/com/parkflow360/security/service/RegistroService.java"]
+    status: "completed"
+  - requirement: "REQ-AUTH-002"
+    plan_item: "1.1,6.1"
+    task: "T001,T013,T014,T015"
+    files: ["frontend/src/app/auth/components/login/login.component.ts", "frontend/src/app/auth/auth.routes.ts", "frontend/src/app/auth/services/auth.service.ts"]
+    status: "completed"
+  - requirement: "REQ-AUTH-003"
+    plan_item: "3.1,4.1,5.1"
+    task: "T008,T009,T010,T011,T012"
+    files: ["backend/src/main/resources/db/migration/V21__recuperacion_password.sql", "backend/src/main/java/com/parkflow360/security/service/RecuperacionPasswordService.java"]
+    status: "completed"
+  - requirement: "REQ-AUTH-004"
+    plan_item: "7.1"
+    task: "T017,T018"
+    files: ["backend/.env.example", "backend/src/main/resources/application.yml", "netlify.toml"]
+    status: "partial"
+protocol_violation: false
+errors: []
+warnings:
+  - severity: HIGH
+    message: "No se pudo ejecutar ChromeHeadless porque el binario Chrome no está instalado."
+  - severity: MEDIUM
+    message: "SMTP requiere credenciales reales fuera del repositorio."
+  - severity: MEDIUM
+    message: "El arranque HTTP local quedó bloqueado por credenciales/variables de base de datos externas."
+test_results:
+  backend:
+    command: ".\\mvnw.cmd -q test"
+    passed: 28
+    failed: 0
+    skipped: 0
+    failures: []
+  frontend_build:
+    command: "npm run build"
+    passed: 1
+    failed: 0
+    skipped: 0
+    failures: []
+  frontend_test:
+    command: "npm test"
+    passed: 0
+    failed: 1
+    skipped: 0
+    failures: ["ChromeHeadless no disponible"]

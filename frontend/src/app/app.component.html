@@ -18,7 +18,7 @@
              [routerLink]="item.path"
              routerLinkActive="active"
              (click)="closeMobileNav()"
-             [attr.data-testid]="'nav-item-' + item.id">
+             [attr.data-testid]="item.dataTestId">
             <span class="material-symbols-outlined">{{ item.icon }}</span> {{ item.label }}
           </a>
         </nav>

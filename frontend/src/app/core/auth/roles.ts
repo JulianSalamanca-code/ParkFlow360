@@ -40,14 +40,13 @@ const ROLE_LABELS: Readonly<Record<Rol, string>> = {
 };
 
 /**
- * Pantalla inicial de cada rol. Los roles que todavía no tienen módulos
- * implementados aterrizan en la vista informativa `/proximamente`.
+ * Pantalla inicial de cada rol.
  */
 const HOME_BY_ROL: Readonly<Record<Rol, string>> = {
   PLATAFORMA: '/planos',
-  EMPRESA: '/proximamente',
-  CAJERO_PAGOS: '/proximamente',
-  GUARDIA: '/proximamente',
+  EMPRESA: '/empresa',
+  CAJERO_PAGOS: '/cajero/pagos',
+  GUARDIA: '/guardia/ingresos',
   USUARIO: '/mis-parqueos'
 };
 

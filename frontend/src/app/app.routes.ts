@@ -53,6 +53,60 @@ export const routes: Routes = [
       .then(m => m.USUARIOS_ROUTES)
   },
 
+  // ---------------- EMPRESA ----------------
+  {
+    path: 'empresa',
+    canActivate: [RoleGuard], data: { roles: ['EMPRESA'], view: 'resumen' },
+    loadComponent: () => import('./features/operaciones/empresa/empresa.component')
+      .then(m => m.EmpresaComponent)
+  },
+  {
+    path: 'empresa/parqueaderos',
+    canActivate: [RoleGuard], data: { roles: ['EMPRESA'], view: 'parqueaderos' },
+    loadComponent: () => import('./features/operaciones/empresa/empresa.component')
+      .then(m => m.EmpresaComponent)
+  },
+  {
+    path: 'empresa/reportes',
+    canActivate: [RoleGuard], data: { roles: ['EMPRESA'], view: 'reportes' },
+    loadComponent: () => import('./features/operaciones/empresa/empresa.component')
+      .then(m => m.EmpresaComponent)
+  },
+  {
+    path: 'empresa/configuracion',
+    canActivate: [RoleGuard], data: { roles: ['EMPRESA'], view: 'configuracion' },
+    loadComponent: () => import('./features/operaciones/empresa/empresa.component')
+      .then(m => m.EmpresaComponent)
+  },
+
+  // ---------------- CAJERO DE PAGOS ----------------
+  {
+    path: 'cajero/pagos',
+    canActivate: [RoleGuard], data: { roles: ['CAJERO_PAGOS'], view: 'pendientes' },
+    loadComponent: () => import('./features/operaciones/cajero/cajero.component')
+      .then(m => m.CajeroComponent)
+  },
+  {
+    path: 'cajero/historial',
+    canActivate: [RoleGuard], data: { roles: ['CAJERO_PAGOS'], view: 'historial' },
+    loadComponent: () => import('./features/operaciones/cajero/cajero.component')
+      .then(m => m.CajeroComponent)
+  },
+
+  // ---------------- GUARDIA ----------------
+  {
+    path: 'guardia/ingresos',
+    canActivate: [RoleGuard], data: { roles: ['GUARDIA'], view: 'ingresos' },
+    loadComponent: () => import('./features/operaciones/guardia/guardia.component')
+      .then(m => m.GuardiaComponent)
+  },
+  {
+    path: 'guardia/ocupacion',
+    canActivate: [RoleGuard], data: { roles: ['GUARDIA'], view: 'ocupacion' },
+    loadComponent: () => import('./features/operaciones/guardia/guardia.component')
+      .then(m => m.GuardiaComponent)
+  },
+
   // ---------------- USUARIO (cliente) ----------------
   {
     path: 'reservar',
@@ -95,8 +149,8 @@ export const routes: Routes = [
 
   {
     path: '',
-    redirectTo: 'planos',
-    pathMatch: 'full'
+    loadComponent: () => import('./core/home-redirect.component')
+      .then(m => m.HomeRedirectComponent)
   },
   {
     path: '**',

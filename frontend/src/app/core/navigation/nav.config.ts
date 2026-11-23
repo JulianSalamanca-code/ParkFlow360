@@ -6,6 +6,7 @@ export interface NavItem {
   readonly shortLabel: string;
   readonly icon: string;
   readonly path: string;
+  readonly dataTestId: string;
 }
 
 export interface NavSection {
@@ -20,7 +21,7 @@ function item(
   icon: string,
   path: string
 ): NavItem {
-  return { id, label, shortLabel, icon, path };
+  return { id, label, shortLabel, icon, path, dataTestId: `nav-item-${id}` };
 }
 
 const PLANOS = item('planos', 'Plano y Ocupación', 'Planos', 'map', '/planos');
@@ -35,10 +36,18 @@ const RESERVAR = item('reservar', 'Reservar Parqueadero', 'Reservar', 'add_circl
 const MIS_PARQUEOS = item('mis-parqueos', 'Mis Parqueos', 'Parqueos', 'local_parking', '/mis-parqueos');
 const MIS_VEHICULOS = item('mis-vehiculos', 'Mis Vehículos', 'Vehículos', 'directions_car', '/mis-vehiculos');
 const PAGAR = item('pagar', 'Pagar en Línea', 'Pagar', 'payments', '/pagar');
+const EMPRESA_HOME = item('empresa-home', 'Resumen', 'Resumen', 'dashboard', '/empresa');
+const EMPRESA_PARQUEADEROS = item('empresa-parqueaderos', 'Operación', 'Operación', 'domain', '/empresa/parqueaderos');
+const EMPRESA_REPORTES = item('empresa-reportes', 'Reportes', 'Reportes', 'analytics', '/empresa/reportes');
+const EMPRESA_CONFIGURACION = item('empresa-configuracion', 'Configuración', 'Config.', 'settings', '/empresa/configuracion');
+const CAJERO_PAGOS = item('cajero-pagos', 'Pagos pendientes', 'Caja', 'point_of_sale', '/cajero/pagos');
+const CAJERO_HISTORIAL = item('cajero-historial', 'Historial', 'Historial', 'history', '/cajero/historial');
+const GUARDIA_INGRESOS = item('guardia-ingresos', 'Control de accesos', 'Accesos', 'fact_check', '/guardia/ingresos');
+const GUARDIA_OCUPACION = item('guardia-ocupacion', 'Ocupación', 'Ocupación', 'local_parking', '/guardia/ocupacion');
 
 /**
  * Una sola fuente de navegación para el sidebar y la barra inferior.
- * Los roles nuevos quedan sin ítems hasta que existan sus rutas (Etapa 1).
+ * La barra lateral y la barra inferior consumen esta misma configuración.
  */
 const SIDEBAR_BY_ROL: Readonly<Record<Rol, readonly NavSection[]>> = {
   PLATAFORMA: [
@@ -51,9 +60,15 @@ const SIDEBAR_BY_ROL: Readonly<Record<Rol, readonly NavSection[]>> = {
       items: [USUARIOS]
     }
   ],
-  EMPRESA: [],
-  CAJERO_PAGOS: [],
-  GUARDIA: [],
+  EMPRESA: [
+    { label: 'Administración', items: [EMPRESA_HOME, EMPRESA_PARQUEADEROS, EMPRESA_REPORTES, EMPRESA_CONFIGURACION] }
+  ],
+  CAJERO_PAGOS: [
+    { label: 'Recaudo', items: [CAJERO_PAGOS, CAJERO_HISTORIAL] }
+  ],
+  GUARDIA: [
+    { label: 'Operación', items: [GUARDIA_INGRESOS, GUARDIA_OCUPACION] }
+  ],
   USUARIO: [
     {
       label: 'Mi Cuenta',
@@ -65,9 +80,9 @@ const SIDEBAR_BY_ROL: Readonly<Record<Rol, readonly NavSection[]>> = {
 /** Ítems principales de la barra inferior (máximo 4 + hamburguesa). */
 const BOTTOM_BY_ROL: Readonly<Record<Rol, readonly NavItem[]>> = {
   PLATAFORMA: [PLANOS, ESPACIOS, INGRESOS, PAGOS],
-  EMPRESA: [],
-  CAJERO_PAGOS: [],
-  GUARDIA: [],
+  EMPRESA: [EMPRESA_HOME, EMPRESA_PARQUEADEROS, EMPRESA_REPORTES],
+  CAJERO_PAGOS: [CAJERO_PAGOS, CAJERO_HISTORIAL],
+  GUARDIA: [GUARDIA_INGRESOS, GUARDIA_OCUPACION],
   USUARIO: [RESERVAR, MIS_PARQUEOS, MIS_VEHICULOS, PAGAR]
 };
 

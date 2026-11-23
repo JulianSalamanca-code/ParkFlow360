@@ -38,6 +38,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/pagos/online", "/api/pagos/mios").hasRole("USUARIO")
                 .requestMatchers("/api/saldos/**").hasAnyRole("USUARIO", "PLATAFORMA")
                 .requestMatchers("/api/facturas/**").hasAnyRole("USUARIO", "CAJERO_PAGOS", "PLATAFORMA")
+                .requestMatchers(HttpMethod.POST, "/api/creditos").hasRole("USUARIO")
                 .requestMatchers("/api/creditos/**").hasAnyRole("USUARIO", "CAJERO_PAGOS", "PLATAFORMA")
 
                 // ---------- Vinculación y catálogo compartido ----------

@@ -1,6 +1,7 @@
 package com.parkflow360.modulos.ingresos.service;
 
 import com.parkflow360.modulos.espacios.entity.Espacio;
+import com.parkflow360.modulos.creditos.service.CreditoService;
 import com.parkflow360.modulos.espacios.repository.EspacioRepository;
 import com.parkflow360.modulos.ingresos.dto.IngresoRequest;
 import com.parkflow360.modulos.ingresos.dto.IngresoResponse;
@@ -31,6 +32,7 @@ public class IngresoService {
     private final UsuarioRepository usuarioRepository;
     private final AccesoParqueaderoService accesoParqueaderoService;
     private final FacturaService facturaService;
+    private final CreditoService creditoService;
 
     @Transactional(readOnly = true)
     public List<IngresoResponse> listarTodos(String email) {
@@ -80,6 +82,7 @@ public class IngresoService {
     @Transactional
     public IngresoResponse reservar(String email, IngresoRequest request) {
         Usuario usuario = requireUsuario(email);
+        creditoService.validarSinDeudaVencida(usuario.getId());
         Long parqueaderoId = resolverParqueadero(email, request);
 
         String placa = request.getPlaca() != null ? request.getPlaca().toUpperCase() : null;

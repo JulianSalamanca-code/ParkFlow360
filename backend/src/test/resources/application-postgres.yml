@@ -1,0 +1,44 @@
+# Perfil opcional: valida el esquema real con Testcontainers.
+# Requiere Docker y activarse con @ActiveProfiles("postgres").
+spring:
+  application:
+    name: ParkFlow360-Postgres-Test
+
+  datasource:
+    url: jdbc:tc:postgresql:15:///parkflow360
+    username: parkflow360
+    password: parkflow360
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    clean-disabled: true
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: test-client-id
+            client-secret: test-client-secret
+
+server:
+  port: 0
+
+jwt:
+  secret: test-secret-key-for-testing-purposes-only
+  expiration: 86400000
+
+app:
+  cors:
+    allowed-origins: http://localhost:4200

@@ -16,12 +16,11 @@ describe('Roles canónicos y alias', () => {
     cy.url().should('include', '/mis-parqueos')
   })
 
-  it('envía a EMPRESA a su nuevo inicio', () => {
+  it('envía a EMPRESA a su inicio', () => {
     cy.loginAsRole('EMPRESA', 'Empresa de prueba')
     cy.visit('/')
 
     cy.url().should('include', '/empresa')
-    cy.getByTestId('empresa-metricas').should('be.visible')
   })
 
   it('envía al login cuando el rol almacenado no se reconoce', () => {

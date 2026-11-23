@@ -93,7 +93,7 @@ export class CajeroComponent {
       next: pagos => { this.pagos = pagos; this.loading = false; },
       error: () => {
         this.loading = false;
-        this.errorMessage = 'No se pudo cargar la lista de pagos. Intenta de nuevo.';
+        this.errorMessage = 'No se pudo cargar la lista de pagos. Verifica tu vínculo con el parqueadero.';
       }
     });
   }
@@ -110,7 +110,7 @@ export class CajeroComponent {
       },
       error: () => {
         this.confirmingId = null;
-        this.errorMessage = 'No se pudo confirmar el cobro. Intenta de nuevo.';
+        this.errorMessage = 'No se pudo confirmar el cobro. Verifica tus permisos y el estado de la factura.';
       }
     });
   }

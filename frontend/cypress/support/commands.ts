@@ -9,7 +9,6 @@ declare global {
       loginAsAdmin(): Chainable<void>
       loginAsUser(): Chainable<void>
       loginAsRole(rol: string, nombre?: string): Chainable<void>
-      setMockApiState(state: 'success' | 'empty' | 'error'): Chainable<void>
       getByTestId(dataTestId: string): Chainable<JQuery<HTMLElement>>
       shouldBeLoggedIn(): Chainable<void>
       shouldBeOnPage(path: string): Chainable<void>
@@ -54,16 +53,6 @@ Cypress.Commands.add('loginAsRole', (rol: string, nombre = 'Usuario de prueba') 
       }
       win.localStorage.setItem('token', user.token)
       win.localStorage.setItem('user', JSON.stringify(user))
-    }
-  })
-})
-
-Cypress.Commands.add('setMockApiState', (state: 'success' | 'empty' | 'error') => {
-  cy.window().then((win) => {
-    if (state === 'success') {
-      win.sessionStorage.removeItem('parkflow.mock.state')
-    } else {
-      win.sessionStorage.setItem('parkflow.mock.state', state)
     }
   })
 })

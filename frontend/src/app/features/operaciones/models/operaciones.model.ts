@@ -1,4 +1,3 @@
-// Contratos asumidos para la futura API V17; las rutas aún no están publicadas por backend.
 export interface EmpresaResumen {
   readonly empresa: string;
   readonly parqueaderosActivos: number;
@@ -12,8 +11,8 @@ export interface ParqueaderoOperativo {
   readonly id: number;
   readonly nombre: string;
   readonly identificador: string;
-  readonly direccion: string;
-  readonly ocupados: number;
+  readonly direccion?: string;
+  readonly ocupados?: number;
   readonly capacidad: number;
   readonly activo: boolean;
 }
@@ -36,8 +35,8 @@ export type EstadoPagoOperativo = 'PENDIENTE' | 'CONFIRMADO';
 export interface PagoOperativo {
   readonly id: number;
   readonly referencia: string;
-  readonly placa: string;
-  readonly cliente: string;
+  readonly placa?: string;
+  readonly cliente?: string;
   readonly monto: number;
   readonly fecha: string;
   readonly estado: EstadoPagoOperativo;
@@ -46,8 +45,8 @@ export interface PagoOperativo {
 export interface IngresoOperativo {
   readonly id: number;
   readonly placa: string;
-  readonly cliente: string;
-  readonly espacio: string;
+  readonly cliente?: string;
+  readonly espacio?: string;
   readonly fechaIngreso: string;
   readonly estado: 'ESPERANDO' | 'ACTIVO';
 }

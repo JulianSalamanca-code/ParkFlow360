@@ -165,7 +165,7 @@ export class GuardiaComponent {
     this.errorMessage = '';
     const onError = (): void => {
       this.loading = false;
-      this.errorMessage = 'No se pudo cargar la operación. Intenta de nuevo.';
+      this.errorMessage = 'No se pudo cargar la operación. Verifica tu vínculo con el parqueadero.';
     };
 
     if (this.view === 'ingresos') {
@@ -199,7 +199,7 @@ export class GuardiaComponent {
       },
       error: () => {
         this.workingId = null;
-        this.errorMessage = 'No se pudo actualizar el ingreso. Intenta de nuevo.';
+        this.errorMessage = 'No se pudo actualizar el ingreso. Verifica tus permisos y el parqueadero asignado.';
       }
     });
   }
@@ -221,7 +221,7 @@ export class GuardiaComponent {
       },
       error: () => {
         this.savingNovedad = false;
-        this.errorMessage = 'No se pudo registrar la novedad. Intenta de nuevo.';
+        this.errorMessage = 'No se pudo registrar la novedad. Verifica tus permisos y el ingreso seleccionado.';
       }
     });
   }

@@ -154,7 +154,7 @@ export class EmpresaComponent {
     this.errorMessage = '';
     const onError = (): void => {
       this.loading = false;
-      this.errorMessage = 'No se pudo cargar la información. Intenta de nuevo.';
+      this.errorMessage = 'No se pudo cargar la información para este usuario o parqueadero.';
     };
 
     switch (this.view) {

@@ -3,7 +3,7 @@
 ## Descripción
 
 Diagrama de contexto C4 Level 1. Los actores reflejan el modelo objetivo de la
-[`especificación`](ESPECIFICACIONES_PARKFLOW360.md): `PLATAFORMA`, `EMPRESA`, `CAJERO_PAGOS`, `GUARDIA` y `USUARIO`.
+[`especificación`](../01-especificaciones/ESPECIFICACIONES_PARKFLOW360.md): `PLATAFORMA`, `EMPRESA`, `CAJERO_PAGOS`, `GUARDIA` y `USUARIO`.
 Los roles `CAJERO_PAGOS`, `GUARDIA` y `EMPRESA` están pendientes de implementar; hoy el código solo tiene `ADMIN` y `USUARIO`.
 
 %%{init: {'theme':'dark','themeVariables':{'primaryColor':'#1e293b','primaryTextColor':'#e2e8f0','lineColor':'#94a3b8','tertiaryColor':'#334155','background':'#0f172a'}}}%%

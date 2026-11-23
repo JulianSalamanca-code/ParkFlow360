@@ -37,6 +37,6 @@ Las especificaciones E2E están en `cypress/e2e/` y usan `data-testid` y los com
 ## Referencias
 
 - Comandos y convenciones: [`../AGENTS.md`](../AGENTS.md).
-- Funcionalidades planificadas: [`../docs/ESPECIFICACIONES_PARKFLOW360.md`](../docs/ESPECIFICACIONES_PARKFLOW360.md).
+- Funcionalidades planificadas: [`../docs/01-especificaciones/ESPECIFICACIONES_PARKFLOW360.md`](../docs/01-especificaciones/ESPECIFICACIONES_PARKFLOW360.md).
 
 Stack: Angular `^22.2.4`, TypeScript `~6.0.3`, RxJS `7.8`, Cypress `^16.2.0`, Node 22 en Netlify (usa `pnpm-lock.yaml`).

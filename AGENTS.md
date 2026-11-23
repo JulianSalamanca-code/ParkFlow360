@@ -20,7 +20,7 @@
 | Pruebas | Cypress 16.2 (E2E); Testcontainers declarado en el backend |
 | Despliegue | Node 22 en Netlify (usa pnpm), Render (backend), Supabase (DB) |
 
-Las funcionalidades y migraciones previstas (V17 en adelante) están en `docs/ESPECIFICACIONES_PARKFLOW360.md`. No asumas que ya existen en el código: verifica siempre.
+Las funcionalidades y migraciones previstas (V17 en adelante) están en `docs/01-especificaciones/ESPECIFICACIONES_PARKFLOW360.md`. No asumas que ya existen en el código: verifica siempre.
 
 ## 3. Estructura del repositorio
 
@@ -50,7 +50,14 @@ frontend/
                         vehiculos, usuarios, cliente/
     shared/             components/, services/
   cypress/e2e/, cypress/support/
-docs/                   documentación histórica del proyecto (ver regla 1)
+docs/
+  INDICE_DOCUMENTACION.md
+  01-especificaciones/ ESPECIFICACIONES_PARKFLOW360.md, BACKLOG_NUEVO.md
+  02-arquitectura/     proyecto-mcp.md, diagrama-contexto-cr.md,
+                       diagrama-arquitectura-adr.md, diagramas-mcp.md
+  03-operacion/        SOLUCION_GOOGLE_OAUTH.md
+  04-historico/        documentación histórica (ver regla 1)
+  05-entregables-docx/ entregables .docx (no editar)
 docker-compose.yml      solo servicio postgres:15
 netlify.toml            build y rewrite de /api/*
 ```
@@ -108,7 +115,7 @@ Puertos: frontend 4200, backend 8080, PostgreSQL 5432.
 
 ## 7. Reglas de negocio confirmadas (a implementar)
 
-Detalle completo, criterios de aceptación y tabla de alcance en `docs/ESPECIFICACIONES_PARKFLOW360.md`. **Hoy no están implementadas**: no asumas que existen tablas, endpoints ni campos nuevos.
+Detalle completo, criterios de aceptación y tabla de alcance en `docs/01-especificaciones/ESPECIFICACIONES_PARKFLOW360.md`. **Hoy no están implementadas**: no asumas que existen tablas, endpoints ni campos nuevos.
 
 - **Saldo y cobro automático**: el usuario recarga saldo; al generarse una factura (al salir o al expirar una reserva), si el saldo alcanza se debita y se crea un `Pago` confirmado; si no alcanza, la factura queda pendiente.
 - **Crédito**: cubre solo el faltante, máximo uno pendiente por usuario, sin intereses, con vencimiento a 3 días desde que se otorga. La deuda vencida bloquea únicamente nuevas reservas (403 en `POST /api/ingresos/reservar`).

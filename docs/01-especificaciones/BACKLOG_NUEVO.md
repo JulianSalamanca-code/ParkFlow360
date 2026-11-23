@@ -1,7 +1,7 @@
 # Backlog nuevo — ParkFlow360
 
 > Historias derivadas del plan [`ESPECIFICACIONES_PARKFLOW360.md`](ESPECIFICACIONES_PARKFLOW360.md).  
-> Estado: **pendiente de implementación**. El backlog original de 18 historias se conserva en [`HISTORIAL_USUARIO_PARKFLOW360.md`](HISTORIAL_USUARIO_PARKFLOW360.md) como documento histórico.
+> Estado: **pendiente de implementación**. El backlog original de 18 historias se conserva en [`HISTORIAL_USUARIO_PARKFLOW360.md`](../04-historico/HISTORIAL_USUARIO_PARKFLOW360.md) como documento histórico.
 
 ## Resumen
 

@@ -4,7 +4,7 @@
 
 Diagrama de componentes C4 Level 2 y decisiones de arquitectura. Los módulos
 `saldos`, `creditos`, `empresas` y `parqueaderos` son **previstos** (ver
-[`especificación`](ESPECIFICACIONES_PARKFLOW360.md)); hoy no existen en el código.
+[`especificación`](../01-especificaciones/ESPECIFICACIONES_PARKFLOW360.md)); hoy no existen en el código.
 
 %%{init: {'theme':'dark','themeVariables':{'primaryColor':'#1e293b','primaryTextColor':'#e2e8f0','lineColor':'#94a3b8','tertiaryColor':'#334155','background':'#0f172a'}}}%%
 ```mermaid

@@ -21,7 +21,7 @@ Netlify debe conservar la regla `/api/*` que redirige al backend de Render. En e
 
 ## Usuarios creados por Google
 
-`GoogleAuthService` crea o reutiliza el usuario con el email verificado y asigna el rol `USUARIO` (en el código actual). En el modelo objetivo de la [especificación](docs/ESPECIFICACIONES_PARKFLOW360.md), los roles `PLATAFORMA`, `EMPRESA`, `CAJERO_PAGOS` y `GUARDIA` se crean por alta administrativa, no por OAuth.
+`GoogleAuthService` crea o reutiliza el usuario con el email verificado y asigna el rol `USUARIO` (en el código actual). En el modelo objetivo de la [especificación](../01-especificaciones/ESPECIFICACIONES_PARKFLOW360.md), los roles `PLATAFORMA`, `EMPRESA`, `CAJERO_PAGOS` y `GUARDIA` se crean por alta administrativa, no por OAuth.
 
 ## Diagnóstico de errores
 

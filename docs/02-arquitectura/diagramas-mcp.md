@@ -4,13 +4,13 @@
 
 Este documento describe los diagramas CR y ADR de la arquitectura de ParkFlow360.
 Los actores y decisiones nuevas corresponden al plan descrito en
-[`ESPECIFICACIONES_PARKFLOW360.md`](ESPECIFICACIONES_PARKFLOW360.md).
+[`ESPECIFICACIONES_PARKFLOW360.md`](../01-especificaciones/ESPECIFICACIONES_PARKFLOW360.md).
 
 ## Diagramas disponibles
 
 ### 1. Diagrama de Contexto CR
 
-**Archivo:** `docs/diagrama-contexto-cr.md`  
+**Archivo:** `docs/02-arquitectura/diagrama-contexto-cr.md`  
 **Tipo:** C4 Context Level 1  
 **Propósito:** mostrar límites del sistema y actores externos.
 
@@ -25,7 +25,7 @@ Los actores y decisiones nuevas corresponden al plan descrito en
 
 ### 2. Diagrama de Arquitectura ADR
 
-**Archivo:** `docs/diagrama-arquitectura-adr.md`  
+**Archivo:** `docs/02-arquitectura/diagrama-arquitectura-adr.md`  
 **Tipo:** C4 Component Level 2 + ADR  
 **Propósito:** detallar componentes internos y decisiones arquitectónicas.
 
@@ -63,4 +63,4 @@ Actualizar los diagramas cuando:
 
 ## Relación con el proyecto
 
-Estos diagramas complementan `proyecto-mcp.md`, `AGENTS.md` y la especificación de funcionalidades.
+Estos diagramas complementan `proyecto-mcp.md` (esta misma carpeta), `AGENTS.md` (raíz) y la especificación de funcionalidades.

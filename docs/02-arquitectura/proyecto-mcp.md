@@ -1,7 +1,7 @@
 # ParkFlow360 — Manual de Contexto del Proyecto (MCP)
 
-> Documento vivo de contexto. Fuente de verdad: el código y [`AGENTS.md`](../AGENTS.md).  
-> Funcionalidades previstas: [`ESPECIFICACIONES_PARKFLOW360.md`](ESPECIFICACIONES_PARKFLOW360.md).
+> Documento vivo de contexto. Fuente de verdad: el código y [`AGENTS.md`](../../AGENTS.md).  
+> Funcionalidades previstas: [`ESPECIFICACIONES_PARKFLOW360.md`](../01-especificaciones/ESPECIFICACIONES_PARKFLOW360.md).
 
 ## Estado del proyecto
 
@@ -71,4 +71,4 @@ Java 17+, Maven 3.9+, Node 22, pnpm, Docker opcional.
 
 ## Notas
 
-Proyecto privado y confidencial. Los documentos históricos están clasificados en [`INDICE_DOCUMENTACION.md`](INDICE_DOCUMENTACION.md).
+Proyecto privado y confidencial. Los documentos históricos están clasificados en [`INDICE_DOCUMENTACION.md`](../INDICE_DOCUMENTACION.md).

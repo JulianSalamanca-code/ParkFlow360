@@ -13,7 +13,7 @@ ParkFlow360 es un SaaS para la gestión de parqueaderos. La plataforma es operad
 
 ## Nuevas funcionalidades planificadas
 
-El detalle normativo está en [`docs/ESPECIFICACIONES_PARKFLOW360.md`](docs/ESPECIFICACIONES_PARKFLOW360.md) y el alcance en la tabla F0–F10 de ese documento. **Aún no están implementadas**:
+El detalle normativo está en [`docs/01-especificaciones/ESPECIFICACIONES_PARKFLOW360.md`](docs/01-especificaciones/ESPECIFICACIONES_PARKFLOW360.md) y el alcance en la tabla F0–F10 de ese documento. **Aún no están implementadas**:
 
 - Saldo recargable, facturas y cobro automático.
 - Crédito del faltante con vencimiento a 3 días; deuda vencida que bloquea nuevas reservas.
@@ -43,8 +43,8 @@ Comandos de verificación: `mvn test` / `mvn verify` en backend; `pnpm build` y 
 ## Documentación
 
 - `AGENTS.md`: convenciones y reglas de negocio para agentes.
-- `docs/ESPECIFICACIONES_PARKFLOW360.md`: especificaciones y tabla de implementación.
-- `docs/BACKLOG_NUEVO.md`: historias derivadas del plan.
+- `docs/01-especificaciones/ESPECIFICACIONES_PARKFLOW360.md`: especificaciones y tabla de implementación.
+- `docs/01-especificaciones/BACKLOG_NUEVO.md`: historias derivadas del plan.
 - `docs/INDICE_DOCUMENTACION.md`: clasificación de documentos vivos e históricos.
 
 ## Contribución

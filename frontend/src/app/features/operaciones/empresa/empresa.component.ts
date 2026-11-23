@@ -2,10 +2,12 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { forkJoin } from 'rxjs';
 import { OperacionesService } from '../services/operaciones.service';
+import { AuthService } from '../../../auth/services/auth.service';
 import {
   ConfiguracionEmpresa,
+  EmpresaApi,
+  EmpresaCrearRequest,
   EmpresaResumen,
   ParqueaderoCreadoResponse,
   ParqueaderoOperativo,
@@ -144,7 +146,8 @@ type EmpresaView = 'resumen' | 'parqueaderos' | 'reportes' | 'configuracion';
       </ng-template>
 
       <ng-template #parqueaderosEmpty>
-        <div class="card state empty" data-testid="empresa-empty">
+        <div *ngIf="!mostrarFormularioEmpresa; else crearEmpresaTemplate"
+             class="card state empty" data-testid="empresa-empty">
           <span class="material-symbols-outlined">local_parking</span>
           <h2>Todavía no hay parqueaderos</h2>
           <p>Crea la primera sede de tu empresa para empezar a operar.</p>
@@ -152,7 +155,46 @@ type EmpresaView = 'resumen' | 'parqueaderos' | 'reportes' | 'configuracion';
                   [disabled]="empresaId == null" data-testid="empresa-crear-primer-parqueadero">
             Crear mi primer parqueadero
           </button>
+          <p *ngIf="empresaId == null" class="text-muted">
+            Tu usuario aún no está vinculado a una empresa. Créala para poder registrar sedes.
+          </p>
+          <button *ngIf="empresaId == null" type="button" class="btn btn-secondary"
+                  (click)="abrirFormularioEmpresa()" data-testid="empresa-crear-empresa">
+            Crear mi empresa
+          </button>
         </div>
+
+        <ng-template #crearEmpresaTemplate>
+          <article class="card card-body crear-empresa" data-testid="empresa-form">
+            <h2>Crear mi empresa</h2>
+            <p class="text-muted">La empresa se crea y tu usuario queda vinculado automáticamente.</p>
+            <form (ngSubmit)="guardarEmpresa()" #empresaForm="ngForm">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="ee-nombre">Nombre de la empresa</label>
+                  <input id="ee-nombre" data-testid="ee-nombre" class="form-control" type="text"
+                         name="nombre" [(ngModel)]="nuevaEmpresa.nombre" required maxlength="150" />
+                </div>
+                <div class="form-group">
+                  <label for="ee-identificador">Identificador</label>
+                  <input id="ee-identificador" data-testid="ee-identificador" class="form-control" type="text"
+                         name="identificador" [(ngModel)]="nuevaEmpresa.identificador" required maxlength="80" />
+                </div>
+                <div class="form-group">
+                  <label for="ee-tolerancia">Tolerancia de salida (minutos)</label>
+                  <input id="ee-tolerancia" data-testid="ee-tolerancia" class="form-control" type="number"
+                         name="tolerancia" [(ngModel)]="nuevaEmpresa.tolerancia" min="0" max="240" />
+                </div>
+              </div>
+              <div class="form-actions">
+                <button type="button" class="btn btn-secondary" (click)="cerrarFormularioEmpresa()"
+                        data-testid="ee-cancel">Cancelar</button>
+                <button type="submit" class="btn btn-primary" [disabled]="empresaForm.invalid || savingEmpresa"
+                        data-testid="ee-submit">{{ savingEmpresa ? 'Creando...' : 'Crear empresa' }}</button>
+              </div>
+            </form>
+          </article>
+        </ng-template>
       </ng-template>
     </section>
   `,
@@ -180,6 +222,12 @@ type EmpresaView = 'resumen' | 'parqueaderos' | 'reportes' | 'configuracion';
     .settings { max-width: 720px; display: grid; gap: 20px; }
     .settings div { display: grid; gap: 5px; }
     .settings .label { color: var(--pf-muted); font-size: 11px; font-weight: 700; text-transform: uppercase; }
+    .crear-empresa { display: grid; gap: 14px; margin-bottom: 18px; }
+    .crear-empresa h2 { font-size: 17px; }
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+    .form-group { display: grid; gap: 6px; }
+    .form-group label { font-size: 13px; font-weight: 600; }
+    .form-actions { display: flex; justify-content: flex-end; gap: 8px; }
     @media (max-width: 600px) { .overview { align-items: flex-start; flex-direction: column; } }
   `]
 })
@@ -193,11 +241,19 @@ export class EmpresaComponent {
   reportes: ReporteOperativo[] = [];
   configuracion: ConfiguracionEmpresa | null = null;
   empresaId?: number;
+  empresas: EmpresaApi[] = [];
   mostrarFormulario = false;
+  mostrarFormularioEmpresa = false;
+  savingEmpresa = false;
+  nuevaEmpresa = { nombre: '', identificador: '', tolerancia: 30 };
   toleranciaInput = 30;
   savingConfiguracion = false;
 
-  constructor(route: ActivatedRoute, private operaciones: OperacionesService) {
+  constructor(
+    route: ActivatedRoute,
+    private operaciones: OperacionesService,
+    private auth: AuthService
+  ) {
     this.view = route.snapshot.data['view'] as EmpresaView;
     this.load();
   }
@@ -235,15 +291,19 @@ export class EmpresaComponent {
         });
         break;
       case 'parqueaderos':
-        forkJoin({
-          parqueaderos: this.operaciones.getParqueaderos(),
-          empresaId: this.operaciones.getEmpresaId()
-        }).subscribe({
-          next: value => {
-            this.parqueaderos = value.parqueaderos;
-            this.empresaId = value.empresaId;
-            this.loading = false;
+        // Llamadas independientes: si falla el catálogo de empresas, la tabla sigue cargando.
+        this.operaciones.getEmpresasMias().subscribe({
+          next: empresas => {
+            this.empresas = empresas;
+            this.empresaId = empresas[0]?.id;
           },
+          error: () => {
+            this.empresas = [];
+            this.empresaId = undefined;
+          }
+        });
+        this.operaciones.getParqueaderos().subscribe({
+          next: value => { this.parqueaderos = value; this.loading = false; },
           error: onError
         });
         break;
@@ -280,10 +340,84 @@ export class EmpresaComponent {
     this.mostrarFormulario = false;
   }
 
+  abrirFormularioEmpresa(): void {
+    this.errorMessage = '';
+    this.successMessage = '';
+    this.nuevaEmpresa = { nombre: '', identificador: '', tolerancia: 30 };
+    this.mostrarFormularioEmpresa = true;
+  }
+
+  cerrarFormularioEmpresa(): void {
+    this.mostrarFormularioEmpresa = false;
+  }
+
+  guardarEmpresa(): void {
+    const nombre = this.nuevaEmpresa.nombre.trim();
+    const identificador = this.nuevaEmpresa.identificador.trim();
+    const tolerancia = Number(this.nuevaEmpresa.tolerancia);
+    if (!nombre || !identificador
+        || !Number.isInteger(tolerancia) || tolerancia < 0 || tolerancia > 240) {
+      this.errorMessage = 'Revisa el nombre, el identificador y la tolerancia (0 a 240 minutos).';
+      return;
+    }
+
+    const email = this.auth.getUser()?.email;
+    if (!email) {
+      this.errorMessage = 'No se pudo identificar tu usuario. Vuelve a iniciar sesión.';
+      return;
+    }
+
+    const request: EmpresaCrearRequest = {
+      nombre,
+      identificador,
+      usuarioEmail: email,
+      toleranciaSalidaMinutos: tolerancia
+    };
+
+    this.savingEmpresa = true;
+    this.errorMessage = '';
+    this.operaciones.crearEmpresa(request).subscribe({
+      next: empresa => {
+        this.savingEmpresa = false;
+        this.mostrarFormularioEmpresa = false;
+        this.empresas = [empresa, ...this.empresas];
+        this.empresaId = empresa.id;
+        this.successMessage = `Empresa "${empresa.nombre}" creada. Ya puedes registrar parqueaderos.`;
+      },
+      error: (err: { error?: { message?: string } }) => {
+        this.savingEmpresa = false;
+        this.errorMessage = err.error?.message || 'No se pudo crear la empresa.';
+      }
+    });
+  }
+
   onParqueaderoCreado(creado: ParqueaderoCreadoResponse): void {
+    const nuevo: ParqueaderoOperativo = {
+      id: creado.id,
+      nombre: creado.nombre,
+      identificador: creado.identificador,
+      ocupados: 0,
+      capacidad: creado.capacidadVehiculos ?? 0,
+      activo: creado.activo
+    };
+
     this.mostrarFormulario = false;
-    this.load();
+    this.parqueaderos = [...this.parqueaderos.filter(p => p.id !== nuevo.id), nuevo];
     this.successMessage = `Parqueadero "${creado.nombre}" creado correctamente.`;
+
+    // Refrescamos en segundo plano sin borrar la fila recién creada si el GET va retrasado.
+    this.operaciones.getParqueaderos().subscribe({
+      next: actuales => {
+        const ids = new Set(actuales.map(p => p.id));
+        this.parqueaderos = [
+          ...actuales,
+          ...this.parqueaderos.filter(p => p.id === nuevo.id && !ids.has(p.id))
+        ];
+      },
+      error: () => {
+        // La fila optimista se conserva; el usuario puede recargar la página si quiere.
+      }
+    });
   }
 
   guardarConfiguracion(): void {

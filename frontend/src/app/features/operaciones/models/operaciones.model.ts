@@ -7,6 +7,21 @@ export interface EmpresaResumen {
   readonly recaudoHoy: number;
 }
 
+export interface EmpresaApi {
+  readonly id: number;
+  readonly nombre: string;
+  readonly identificador: string;
+  readonly activo: boolean;
+  readonly toleranciaSalidaMinutos: number;
+}
+
+export interface EmpresaCrearRequest {
+  readonly nombre: string;
+  readonly identificador: string;
+  readonly usuarioEmail: string;
+  readonly toleranciaSalidaMinutos: number;
+}
+
 export interface ParqueaderoOperativo {
   readonly id: number;
   readonly nombre: string;

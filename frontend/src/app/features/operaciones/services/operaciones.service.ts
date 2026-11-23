@@ -1,9 +1,11 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, forkJoin, map, of, switchMap } from 'rxjs';
+import { Observable, catchError, forkJoin, map, of, switchMap } from 'rxjs';
 import {
   AccionIngreso,
   ConfiguracionEmpresa,
+  EmpresaApi,
+  EmpresaCrearRequest,
   EmpresaResumen,
   EstadoPagoOperativoResponse,
   IngresoOperativo,
@@ -16,13 +18,6 @@ import {
   ParqueaderoOperativo,
   ReporteOperativo
 } from '../models/operaciones.model';
-
-interface EmpresaApi {
-  readonly id: number;
-  readonly nombre: string;
-  readonly activo: boolean;
-  readonly toleranciaSalidaMinutos?: number;
-}
 
 interface FacturaApi {
   readonly id: number;
@@ -64,17 +59,31 @@ export class OperacionesService {
   }
 
   getParqueaderos(): Observable<ParqueaderoOperativo[]> {
-    return forkJoin({
-      parqueaderos: this.http.get<Array<{ id: number; nombre: string; identificador: string; capacidadVehiculos: number | null; activo: boolean }>>('/api/parqueaderos/mios'),
-      espacios: this.http.get<Array<{ parqueaderoId: number | null; estado: string }>>('/api/espacios')
-    }).pipe(map(({ parqueaderos, espacios }) => parqueaderos.map(p => ({
-      id: p.id,
-      nombre: p.nombre,
-      identificador: p.identificador,
-      ocupados: espacios.filter(e => e.parqueaderoId === p.id && e.estado?.toUpperCase() === 'OCUPADO').length,
-      capacidad: p.capacidadVehiculos ?? espacios.filter(e => e.parqueaderoId === p.id).length,
-      activo: p.activo
-    }))));
+    return this.http.get<Array<{
+      id: number; nombre: string; identificador: string;
+      capacidadVehiculos: number | null; activo: boolean;
+    }>>('/api/parqueaderos/mios').pipe(
+      switchMap(parqueaderos =>
+        this.http.get<Array<{ parqueaderoId: number | null; estado: string }>>('/api/espacios').pipe(
+          map(espacios => parqueaderos.map(p => ({
+            id: p.id,
+            nombre: p.nombre,
+            identificador: p.identificador,
+            ocupados: espacios.filter(e => e.parqueaderoId === p.id && e.estado?.toUpperCase() === 'OCUPADO').length,
+            capacidad: p.capacidadVehiculos ?? espacios.filter(e => e.parqueaderoId === p.id).length,
+            activo: p.activo
+          }))),
+          catchError(() => of(parqueaderos.map(p => ({
+            id: p.id,
+            nombre: p.nombre,
+            identificador: p.identificador,
+            ocupados: 0,
+            capacidad: p.capacidadVehiculos ?? 0,
+            activo: p.activo
+          }))))
+        )
+      )
+    );
   }
 
   getReportes(): Observable<ReporteOperativo[]> {
@@ -87,12 +96,16 @@ export class OperacionesService {
       }))));
   }
 
-  private getEmpresasMias(): Observable<EmpresaApi[]> {
+  getEmpresasMias(): Observable<EmpresaApi[]> {
     return this.http.get<EmpresaApi[]>('/api/empresas/mias');
   }
 
   getEmpresaId(): Observable<number | undefined> {
     return this.getEmpresasMias().pipe(map(empresas => empresas[0]?.id));
+  }
+
+  crearEmpresa(request: EmpresaCrearRequest): Observable<EmpresaApi> {
+    return this.http.post<EmpresaApi>('/api/empresas', request);
   }
 
   getConfiguracion(): Observable<ConfiguracionEmpresa> {

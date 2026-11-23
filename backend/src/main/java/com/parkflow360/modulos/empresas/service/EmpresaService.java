@@ -33,8 +33,11 @@ public class EmpresaService {
 
     @Transactional
     public EmpresaResponse crear(String emailActor, EmpresaRequest request) {
-        if (!accesoParqueaderoService.esPlataforma(emailActor)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Solo PLATAFORMA puede crear empresas.");
+        Usuario actor = accesoParqueaderoService.requireUsuario(emailActor);
+        String rolActor = Roles.normalizar(actor.getRol());
+        if (!Roles.esPlataforma(rolActor) && !Roles.EMPRESA.equals(rolActor)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Solo PLATAFORMA o EMPRESA puede crear empresas.");
         }
 
         String identificador = request.getIdentificador().trim().toUpperCase(Locale.ROOT);
@@ -42,9 +45,13 @@ public class EmpresaService {
             throw new IllegalArgumentException("Ya existe una empresa con el identificador: " + identificador);
         }
 
-        Usuario propietario = usuarioRepository.findByEmail(request.getUsuarioEmail().trim().toLowerCase(Locale.ROOT))
+        // Un usuario EMPRESA siempre se vincula a sí mismo; no puede elegir otro propietario.
+        String emailPropietario = Roles.EMPRESA.equals(rolActor)
+                ? actor.getEmail()
+                : request.getUsuarioEmail().trim().toLowerCase(Locale.ROOT);
+        Usuario propietario = usuarioRepository.findByEmail(emailPropietario)
                 .orElseThrow(() -> new NoSuchElementException(
-                        "No existe un usuario con el email: " + request.getUsuarioEmail()));
+                        "No existe un usuario con el email: " + emailPropietario));
         String rolPropietario = Roles.normalizar(propietario.getRol());
         if (Roles.CAJERO_PAGOS.equals(rolPropietario) || Roles.GUARDIA.equals(rolPropietario)) {
             throw new IllegalArgumentException("El usuario indicado ya tiene un rol operativo asignado.");

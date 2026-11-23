@@ -84,6 +84,38 @@ describe('EMPRESA: alta de parqueaderos', () => {
     cy.getByTestId('empresa-nuevo-parqueadero').should('exist');
   });
 
+  it('permite a una EMPRESA sin empresa crearla y habilitar el alta de sedes', () => {
+    let empresas: EmpresaApi[] = [];
+    cy.intercept('GET', '/api/empresas/mias', req => {
+      req.reply({ statusCode: 200, body: empresas });
+    }).as('empresasVacias');
+    cy.intercept('POST', '/api/empresas', req => {
+      expect(req.body).to.deep.equal({
+        nombre: 'Empresa de prueba',
+        identificador: 'EMP-1',
+        usuarioEmail: 'e2e@parkflow360.com',
+        toleranciaSalidaMinutos: 30
+      });
+      empresas = [empresa];
+      req.reply({ statusCode: 201, body: empresa });
+    }).as('crearEmpresa');
+
+    cy.loginAsRole('EMPRESA', 'Sin empresa');
+    cy.visit('/empresa/parqueaderos');
+
+    cy.getByTestId('empresa-crear-primer-parqueadero').should('be.disabled');
+    cy.getByTestId('empresa-crear-empresa').click();
+    cy.getByTestId('empresa-form').should('be.visible');
+    cy.getByTestId('ee-nombre').type('Empresa de prueba');
+    cy.getByTestId('ee-identificador').type('EMP-1');
+    cy.getByTestId('ee-submit').click();
+
+    cy.wait('@crearEmpresa');
+    cy.getByTestId('empresa-form').should('not.exist');
+    cy.getByTestId('empresa-crear-primer-parqueadero').should('be.enabled');
+    cy.getByTestId('empresa-success').should('contain', 'Ya puedes registrar parqueaderos');
+  });
+
   it('crea un parqueadero con tipos y usuario cajero', () => {
     cy.intercept('POST', '/api/empresas/7/parqueaderos', req => {
       expect(req.body).to.deep.equal({
@@ -114,6 +146,25 @@ describe('EMPRESA: alta de parqueaderos', () => {
     cy.getByTestId('empresa-success').should('contain', 'creado correctamente');
     cy.getByTestId('empresa-parqueaderos').should('contain', 'Parqueadero Central');
     cy.getByTestId('empresa-parqueaderos').should('contain', 'CENTRAL-01');
+  });
+
+  it('muestra la sede creada aunque el listado todavía no la devuelva', () => {
+    cy.intercept('POST', '/api/empresas/7/parqueaderos', {
+      statusCode: 201,
+      body: creado
+    }).as('crearSinRefresh');
+
+    cy.loginAsRole('EMPRESA', 'Empresa de prueba');
+    cy.visit('/empresa/parqueaderos');
+    cy.getByTestId('empresa-empty').should('be.visible');
+    cy.getByTestId('empresa-crear-primer-parqueadero').click();
+    llenarFormulario();
+    cy.getByTestId('pq-submit').click();
+
+    cy.wait('@crearSinRefresh');
+    cy.getByTestId('empresa-parqueaderos').should('contain', 'Parqueadero Central');
+    cy.getByTestId('empresa-parqueaderos').should('contain', 'CENTRAL-01');
+    cy.getByTestId('empresa-success').should('contain', 'creado correctamente');
   });
 
   it('muestra el mensaje del backend cuando el identificador ya existe', () => {
@@ -167,5 +218,18 @@ describe('EMPRESA: alta de parqueaderos', () => {
     cy.getByTestId('select-parqueadero').find('option:selected')
       .should('contain', 'Parqueadero Norte')
       .and('contain', 'NORTE-02');
+  });
+
+  it('muestra las sedes a PLATAFORMA aunque falle el listado de espacios', () => {
+    parqueaderos = [creado];
+    cy.intercept('GET', '/api/espacios', { statusCode: 500, body: {} }).as('espaciosError');
+
+    cy.loginAsRole('PLATAFORMA', 'Administrador');
+    cy.visit('/empresa/parqueaderos');
+
+    cy.wait('@espaciosError');
+    cy.getByTestId('empresa-parqueaderos').should('contain', 'Parqueadero Central');
+    cy.getByTestId('empresa-parqueaderos').should('contain', 'CENTRAL-01');
+    cy.getByTestId('empresa-empty').should('not.exist');
   });
 });

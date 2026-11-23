@@ -56,25 +56,25 @@ export const routes: Routes = [
   // ---------------- EMPRESA ----------------
   {
     path: 'empresa',
-    canActivate: [RoleGuard], data: { roles: ['EMPRESA'], view: 'resumen' },
+    canActivate: [RoleGuard], data: { roles: ['EMPRESA', 'PLATAFORMA'], view: 'resumen' },
     loadComponent: () => import('./features/operaciones/empresa/empresa.component')
       .then(m => m.EmpresaComponent)
   },
   {
     path: 'empresa/parqueaderos',
-    canActivate: [RoleGuard], data: { roles: ['EMPRESA'], view: 'parqueaderos' },
+    canActivate: [RoleGuard], data: { roles: ['EMPRESA', 'PLATAFORMA'], view: 'parqueaderos' },
     loadComponent: () => import('./features/operaciones/empresa/empresa.component')
       .then(m => m.EmpresaComponent)
   },
   {
     path: 'empresa/reportes',
-    canActivate: [RoleGuard], data: { roles: ['EMPRESA'], view: 'reportes' },
+    canActivate: [RoleGuard], data: { roles: ['EMPRESA', 'PLATAFORMA'], view: 'reportes' },
     loadComponent: () => import('./features/operaciones/empresa/empresa.component')
       .then(m => m.EmpresaComponent)
   },
   {
     path: 'empresa/configuracion',
-    canActivate: [RoleGuard], data: { roles: ['EMPRESA'], view: 'configuracion' },
+    canActivate: [RoleGuard], data: { roles: ['EMPRESA', 'PLATAFORMA'], view: 'configuracion' },
     loadComponent: () => import('./features/operaciones/empresa/empresa.component')
       .then(m => m.EmpresaComponent)
   },

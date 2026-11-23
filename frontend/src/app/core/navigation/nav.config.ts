@@ -58,7 +58,7 @@ const SIDEBAR_BY_ROL: Readonly<Record<Rol, readonly NavSection[]>> = {
     },
     {
       label: 'Administración',
-      items: [USUARIOS]
+      items: [EMPRESA_PARQUEADEROS, USUARIOS]
     }
   ],
   EMPRESA: [

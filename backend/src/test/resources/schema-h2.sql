@@ -11,3 +11,11 @@ CREATE INDEX IF NOT EXISTS idx_pagos_parqueadero ON pagos(parqueadero_id);
 CREATE INDEX IF NOT EXISTS idx_tarifas_parqueadero ON tarifas(parqueadero_id);
 CREATE INDEX IF NOT EXISTS idx_pu_usuario ON parqueadero_usuarios(usuario_id);
 CREATE INDEX IF NOT EXISTS idx_eu_usuario ON empresa_usuarios(usuario_id);
+
+-- Hito 2: unicidad de facturas e índices de apoyo (H2 no soporta índices parciales).
+ALTER TABLE facturas
+    ADD CONSTRAINT uq_facturas_ingreso UNIQUE (ingreso_id);
+
+CREATE INDEX IF NOT EXISTS idx_facturas_usuario ON facturas(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_creditos_usuario ON creditos(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_movimientos_saldo_usuario ON movimientos_saldo(usuario_id);

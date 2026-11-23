@@ -1,12 +1,14 @@
 package com.parkflow360.modulos.ingresos.service;
 
 import com.parkflow360.modulos.espacios.entity.Espacio;
+import com.parkflow360.modulos.creditos.service.CreditoService;
 import com.parkflow360.modulos.espacios.repository.EspacioRepository;
 import com.parkflow360.modulos.ingresos.dto.IngresoRequest;
 import com.parkflow360.modulos.ingresos.dto.IngresoResponse;
 import com.parkflow360.modulos.ingresos.entity.Ingreso;
 import com.parkflow360.modulos.ingresos.repository.IngresoRepository;
 import com.parkflow360.modulos.pagos.repository.PagoRepository;
+import com.parkflow360.modulos.pagos.service.FacturaService;
 import com.parkflow360.security.entity.Usuario;
 import com.parkflow360.security.repository.UsuarioRepository;
 import com.parkflow360.shared.service.AccesoParqueaderoService;
@@ -29,6 +31,8 @@ public class IngresoService {
     private final EspacioRepository espacioRepository;
     private final UsuarioRepository usuarioRepository;
     private final AccesoParqueaderoService accesoParqueaderoService;
+    private final FacturaService facturaService;
+    private final CreditoService creditoService;
 
     @Transactional(readOnly = true)
     public List<IngresoResponse> listarTodos(String email) {
@@ -78,6 +82,7 @@ public class IngresoService {
     @Transactional
     public IngresoResponse reservar(String email, IngresoRequest request) {
         Usuario usuario = requireUsuario(email);
+        creditoService.validarSinDeudaVencida(usuario.getId());
         Long parqueaderoId = resolverParqueadero(email, request);
 
         String placa = request.getPlaca() != null ? request.getPlaca().toUpperCase() : null;
@@ -159,16 +164,13 @@ public class IngresoService {
         if (!"ACTIVO".equalsIgnoreCase(ingreso.getEstado())) {
             throw new IllegalArgumentException("Solo se puede registrar la salida de un ingreso activo.");
         }
-        if (!pagoRepository.existsByIngresoIdAndEstadoPago(id, "CONFIRMADO")) {
-            throw new IllegalArgumentException(
-                    "No se puede finalizar la estancia: primero registra un pago confirmado asociado a este ingreso.");
-        }
 
         ingreso.setEstado("FINALIZADO");
         ingreso.setFechaSalida(LocalDateTime.now());
         ingreso = ingresoRepository.save(ingreso);
 
         marcarEspacio(ingreso.getEspacioId(), "LIBRE");
+        facturaService.generarYCobrar(ingreso);
 
         return mapToResponse(ingreso);
     }
@@ -258,7 +260,12 @@ public class IngresoService {
     }
 
     private IngresoResponse mapToResponse(Ingreso ingreso) {
-        var pago = pagoRepository.findByIngresoId(ingreso.getId()).stream().findFirst().orElse(null);
+        var pago = pagoRepository.findByIngresoId(ingreso.getId()).stream()
+                .filter(p -> "CONFIRMADO".equals(p.getEstadoPago()))
+                .findFirst()
+                .orElseGet(() -> pagoRepository.findByIngresoId(ingreso.getId()).stream()
+                        .findFirst()
+                        .orElse(null));
         return IngresoResponse.builder()
                 .id(ingreso.getId())
                 .parqueaderoId(ingreso.getParqueaderoId())

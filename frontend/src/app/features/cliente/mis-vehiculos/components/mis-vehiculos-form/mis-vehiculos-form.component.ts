@@ -24,9 +24,11 @@ import { ToastService } from '../../../../../shared/services/toast.service';
         <form [formGroup]="form" (ngSubmit)="guardar()">
           <div class="form-group">
             <label for="placa">Placa</label>
-            <input id="placa" type="text" formControlName="placa" class="form-control mono-input" placeholder="ABC123" />
+            <input id="placa" type="text" formControlName="placa" class="form-control mono-input"
+                   placeholder="ABC-123" maxlength="20" />
             <div *ngIf="form.get('placa')?.invalid && form.get('placa')?.touched" class="field-error">
-              La placa es obligatoria
+              <span *ngIf="form.get('placa')?.errors?.['required']">La placa es obligatoria</span>
+              <span *ngIf="form.get('placa')?.errors?.['pattern']">La placa solo puede contener letras, números y guiones</span>
             </div>
           </div>
 
@@ -34,10 +36,9 @@ import { ToastService } from '../../../../../shared/services/toast.service';
             <label for="tipo">Tipo</label>
             <select id="tipo" formControlName="tipo" class="form-control">
               <option value="">Seleccione...</option>
-              <option value="CARRO">Carro</option>
+              <option value="VEHICULO">Vehículo</option>
               <option value="MOTO">Moto</option>
-              <option value="CAMIONETA">Camioneta</option>
-              <option value="OTRO">Otro</option>
+              <option value="VEHICULO_ELECTRICO">Vehículo eléctrico</option>
             </select>
             <div *ngIf="form.get('tipo')?.invalid && form.get('tipo')?.touched" class="field-error">
               El tipo es obligatorio
@@ -82,8 +83,8 @@ export class MisVehiculosFormComponent implements OnInit {
 
   ngOnInit(): void {
     this.form = this.fb.group({
-      placa: ['', [Validators.required, Validators.maxLength(20)]],
-      tipo: ['', [Validators.required, Validators.maxLength(50)]],
+      placa: ['', [Validators.required, Validators.pattern(/^[A-Za-z0-9-]+$/), Validators.maxLength(20)]],
+      tipo: ['', [Validators.required, Validators.pattern(/^(VEHICULO|MOTO|VEHICULO_ELECTRICO)$/)]],
       color: ['', [Validators.maxLength(50)]],
       modelo: ['', [Validators.maxLength(100)]]
     });
@@ -107,7 +108,10 @@ export class MisVehiculosFormComponent implements OnInit {
   guardar(): void {
     if (this.form.invalid) return;
 
-    const request: VehiculoRequest = this.form.value;
+    const request: VehiculoRequest = {
+      ...this.form.value,
+      placa: String(this.form.value.placa).trim().toUpperCase()
+    };
     const op = this.id
       ? this.vehiculoService.actualizarMio(this.id, request)
       : this.vehiculoService.crearMio(request);

@@ -32,27 +32,39 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/pagos/wompi/webhook").permitAll()
 
-                // ---------- Cliente (rol USUARIO) ----------
-                // Solicitudes concretas del cliente (van ANTES de las reglas de ADMIN)
+                // ---------- Cliente (USUARIO) ----------
                 .requestMatchers("/api/vehiculos/mios", "/api/vehiculos/mios/**").hasRole("USUARIO")
                 .requestMatchers("/api/ingresos/mios", "/api/ingresos/reservar").hasRole("USUARIO")
                 .requestMatchers("/api/pagos/online", "/api/pagos/mios").hasRole("USUARIO")
-                // Consulta de catálogo (espacios, tarifas y planos) compartida
-                .requestMatchers(HttpMethod.GET, "/api/espacios/**", "/api/tarifas/**", "/api/planos/**")
-                    .hasAnyRole("ADMIN", "USUARIO")
+                .requestMatchers("/api/saldos/**").hasAnyRole("USUARIO", "PLATAFORMA")
+                .requestMatchers("/api/creditos/**").hasAnyRole("USUARIO", "CAJERO_PAGOS", "PLATAFORMA")
 
-                // ---------- Solo ADMIN ----------
-                // El administrador NO registra vehículos ni reserva: solo opera y supervisa.
-                .requestMatchers("/api/usuarios/**").hasRole("ADMIN")
-                .requestMatchers("/api/reportes/**").hasRole("ADMIN")
-                .requestMatchers("/api/planos/**").hasRole("ADMIN")
-                .requestMatchers("/api/pagos/**").hasRole("ADMIN")
-                // Catálogo de vehículos: el ADMIN solo lo consulta (reportes y búsqueda).
-                .requestMatchers(HttpMethod.GET, "/api/vehiculos/**").hasRole("ADMIN")
-                .requestMatchers("/api/vehiculos/**").denyAll()
-                .requestMatchers("/api/ingresos/**").hasRole("ADMIN")
-                .requestMatchers("/api/espacios/**").hasRole("ADMIN")
-                .requestMatchers("/api/tarifas/**").hasRole("ADMIN")
+                // ---------- Vinculación y catálogo compartido ----------
+                .requestMatchers("/api/parqueaderos/vincular", "/api/parqueaderos/mios")
+                    .hasAnyRole("USUARIO", "EMPRESA", "PLATAFORMA", "CAJERO_PAGOS", "GUARDIA")
+                .requestMatchers(HttpMethod.GET, "/api/parqueaderos/*/tipos")
+                    .hasAnyRole("USUARIO", "EMPRESA", "PLATAFORMA", "CAJERO_PAGOS", "GUARDIA")
+                .requestMatchers(HttpMethod.GET, "/api/espacios/**", "/api/tarifas/**", "/api/planos/**")
+                    .hasAnyRole("USUARIO", "EMPRESA", "PLATAFORMA", "CAJERO_PAGOS", "GUARDIA")
+
+                // ---------- Guardia: campo, sin gestión de pagos ----------
+                .requestMatchers("/api/ingresos/*/llegada", "/api/ingresos/*/verificar",
+                        "/api/ingresos/*/estado-pago")
+                    .hasAnyRole("GUARDIA", "CAJERO_PAGOS", "PLATAFORMA")
+
+                // ---------- Cajero: solo pagos y facturas ----------
+                .requestMatchers("/api/pagos/**", "/api/facturas/**")
+                    .hasAnyRole("CAJERO_PAGOS", "PLATAFORMA")
+
+                // ---------- Empresa: sus parqueaderos ----------
+                .requestMatchers("/api/empresas/**", "/api/parqueaderos/**")
+                    .hasAnyRole("EMPRESA", "PLATAFORMA")
+
+                // ---------- Plataforma: administración y supervisión ----------
+                .requestMatchers("/api/usuarios/**", "/api/reportes/**", "/api/ingresos/**",
+                        "/api/espacios/**", "/api/tarifas/**", "/api/planos/**",
+                        "/api/vehiculos/**")
+                    .hasRole("PLATAFORMA")
 
                 .requestMatchers("/api/**").authenticated()
                 .anyRequest().permitAll()

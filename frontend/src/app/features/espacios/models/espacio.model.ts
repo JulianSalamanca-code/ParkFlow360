@@ -1,5 +1,6 @@
 export interface Espacio {
   id: number;
+  parqueaderoId?: number;
   numero: string;
   tipo: string;
   estado: string;
@@ -15,6 +16,7 @@ export interface Espacio {
 }
 
 export interface EspacioRequest {
+  parqueaderoId?: number;
   numero: string;
   tipo: string;
   estado: string;

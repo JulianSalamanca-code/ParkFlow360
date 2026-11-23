@@ -48,6 +48,9 @@ public class SecurityConfig {
                     .hasAnyRole("USUARIO", "EMPRESA", "PLATAFORMA", "CAJERO_PAGOS", "GUARDIA")
                 .requestMatchers(HttpMethod.GET, "/api/espacios/**", "/api/tarifas/**", "/api/planos/**")
                     .hasAnyRole("USUARIO", "EMPRESA", "PLATAFORMA", "CAJERO_PAGOS", "GUARDIA")
+                // La empresa administra los puestos de sus parqueaderos; el service valida cuál.
+                .requestMatchers("/api/espacios/**")
+                    .hasAnyRole("EMPRESA", "PLATAFORMA")
 
                 // ---------- Guardia: campo, sin gestión de pagos ----------
                 .requestMatchers(HttpMethod.PUT, "/api/ingresos/*/llegada")
@@ -75,8 +78,7 @@ public class SecurityConfig {
 
                 // ---------- Plataforma: administración y supervisión ----------
                 .requestMatchers("/api/usuarios/**", "/api/ingresos/**",
-                        "/api/espacios/**", "/api/tarifas/**", "/api/planos/**",
-                        "/api/vehiculos/**")
+                        "/api/tarifas/**", "/api/planos/**", "/api/vehiculos/**")
                     .hasRole("PLATAFORMA")
 
                 .requestMatchers("/api/**").authenticated()

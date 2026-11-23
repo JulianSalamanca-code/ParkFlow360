@@ -1,9 +1,11 @@
-import { ChangeDetectionStrategy, Component, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { EspacioRequest } from '../../models/espacio.model';
 import { EspacioService } from '../../services/espacio.service';
+import { OperacionesService } from '../../../operaciones/services/operaciones.service';
+import { ParqueaderoOperativo } from '../../../operaciones/models/operaciones.model';
 import { ToastService } from '../../../../shared/services/toast.service';
 
 type ImportMode = 'plano' | 'csv';
@@ -24,6 +26,17 @@ type ImportMode = 'plano' | 'csv';
       </div>
 
       <div class="card import-card">
+        <label class="form-group parqueadero-select">
+          <span>Parqueadero donde se crearán los puestos</span>
+          <select class="form-control" [(ngModel)]="parqueaderoId" data-testid="select-parqueadero">
+            <option [ngValue]="null">Selecciona un parqueadero</option>
+            <option *ngFor="let parqueadero of parqueaderos" [ngValue]="parqueadero.id">
+              {{ parqueadero.nombre }} · {{ parqueadero.identificador }}
+            </option>
+          </select>
+          <small class="help-text" *ngIf="cargandoParqueaderos">Cargando parqueaderos…</small>
+        </label>
+
         <div class="mode-switch" role="tablist" aria-label="Método de importación">
           <button type="button" class="btn" [class.btn-primary]="mode === 'plano'"
                   [class.btn-secondary]="mode !== 'plano'" (click)="setMode('plano')">
@@ -121,7 +134,7 @@ type ImportMode = 'plano' | 'csv';
 
         <div class="form-actions">
           <button type="button" class="btn btn-primary" (click)="importSpaces()"
-                  [disabled]="isSaving || !spacesToImport.length || (mode === 'plano' && !mapUrl)"
+                  [disabled]="isSaving || parqueaderoId == null || !spacesToImport.length || (mode === 'plano' && !mapUrl)"
                   data-testid="btn-importar">
             <span class="material-symbols-outlined">cloud_upload</span>
             {{ isSaving ? 'Importando…' : 'Importar ' + spacesToImport.length + ' espacios' }}
@@ -133,6 +146,7 @@ type ImportMode = 'plano' | 'csv';
   `,
   styles: [`
     .import-card { padding: 24px; }
+    .parqueadero-select { margin-bottom: 18px; }
     .mode-switch, .page-actions, .form-actions { display: flex; flex-wrap: wrap; gap: 10px; }
     .mode-switch { border-bottom: 1px solid var(--pf-border); padding-bottom: 18px; }
     .import-content { padding: 22px 0; }
@@ -152,7 +166,10 @@ type ImportMode = 'plano' | 'csv';
     }
   `]
 })
-export class EspacioImportComponent implements OnDestroy {
+export class EspacioImportComponent implements OnInit, OnDestroy {
+  parqueaderos: ParqueaderoOperativo[] = [];
+  parqueaderoId: number | null = null;
+  cargandoParqueaderos = true;
   mode: ImportMode = 'plano';
   mapFileName = '';
   mapUrl = '';
@@ -174,10 +191,30 @@ export class EspacioImportComponent implements OnDestroy {
 
   constructor(
     private espacioService: EspacioService,
+    private operaciones: OperacionesService,
     private toast: ToastService,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute
   ) {
     this.updatePreview();
+  }
+
+  ngOnInit(): void {
+    const preseleccionado = Number(this.route.snapshot.queryParamMap.get('parqueadero'));
+    this.operaciones.getParqueaderos().subscribe({
+      next: parqueaderos => {
+        this.parqueaderos = parqueaderos;
+        this.cargandoParqueaderos = false;
+        const destino = preseleccionado && parqueaderos.some(p => p.id === preseleccionado)
+          ? preseleccionado
+          : parqueaderos.length === 1 ? parqueaderos[0].id : null;
+        this.parqueaderoId = destino ?? null;
+      },
+      error: () => {
+        this.cargandoParqueaderos = false;
+        this.errorMessage = 'No se pudieron cargar tus parqueaderos.';
+      }
+    });
   }
 
   ngOnDestroy(): void {
@@ -274,9 +311,13 @@ export class EspacioImportComponent implements OnDestroy {
   }
 
   importSpaces(): void {
-    if (!this.spacesToImport.length || this.isSaving) return;
+    if (!this.spacesToImport.length || this.isSaving || this.parqueaderoId == null) return;
     this.isSaving = true;
-    this.espacioService.importar(this.spacesToImport).subscribe({
+    const payload: EspacioRequest[] = this.spacesToImport.map(espacio => ({
+      ...espacio,
+      parqueaderoId: this.parqueaderoId as number
+    }));
+    this.espacioService.importar(payload).subscribe({
       next: (created) => {
         this.toast.success(`Se importaron ${created.length} espacios correctamente.`);
         this.router.navigate(['/espacios']);

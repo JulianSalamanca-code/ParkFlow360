@@ -4,6 +4,8 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { EspacioService } from '../../services/espacio.service';
 import { EspacioRequest } from '../../models/espacio.model';
+import { OperacionesService } from '../../../operaciones/services/operaciones.service';
+import { ParqueaderoOperativo } from '../../../operaciones/models/operaciones.model';
 import { ToastService } from '../../../../shared/services/toast.service';
 
 @Component({
@@ -22,6 +24,19 @@ import { ToastService } from '../../../../shared/services/toast.service';
 
       <div class="form-card">
         <form [formGroup]="form" (ngSubmit)="guardar()" [attr.data-testid]="'espacio-form'">
+          <div class="form-group">
+            <label for="parqueadero">Parqueadero</label>
+            <select id="parqueadero" formControlName="parqueaderoId" class="form-control" data-testid="select-parqueadero">
+              <option value="">Seleccione...</option>
+              <option *ngFor="let parqueadero of parqueaderos" [ngValue]="parqueadero.id">
+                {{ parqueadero.nombre }} · {{ parqueadero.identificador }}
+              </option>
+            </select>
+            <div *ngIf="form.get('parqueaderoId')?.invalid && form.get('parqueaderoId')?.touched" class="field-error" data-testid="error-parqueadero">
+              Selecciona el parqueadero del puesto
+            </div>
+          </div>
+
           <div class="form-group">
             <label for="numero">Número / Código</label>
             <input id="numero" type="text" formControlName="numero" class="form-control mono-input" placeholder="A01" [attr.data-testid]="'input-numero'" />
@@ -83,10 +98,12 @@ export class EspacioFormComponent implements OnInit {
   form!: FormGroup;
   esEdicion = false;
   espacioId?: number;
+  parqueaderos: ParqueaderoOperativo[] = [];
 
   constructor(
     private fb: FormBuilder,
     private espacioService: EspacioService,
+    private operaciones: OperacionesService,
     private router: Router,
     private route: ActivatedRoute,
     private toast: ToastService
@@ -94,10 +111,25 @@ export class EspacioFormComponent implements OnInit {
 
   ngOnInit(): void {
     this.form = this.fb.group({
+      parqueaderoId: ['', [Validators.required]],
       numero: ['', [Validators.required, Validators.maxLength(20)]],
       tipo: ['', [Validators.required, Validators.maxLength(50)]],
       estado: ['', [Validators.required, Validators.maxLength(20)]],
       piso: ['', [Validators.required]]
+    });
+
+    const preseleccionado = Number(this.route.snapshot.queryParamMap.get('parqueadero'));
+    this.operaciones.getParqueaderos().subscribe({
+      next: parqueaderos => {
+        this.parqueaderos = parqueaderos;
+        if (!this.esEdicion) {
+          const destino = preseleccionado && parqueaderos.some(p => p.id === preseleccionado)
+            ? preseleccionado
+            : parqueaderos.length === 1 ? parqueaderos[0].id : null;
+          if (destino != null) this.form.patchValue({ parqueaderoId: destino });
+        }
+      },
+      error: () => this.toast.error('No se pudieron cargar tus parqueaderos.')
     });
 
     const id = this.route.snapshot.paramMap.get('id');
@@ -112,6 +144,7 @@ export class EspacioFormComponent implements OnInit {
     this.espacioService.obtenerPorId(id).subscribe({
       next: (espacio) => {
         this.form.patchValue({
+          parqueaderoId: espacio.parqueaderoId,
           numero: espacio.numero,
           tipo: espacio.tipo,
           estado: espacio.estado,
@@ -125,7 +158,10 @@ export class EspacioFormComponent implements OnInit {
   guardar(): void {
     if (this.form.invalid) return;
 
-    const request: EspacioRequest = this.form.value;
+    const request: EspacioRequest = {
+      ...this.form.value,
+      parqueaderoId: Number(this.form.value.parqueaderoId)
+    };
     const accion = this.esEdicion ? 'actualizado' : 'creado';
 
     if (this.esEdicion && this.espacioId) {

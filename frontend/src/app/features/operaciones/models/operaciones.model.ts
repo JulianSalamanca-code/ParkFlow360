@@ -32,6 +32,50 @@ export interface ConfiguracionEmpresa {
   readonly toleranciaSalidaMinutos: number;
 }
 
+export interface TipoVehiculoCrearRequest {
+  readonly tipo: string;
+  readonly cantidadFija: boolean;
+  readonly cantidad: number | null;
+}
+
+export interface EspacioCrearRequest {
+  readonly numero: string;
+  readonly tipo: string;
+  readonly piso: number;
+  readonly fila?: number;
+  readonly columna?: number;
+}
+
+export interface ParqueaderoCrearRequest {
+  readonly nombre: string;
+  readonly identificador: string;
+  readonly capacidadVehiculos: number | null;
+  readonly tipos: readonly TipoVehiculoCrearRequest[];
+  readonly espacios: readonly EspacioCrearRequest[];
+  readonly cajeroEmail: string;
+  readonly cajeroPassword: string;
+  readonly cajeroNombre: string;
+}
+
+export interface TipoVehiculoCreadoResponse {
+  readonly id: number;
+  readonly tipo: string;
+  readonly cantidadFija: boolean;
+  readonly cantidad: number | null;
+  readonly espaciosOcupados: number;
+}
+
+export interface ParqueaderoCreadoResponse {
+  readonly id: number;
+  readonly empresaId: number;
+  readonly nombre: string;
+  readonly identificador: string;
+  readonly capacidadVehiculos: number | null;
+  readonly activo: boolean;
+  readonly cajeroEmail: string;
+  readonly tipos: readonly TipoVehiculoCreadoResponse[];
+}
+
 export type EstadoPagoOperativo = 'PENDIENTE' | 'CONFIRMADO';
 
 export interface PagoOperativo {

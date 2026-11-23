@@ -32,6 +32,9 @@ public class ParqueaderoRequest {
     @Valid
     private List<TipoVehiculoRequest> tipos;
 
+    @Valid
+    private List<EspacioCrearRequest> espacios;
+
     @NotBlank(message = "El email del cajero es obligatorio")
     @Email(message = "El email del cajero debe ser válido")
     private String cajeroEmail;

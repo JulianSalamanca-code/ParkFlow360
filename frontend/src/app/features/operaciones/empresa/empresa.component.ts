@@ -2,19 +2,22 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { forkJoin } from 'rxjs';
 import { OperacionesService } from '../services/operaciones.service';
 import {
   ConfiguracionEmpresa,
   EmpresaResumen,
+  ParqueaderoCreadoResponse,
   ParqueaderoOperativo,
   ReporteOperativo
 } from '../models/operaciones.model';
+import { ParqueaderoFormComponent } from './parqueadero-form.component';
 
 type EmpresaView = 'resumen' | 'parqueaderos' | 'reportes' | 'configuracion';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, ParqueaderoFormComponent],
   template: `
     <section class="page">
       <header class="page-header">
@@ -56,16 +59,36 @@ type EmpresaView = 'resumen' | 'parqueaderos' | 'reportes' | 'configuracion';
           </ng-container>
 
           <ng-container *ngSwitchCase="'parqueaderos'">
-            <div class="card table-wrap" *ngIf="parqueaderos.length; else empresaEmpty">
+            <div class="seccion-header">
+              <p>Consulta y administra las sedes vinculadas a tu empresa.</p>
+              <button type="button" class="btn btn-primary" (click)="abrirFormulario()"
+                      [disabled]="empresaId == null" data-testid="empresa-nuevo-parqueadero">
+                Nuevo parqueadero
+              </button>
+            </div>
+
+            <app-parqueadero-form *ngIf="mostrarFormulario && empresaId != null"
+                                  [empresaId]="empresaId"
+                                  (created)="onParqueaderoCreado($event)"
+                                  (cancel)="cerrarFormulario()"></app-parqueadero-form>
+
+            <div class="card table-wrap" *ngIf="parqueaderos.length; else parqueaderosEmpty">
               <table class="table" data-testid="empresa-parqueaderos">
-                <thead><tr><th>Parqueadero</th><th>Identificador</th><th>Dirección</th><th>Ocupación</th><th>Estado</th></tr></thead>
+                <thead><tr><th>Parqueadero</th><th>Identificador</th><th>Ocupación</th><th>Estado</th><th>Puestos</th></tr></thead>
                 <tbody>
                   <tr *ngFor="let parqueadero of parqueaderos">
                     <td>{{ parqueadero.nombre }}</td>
                     <td class="mono">{{ parqueadero.identificador }}</td>
-                    <td>{{ parqueadero.direccion }}</td>
                     <td>{{ parqueadero.ocupados }} / {{ parqueadero.capacidad }}</td>
                     <td><span class="badge" [class.badge-available]="parqueadero.activo" [class.badge-neutral]="!parqueadero.activo">{{ parqueadero.activo ? 'Activo' : 'Inactivo' }}</span></td>
+                    <td>
+                      <a class="btn btn-secondary btn-sm"
+                         [routerLink]="['/espacios']" [queryParams]="{ parqueadero: parqueadero.id }"
+                         [attr.data-testid]="'empresa-ver-puestos-' + parqueadero.id">Ver</a>
+                      <a class="btn btn-secondary btn-sm"
+                         [routerLink]="['/espacios', 'importar']" [queryParams]="{ parqueadero: parqueadero.id }"
+                         [attr.data-testid]="'empresa-agregar-puestos-' + parqueadero.id">Agregar</a>
+                    </td>
                   </tr>
                 </tbody>
               </table>
@@ -119,6 +142,18 @@ type EmpresaView = 'resumen' | 'parqueaderos' | 'reportes' | 'configuracion';
           <p>Cuando haya datos disponibles para esta sección, aparecerán aquí.</p>
         </div>
       </ng-template>
+
+      <ng-template #parqueaderosEmpty>
+        <div class="card state empty" data-testid="empresa-empty">
+          <span class="material-symbols-outlined">local_parking</span>
+          <h2>Todavía no hay parqueaderos</h2>
+          <p>Crea la primera sede de tu empresa para empezar a operar.</p>
+          <button type="button" class="btn btn-primary" (click)="abrirFormulario()"
+                  [disabled]="empresaId == null" data-testid="empresa-crear-primer-parqueadero">
+            Crear mi primer parqueadero
+          </button>
+        </div>
+      </ng-template>
     </section>
   `,
   changeDetection: ChangeDetectionStrategy.Eager,
@@ -126,6 +161,8 @@ type EmpresaView = 'resumen' | 'parqueaderos' | 'reportes' | 'configuracion';
     .page { max-width: 1180px; margin: 0 auto; }
     .badge-available { display: inline-flex; align-items: center; gap: 7px; }
     .badge-available .online-dot { width: 7px; height: 7px; }
+    .seccion-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+    .seccion-header p { color: var(--pf-muted); }
     .overview { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
     .overview h2 { font-size: 17px; margin-bottom: 5px; }
     .overview p, .settings p { color: var(--pf-muted); }
@@ -155,6 +192,8 @@ export class EmpresaComponent {
   parqueaderos: ParqueaderoOperativo[] = [];
   reportes: ReporteOperativo[] = [];
   configuracion: ConfiguracionEmpresa | null = null;
+  empresaId?: number;
+  mostrarFormulario = false;
   toleranciaInput = 30;
   savingConfiguracion = false;
 
@@ -196,8 +235,15 @@ export class EmpresaComponent {
         });
         break;
       case 'parqueaderos':
-        this.operaciones.getParqueaderos().subscribe({
-          next: value => { this.parqueaderos = value; this.loading = false; },
+        forkJoin({
+          parqueaderos: this.operaciones.getParqueaderos(),
+          empresaId: this.operaciones.getEmpresaId()
+        }).subscribe({
+          next: value => {
+            this.parqueaderos = value.parqueaderos;
+            this.empresaId = value.empresaId;
+            this.loading = false;
+          },
           error: onError
         });
         break;
@@ -218,6 +264,26 @@ export class EmpresaComponent {
         });
         break;
     }
+  }
+
+  abrirFormulario(): void {
+    if (this.empresaId == null) {
+      this.errorMessage = 'No se pudo identificar la empresa. Vuelve a cargar la página.';
+      return;
+    }
+    this.errorMessage = '';
+    this.successMessage = '';
+    this.mostrarFormulario = true;
+  }
+
+  cerrarFormulario(): void {
+    this.mostrarFormulario = false;
+  }
+
+  onParqueaderoCreado(creado: ParqueaderoCreadoResponse): void {
+    this.mostrarFormulario = false;
+    this.load();
+    this.successMessage = `Parqueadero "${creado.nombre}" creado correctamente.`;
   }
 
   guardarConfiguracion(): void {

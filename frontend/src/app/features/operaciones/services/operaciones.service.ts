@@ -11,6 +11,8 @@ import {
   NovedadResponse,
   OcupacionOperativa,
   PagoOperativo,
+  ParqueaderoCreadoResponse,
+  ParqueaderoCrearRequest,
   ParqueaderoOperativo,
   ReporteOperativo
 } from '../models/operaciones.model';
@@ -85,14 +87,27 @@ export class OperacionesService {
       }))));
   }
 
+  private getEmpresasMias(): Observable<EmpresaApi[]> {
+    return this.http.get<EmpresaApi[]>('/api/empresas/mias');
+  }
+
+  getEmpresaId(): Observable<number | undefined> {
+    return this.getEmpresasMias().pipe(map(empresas => empresas[0]?.id));
+  }
+
   getConfiguracion(): Observable<ConfiguracionEmpresa> {
-    return this.http.get<EmpresaApi[]>('/api/empresas/mias').pipe(map(empresas => ({
+    return this.getEmpresasMias().pipe(map(empresas => ({
       empresaId: empresas[0]?.id,
       razonSocial: empresas[0]?.nombre || '',
       correoContacto: '',
       zonaHoraria: 'America/Bogota',
       toleranciaSalidaMinutos: empresas[0]?.toleranciaSalidaMinutos ?? 30
     })));
+  }
+
+  crearParqueadero(empresaId: number, request: ParqueaderoCrearRequest): Observable<ParqueaderoCreadoResponse> {
+    return this.http.post<ParqueaderoCreadoResponse>(
+      `/api/empresas/${empresaId}/parqueaderos`, request);
   }
 
   guardarConfiguracion(empresaId: number, toleranciaSalidaMinutos: number): Observable<ConfiguracionEmpresa> {

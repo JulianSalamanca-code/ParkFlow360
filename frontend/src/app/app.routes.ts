@@ -18,7 +18,7 @@ export const routes: Routes = [
   },
   {
     path: 'espacios',
-    canActivate: [RoleGuard], data: { roles: ['PLATAFORMA'] },
+    canActivate: [RoleGuard], data: { roles: ['PLATAFORMA', 'EMPRESA'] },
     loadChildren: () => import('./features/espacios/espacios.routes')
       .then(m => m.ESPACIOS_ROUTES)
   },

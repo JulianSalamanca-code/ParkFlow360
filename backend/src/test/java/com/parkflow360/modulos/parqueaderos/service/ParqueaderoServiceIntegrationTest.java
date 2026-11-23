@@ -1,7 +1,12 @@
 package com.parkflow360.modulos.parqueaderos.service;
 
 import com.parkflow360.modulos.empresas.entity.Empresa;
+import com.parkflow360.modulos.empresas.entity.EmpresaUsuario;
 import com.parkflow360.modulos.empresas.repository.EmpresaRepository;
+import com.parkflow360.modulos.empresas.repository.EmpresaUsuarioRepository;
+import com.parkflow360.modulos.espacios.entity.Espacio;
+import com.parkflow360.modulos.espacios.repository.EspacioRepository;
+import com.parkflow360.modulos.parqueaderos.dto.EspacioCrearRequest;
 import com.parkflow360.modulos.parqueaderos.dto.ParqueaderoRequest;
 import com.parkflow360.modulos.parqueaderos.dto.ParqueaderoResponse;
 import com.parkflow360.modulos.parqueaderos.dto.TipoVehiculoRequest;
@@ -35,11 +40,15 @@ class ParqueaderoServiceIntegrationTest {
     @Autowired
     private EmpresaRepository empresaRepository;
     @Autowired
+    private EmpresaUsuarioRepository empresaUsuarioRepository;
+    @Autowired
     private UsuarioRepository usuarioRepository;
     @Autowired
     private ParqueaderoUsuarioRepository parqueaderoUsuarioRepository;
     @Autowired
     private ParqueaderoTipoVehiculoRepository tipoVehiculoRepository;
+    @Autowired
+    private EspacioRepository espacioRepository;
     @Autowired
     private PasswordEncoder passwordEncoder;
 
@@ -71,6 +80,9 @@ class ParqueaderoServiceIntegrationTest {
                         .cantidadFija(true)
                         .cantidad(10)
                         .build()))
+                .espacios(List.of(
+                        EspacioCrearRequest.builder().numero("carro-001").tipo("carro").piso(1).build(),
+                        EspacioCrearRequest.builder().numero("carro-002").tipo("carro").piso(1).build()))
                 .cajeroEmail("cajero-pq-integ@test.com")
                 .cajeroPassword("clave1234")
                 .cajeroNombre("Cajero")
@@ -94,6 +106,43 @@ class ParqueaderoServiceIntegrationTest {
         assertThat(vinculos.get(0).getRolAsignado()).isEqualTo(Roles.CAJERO_PAGOS);
 
         assertThat(tipoVehiculoRepository.findByParqueaderoId(response.getId())).hasSize(1);
+
+        List<Espacio> espacios = espacioRepository.findByParqueaderoId(response.getId());
+        assertThat(espacios).hasSize(2);
+        assertThat(espacios).extracting(Espacio::getNumero)
+                .containsExactlyInAnyOrder("CARRO-001", "CARRO-002");
+        assertThat(espacios).allSatisfy(espacio -> {
+            assertThat(espacio.getTipo()).isEqualTo("CARRO");
+            assertThat(espacio.getEstado()).isEqualTo("LIBRE");
+            assertThat(espacio.getPiso()).isEqualTo(1);
+        });
+    }
+
+    @Test
+    void empresaPuedeCrearParqueaderoYVerloEnLosSuyos() {
+        Usuario empresa = usuarioRepository.save(Usuario.builder()
+                .email("empresa-pq-integ@test.com")
+                .password("hash")
+                .rol(Roles.EMPRESA)
+                .nombre("Empresa integración")
+                .build());
+        empresaUsuarioRepository.save(EmpresaUsuario.builder()
+                .empresaId(empresaId)
+                .usuarioId(empresa.getId())
+                .build());
+
+        ParqueaderoResponse response = parqueaderoService.crear(empresaId, ParqueaderoRequest.builder()
+                .nombre("Parqueadero empresa integración")
+                .identificador("pq-integ-empresa")
+                .capacidadVehiculos(30)
+                .tipos(List.of())
+                .cajeroEmail("cajero-pq-empresa-integ@test.com")
+                .cajeroPassword("clave1234")
+                .build(), "empresa-pq-integ@test.com");
+
+        assertThat(parqueaderoService.listarMios("empresa-pq-integ@test.com"))
+                .extracting(ParqueaderoResponse::getId)
+                .contains(response.getId());
     }
 
     @Test

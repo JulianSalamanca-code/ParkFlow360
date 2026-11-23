@@ -37,7 +37,8 @@ const MIS_PARQUEOS = item('mis-parqueos', 'Mis Parqueos', 'Parqueos', 'local_par
 const MIS_VEHICULOS = item('mis-vehiculos', 'Mis Vehículos', 'Vehículos', 'directions_car', '/mis-vehiculos');
 const PAGAR = item('pagar', 'Pagar en Línea', 'Pagar', 'payments', '/pagar');
 const EMPRESA_HOME = item('empresa-home', 'Resumen', 'Resumen', 'dashboard', '/empresa');
-const EMPRESA_PARQUEADEROS = item('empresa-parqueaderos', 'Operación', 'Operación', 'domain', '/empresa/parqueaderos');
+const EMPRESA_PARQUEADEROS = item('empresa-parqueaderos', 'Parqueaderos', 'Parqueos', 'domain', '/empresa/parqueaderos');
+const EMPRESA_PUESTOS = item('empresa-puestos', 'Puestos', 'Puestos', 'local_parking', '/espacios');
 const EMPRESA_REPORTES = item('empresa-reportes', 'Reportes', 'Reportes', 'analytics', '/empresa/reportes');
 const EMPRESA_CONFIGURACION = item('empresa-configuracion', 'Configuración', 'Config.', 'settings', '/empresa/configuracion');
 const CAJERO_PAGOS = item('cajero-pagos', 'Pagos pendientes', 'Caja', 'point_of_sale', '/cajero/pagos');
@@ -61,7 +62,10 @@ const SIDEBAR_BY_ROL: Readonly<Record<Rol, readonly NavSection[]>> = {
     }
   ],
   EMPRESA: [
-    { label: 'Administración', items: [EMPRESA_HOME, EMPRESA_PARQUEADEROS, EMPRESA_REPORTES, EMPRESA_CONFIGURACION] }
+    {
+      label: 'Administración',
+      items: [EMPRESA_HOME, EMPRESA_PARQUEADEROS, EMPRESA_PUESTOS, EMPRESA_REPORTES, EMPRESA_CONFIGURACION]
+    }
   ],
   CAJERO_PAGOS: [
     { label: 'Recaudo', items: [CAJERO_PAGOS, CAJERO_HISTORIAL] }
@@ -80,7 +84,7 @@ const SIDEBAR_BY_ROL: Readonly<Record<Rol, readonly NavSection[]>> = {
 /** Ítems principales de la barra inferior (máximo 4 + hamburguesa). */
 const BOTTOM_BY_ROL: Readonly<Record<Rol, readonly NavItem[]>> = {
   PLATAFORMA: [PLANOS, ESPACIOS, INGRESOS, PAGOS],
-  EMPRESA: [EMPRESA_HOME, EMPRESA_PARQUEADEROS, EMPRESA_REPORTES],
+  EMPRESA: [EMPRESA_HOME, EMPRESA_PARQUEADEROS, EMPRESA_PUESTOS, EMPRESA_REPORTES],
   CAJERO_PAGOS: [CAJERO_PAGOS, CAJERO_HISTORIAL],
   GUARDIA: [GUARDIA_INGRESOS, GUARDIA_OCUPACION],
   USUARIO: [RESERVAR, MIS_PARQUEOS, MIS_VEHICULOS, PAGAR]

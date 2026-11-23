@@ -3,7 +3,9 @@ package com.parkflow360.modulos.parqueaderos.service;
 import com.parkflow360.modulos.empresas.entity.Empresa;
 import com.parkflow360.modulos.empresas.repository.EmpresaRepository;
 import com.parkflow360.modulos.empresas.repository.EmpresaUsuarioRepository;
+import com.parkflow360.modulos.espacios.entity.Espacio;
 import com.parkflow360.modulos.espacios.repository.EspacioRepository;
+import com.parkflow360.modulos.parqueaderos.dto.EspacioCrearRequest;
 import com.parkflow360.modulos.parqueaderos.dto.GuardiaRequest;
 import com.parkflow360.modulos.parqueaderos.dto.ParqueaderoRequest;
 import com.parkflow360.modulos.parqueaderos.dto.ParqueaderoResponse;
@@ -28,9 +30,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
@@ -72,6 +76,7 @@ public class ParqueaderoService {
                 .build());
 
         List<ParqueaderoTipoVehiculo> tipos = guardarTipos(parqueadero.getId(), request.getTipos());
+        guardarEspacios(parqueadero.getId(), request.getEspacios());
         Usuario cajero = crearCajero(parqueadero, request);
 
         return mapToResponse(parqueadero, tipos, cajero.getEmail());
@@ -249,6 +254,56 @@ public class ParqueaderoService {
                     .build()));
         }
         return entities;
+    }
+
+    /** Crea los puestos del parqueadero en la misma transacción del alta. RN-14 aplica por tipo. */
+    private void guardarEspacios(Long parqueaderoId, List<EspacioCrearRequest> espacios) {
+        if (espacios == null || espacios.isEmpty()) {
+            return;
+        }
+        if (espacios.size() > 2000) {
+            throw new IllegalArgumentException("No se pueden crear más de 2000 puestos por lote.");
+        }
+
+        Set<String> numeros = new HashSet<>();
+        Map<String, Integer> solicitadosPorTipo = new HashMap<>();
+        for (EspacioCrearRequest espacio : espacios) {
+            String numero = espacio.getNumero() == null ? null
+                    : espacio.getNumero().trim().toUpperCase(Locale.ROOT);
+            if (numero == null || numero.isBlank()) {
+                throw new IllegalArgumentException("Todos los puestos deben tener un número.");
+            }
+            if (!numeros.add(numero)) {
+                throw new IllegalArgumentException("El lote contiene el puesto repetido: " + numero);
+            }
+            String tipo = espacio.getTipo() == null ? null
+                    : espacio.getTipo().trim().toUpperCase(Locale.ROOT);
+            if (tipo == null || tipo.isBlank()) {
+                throw new IllegalArgumentException("Todos los puestos deben tener un tipo.");
+            }
+            int solicitados = solicitadosPorTipo.merge(tipo, 1, Integer::sum);
+            validarCupo(parqueaderoId, tipo, solicitados);
+        }
+
+        for (String numero : numeros) {
+            if (espacioRepository.existsByParqueaderoIdAndNumeroIgnoreCase(parqueaderoId, numero)) {
+                throw new IllegalArgumentException(
+                        "Ya existe un espacio con el número " + numero + " en este parqueadero.");
+            }
+        }
+
+        List<Espacio> entities = espacios.stream()
+                .map(espacio -> Espacio.builder()
+                        .parqueaderoId(parqueaderoId)
+                        .numero(espacio.getNumero().trim().toUpperCase(Locale.ROOT))
+                        .tipo(espacio.getTipo().trim().toUpperCase(Locale.ROOT))
+                        .estado("LIBRE")
+                        .piso(espacio.getPiso())
+                        .fila(espacio.getFila())
+                        .columna(espacio.getColumna())
+                        .build())
+                .toList();
+        espacioRepository.saveAll(entities);
     }
 
     private Usuario crearCajero(Parqueadero parqueadero, ParqueaderoRequest request) {

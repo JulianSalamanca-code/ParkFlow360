@@ -2,6 +2,7 @@ package com.parkflow360.security.service;
 
 import com.parkflow360.security.dto.UsuarioRequest;
 import com.parkflow360.security.dto.UsuarioResponse;
+import com.parkflow360.security.Roles;
 import com.parkflow360.security.entity.Usuario;
 import com.parkflow360.security.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
@@ -42,11 +43,14 @@ public class UsuarioService {
         if (request.getPassword() == null || request.getPassword().isBlank()) {
             throw new IllegalArgumentException("La contraseña es obligatoria para crear un usuario");
         }
+        if (!Roles.esValido(request.getRol())) {
+            throw new IllegalArgumentException("El rol indicado no es válido");
+        }
 
         Usuario usuario = Usuario.builder()
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .rol(request.getRol())
+                .rol(Roles.normalizar(request.getRol()))
                 .nombre(request.getNombre())
                 .build();
 
@@ -58,8 +62,11 @@ public class UsuarioService {
         Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Usuario no encontrado con id: " + id));
 
+        if (!Roles.esValido(request.getRol())) {
+            throw new IllegalArgumentException("El rol indicado no es válido");
+        }
         usuario.setEmail(request.getEmail());
-        usuario.setRol(request.getRol());
+        usuario.setRol(Roles.normalizar(request.getRol()));
         usuario.setNombre(request.getNombre());
 
         // Solo cambia la contraseña si se envía una nueva

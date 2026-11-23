@@ -1,5 +1,6 @@
 package com.parkflow360.modulos.ingresos.service;
 
+import com.parkflow360.modulos.espacios.entity.Espacio;
 import com.parkflow360.modulos.espacios.repository.EspacioRepository;
 import com.parkflow360.modulos.ingresos.dto.IngresoRequest;
 import com.parkflow360.modulos.ingresos.dto.IngresoResponse;
@@ -8,11 +9,13 @@ import com.parkflow360.modulos.ingresos.repository.IngresoRepository;
 import com.parkflow360.modulos.pagos.repository.PagoRepository;
 import com.parkflow360.security.entity.Usuario;
 import com.parkflow360.security.repository.UsuarioRepository;
+import com.parkflow360.shared.service.AccesoParqueaderoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
@@ -25,38 +28,44 @@ public class IngresoService {
     private final PagoRepository pagoRepository;
     private final EspacioRepository espacioRepository;
     private final UsuarioRepository usuarioRepository;
-
-    // ---------- Consultas ----------
+    private final AccesoParqueaderoService accesoParqueaderoService;
 
     @Transactional(readOnly = true)
-    public List<IngresoResponse> listarTodos() {
-        return ingresoRepository.findAll().stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+    public List<IngresoResponse> listarTodos(String email) {
+        if (accesoParqueaderoService.esPlataforma(email)) {
+            return ingresoRepository.findAll().stream()
+                    .map(this::mapToResponse)
+                    .collect(Collectors.toList());
+        }
+        return filtrarPorParqueaderos(accesoParqueaderoService.parqueaderosPermitidos(email),
+                ingresoRepository.findAll());
     }
 
     @Transactional(readOnly = true)
-    public List<IngresoResponse> listarActivos() {
-        return ingresoRepository.findByEstado("ACTIVO").stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+    public List<IngresoResponse> listarActivos(String email) {
+        if (accesoParqueaderoService.esPlataforma(email)) {
+            return ingresoRepository.findByEstado("ACTIVO").stream()
+                    .map(this::mapToResponse)
+                    .collect(Collectors.toList());
+        }
+        return filtrarPorParqueaderos(accesoParqueaderoService.parqueaderosPermitidos(email),
+                ingresoRepository.findByEstado("ACTIVO"));
     }
 
     @Transactional(readOnly = true)
-    public IngresoResponse obtenerPorId(Long id) {
-        Ingreso ingreso = ingresoRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Ingreso no encontrado con id: " + id));
+    public IngresoResponse obtenerPorId(String email, Long id) {
+        Ingreso ingreso = requireIngreso(id);
+        accesoParqueaderoService.verificarAcceso(email, ingreso.getParqueaderoId());
         return mapToResponse(ingreso);
     }
 
     @Transactional(readOnly = true)
-    public IngresoResponse obtenerPorFolio(String folio) {
+    public IngresoResponse obtenerPorFolio(String email, String folio) {
         Ingreso ingreso = ingresoRepository.findByFolio(folio)
                 .orElseThrow(() -> new NoSuchElementException("Ingreso no encontrado con folio: " + folio));
+        accesoParqueaderoService.verificarAcceso(email, ingreso.getParqueaderoId());
         return mapToResponse(ingreso);
     }
-
-    // ---------- Usuario (cliente) ----------
 
     @Transactional(readOnly = true)
     public List<IngresoResponse> listarPorUsuarioEmail(String email) {
@@ -69,10 +78,10 @@ public class IngresoService {
     @Transactional
     public IngresoResponse reservar(String email, IngresoRequest request) {
         Usuario usuario = requireUsuario(email);
+        Long parqueaderoId = resolverParqueadero(email, request);
 
         String placa = request.getPlaca() != null ? request.getPlaca().toUpperCase() : null;
 
-        // Regla: un vehículo solo puede tener una reserva/parqueo activo a la vez
         boolean yaTieneActivo = ingresoRepository
                 .findByUsuarioIdAndEstadoIn(usuario.getId(), List.of("RESERVADO", "ACTIVO"))
                 .stream()
@@ -83,10 +92,11 @@ public class IngresoService {
 
         if (yaTieneActivo) {
             throw new IllegalArgumentException(
-                "Este vehículo ya tiene una reserva o parqueo activo. Debes finalizarlo antes de reservar de nuevo.");
+                    "Este vehículo ya tiene una reserva o parqueo activo. Debes finalizarlo antes de reservar de nuevo.");
         }
 
         Ingreso ingreso = Ingreso.builder()
+                .parqueaderoId(parqueaderoId)
                 .folio("TMP-" + System.nanoTime())
                 .placa(placa)
                 .categoria(request.getCategoria())
@@ -111,11 +121,12 @@ public class IngresoService {
         return mapToResponse(ingreso);
     }
 
-    // ---------- Administrador ----------
-
     @Transactional
-    public IngresoResponse crear(IngresoRequest request) {
+    public IngresoResponse crear(String email, IngresoRequest request) {
+        Long parqueaderoId = resolverParqueadero(email, request);
+
         Ingreso ingreso = Ingreso.builder()
+                .parqueaderoId(parqueaderoId)
                 .folio("TMP-" + System.nanoTime())
                 .placa(request.getPlaca() != null ? request.getPlaca().toUpperCase() : null)
                 .categoria(request.getCategoria())
@@ -140,9 +151,10 @@ public class IngresoService {
     }
 
     @Transactional
-    public IngresoResponse registrarSalida(Long id) {
+    public IngresoResponse registrarSalida(String email, Long id) {
         Ingreso ingreso = ingresoRepository.findByIdForUpdate(id)
                 .orElseThrow(() -> new NoSuchElementException("Ingreso no encontrado con id: " + id));
+        accesoParqueaderoService.verificarAcceso(email, ingreso.getParqueaderoId());
 
         if (!"ACTIVO".equalsIgnoreCase(ingreso.getEstado())) {
             throw new IllegalArgumentException("Solo se puede registrar la salida de un ingreso activo.");
@@ -162,9 +174,9 @@ public class IngresoService {
     }
 
     @Transactional
-    public IngresoResponse liberar(Long id) {
-        Ingreso ingreso = ingresoRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Ingreso no encontrado con id: " + id));
+    public IngresoResponse liberar(String email, Long id) {
+        Ingreso ingreso = requireIngreso(id);
+        accesoParqueaderoService.verificarAcceso(email, ingreso.getParqueaderoId());
 
         if ("FINALIZADO".equalsIgnoreCase(ingreso.getEstado()) || "CANCELADO".equalsIgnoreCase(ingreso.getEstado())) {
             throw new IllegalArgumentException("Esta reserva ya fue finalizada o liberada.");
@@ -183,26 +195,52 @@ public class IngresoService {
     }
 
     @Transactional
-    public IngresoResponse liberarPorEspacio(Long espacioId) {
+    public IngresoResponse liberarPorEspacio(String email, Long espacioId) {
+        Espacio espacio = espacioRepository.findById(espacioId)
+                .orElseThrow(() -> new NoSuchElementException("Espacio no encontrado con id: " + espacioId));
+        accesoParqueaderoService.verificarAcceso(email, espacio.getParqueaderoId());
+
         Ingreso ingreso = ingresoRepository
                 .findFirstByEspacioIdAndEstadoIn(espacioId, List.of("RESERVADO", "ACTIVO"))
                 .orElseThrow(() -> new IllegalArgumentException(
                     "El espacio no tiene una reserva o parqueo activo que liberar."));
-        return liberar(ingreso.getId());
+        return liberar(email, ingreso.getId());
     }
 
     @Transactional
-    public void eliminar(Long id) {
-        if (!ingresoRepository.existsById(id)) {
-            throw new NoSuchElementException("Ingreso no encontrado con id: " + id);
-        }
+    public void eliminar(String email, Long id) {
+        Ingreso ingreso = requireIngreso(id);
+        accesoParqueaderoService.verificarAcceso(email, ingreso.getParqueaderoId());
+
         if (pagoRepository.existsByIngresoId(id)) {
             throw new IllegalArgumentException("No se puede eliminar una estancia que tiene un pago asociado.");
         }
         ingresoRepository.deleteById(id);
     }
 
-    // ---------- Helpers ----------
+    private Long resolverParqueadero(String email, IngresoRequest request) {
+        Long solicitado = request.getParqueaderoId();
+        if (solicitado == null && request.getEspacioId() != null) {
+            Espacio espacio = espacioRepository.findById(request.getEspacioId()).orElse(null);
+            if (espacio != null) {
+                solicitado = espacio.getParqueaderoId();
+            }
+        }
+        return accesoParqueaderoService.resolverParqueadero(email, solicitado);
+    }
+
+    private List<IngresoResponse> filtrarPorParqueaderos(Collection<Long> permitidos, List<Ingreso> ingresos) {
+        return ingresos.stream()
+                .filter(ingreso -> ingreso.getParqueaderoId() == null
+                        || permitidos.contains(ingreso.getParqueaderoId()))
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    private Ingreso requireIngreso(Long id) {
+        return ingresoRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Ingreso no encontrado con id: " + id));
+    }
 
     private Usuario requireUsuario(String email) {
         return usuarioRepository.findByEmail(email)
@@ -223,6 +261,7 @@ public class IngresoService {
         var pago = pagoRepository.findByIngresoId(ingreso.getId()).stream().findFirst().orElse(null);
         return IngresoResponse.builder()
                 .id(ingreso.getId())
+                .parqueaderoId(ingreso.getParqueaderoId())
                 .folio(ingreso.getFolio())
                 .placa(ingreso.getPlaca())
                 .categoria(ingreso.getCategoria())

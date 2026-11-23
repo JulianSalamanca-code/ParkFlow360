@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 @Builder
 public class EspacioResponse {
     private Long id;
+    private Long parqueaderoId;
     private String numero;
     private String tipo;
     private String estado;

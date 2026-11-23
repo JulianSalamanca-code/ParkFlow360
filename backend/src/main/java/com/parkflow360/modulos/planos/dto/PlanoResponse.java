@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 @Builder
 public class PlanoResponse {
     private Long id;
+    private Long parqueaderoId;
     private String nombre;
     private String descripcion;
     private String imagenUrl;

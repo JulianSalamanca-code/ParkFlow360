@@ -30,6 +30,9 @@ public class Ingreso {
     @Column(nullable = false, length = 20)
     private String categoria;
 
+    @Column(name = "parqueadero_id")
+    private Long parqueaderoId;
+
     @Column(name = "vehiculo_id")
     private Long vehiculoId;
 

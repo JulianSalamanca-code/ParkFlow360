@@ -6,17 +6,22 @@ import com.parkflow360.modulos.espacios.entity.Espacio;
 import com.parkflow360.modulos.espacios.repository.EspacioRepository;
 import com.parkflow360.modulos.ingresos.repository.IngresoRepository;
 import com.parkflow360.modulos.pagos.repository.PagoRepository;
+import com.parkflow360.modulos.parqueaderos.service.ParqueaderoService;
 import com.parkflow360.modulos.planos.dto.GenerarEspaciosRequest;
 import com.parkflow360.modulos.planos.dto.PlanoRequest;
 import com.parkflow360.modulos.planos.dto.PlanoResponse;
 import com.parkflow360.modulos.planos.entity.Plano;
 import com.parkflow360.modulos.planos.repository.PlanoRepository;
+import com.parkflow360.shared.service.AccesoParqueaderoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
@@ -28,22 +33,39 @@ public class PlanoService {
     private final EspacioRepository espacioRepository;
     private final PagoRepository pagoRepository;
     private final IngresoRepository ingresoRepository;
+    private final AccesoParqueaderoService accesoParqueaderoService;
+    private final ParqueaderoService parqueaderoService;
 
     @Transactional(readOnly = true)
-    public List<PlanoResponse> listarTodos() {
-        return planoRepository.findAll().stream()
+    public List<PlanoResponse> listarTodos(String email) {
+        if (accesoParqueaderoService.esPlataforma(email)) {
+            return planoRepository.findAll().stream()
+                    .map(this::mapToResponse)
+                    .collect(Collectors.toList());
+        }
+        List<Long> permitidos = accesoParqueaderoService.parqueaderosPermitidos(email);
+        if (permitidos.isEmpty()) {
+            return List.of();
+        }
+        return planoRepository.findByParqueaderoIdIn(permitidos).stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
-    public PlanoResponse obtenerPorId(Long id) {
-        return mapToResponse(requirePlano(id));
+    public PlanoResponse obtenerPorId(String email, Long id) {
+        Plano plano = requirePlano(id);
+        accesoParqueaderoService.verificarAcceso(email, plano.getParqueaderoId());
+        return mapToResponse(plano);
     }
 
     @Transactional
-    public PlanoResponse crear(PlanoRequest request) {
+    public PlanoResponse crear(String email, PlanoRequest request) {
+        Long parqueaderoId = accesoParqueaderoService.resolverParqueadero(
+                email, request.getParqueaderoId());
+
         Plano plano = Plano.builder()
+                .parqueaderoId(parqueaderoId)
                 .nombre(request.getNombre())
                 .descripcion(request.getDescripcion())
                 .imagenUrl(request.getImagenUrl())
@@ -57,8 +79,15 @@ public class PlanoService {
     }
 
     @Transactional
-    public PlanoResponse actualizar(Long id, PlanoRequest request) {
+    public PlanoResponse actualizar(String email, Long id, PlanoRequest request) {
         Plano plano = requirePlano(id);
+        accesoParqueaderoService.verificarAcceso(email, plano.getParqueaderoId());
+
+        if (request.getParqueaderoId() != null
+                && !request.getParqueaderoId().equals(plano.getParqueaderoId())) {
+            plano.setParqueaderoId(accesoParqueaderoService.resolverParqueadero(
+                    email, request.getParqueaderoId()));
+        }
         plano.setNombre(request.getNombre());
         plano.setDescripcion(request.getDescripcion());
         if (request.getImagenUrl() != null) plano.setImagenUrl(request.getImagenUrl());
@@ -71,11 +100,11 @@ public class PlanoService {
     }
 
     @Transactional
-    public void eliminar(Long id) {
+    public void eliminar(String email, Long id) {
         Plano plano = requirePlano(id);
+        accesoParqueaderoService.verificarAcceso(email, plano.getParqueaderoId());
         List<Espacio> espacios = espacioRepository.findByPlanoId(id);
 
-        // No se elimina un plano con movimientos: hay que preservar el historial.
         for (Espacio espacio : espacios) {
             if (!pagoRepository.findByEspacioId(espacio.getId()).isEmpty()) {
                 throw new IllegalArgumentException(
@@ -89,23 +118,23 @@ public class PlanoService {
             }
         }
 
-        // Elimina primero los espacios asociados para no violar la referencia
         if (!espacios.isEmpty()) {
             espacioRepository.deleteAll(espacios);
         }
         planoRepository.delete(plano);
     }
 
-    /**
-     * Genera en bloque los espacios de un plano a partir de una cuadrícula
-     * (filas x columnas), evitando registrarlos uno por uno.
-     */
+    /** Genera en bloque los espacios de un plano a partir de una cuadrícula. */
     @Transactional
-    public List<EspacioResponse> generarEspacios(Long planoId, GenerarEspaciosRequest request) {
+    public List<EspacioResponse> generarEspacios(
+            String email, Long planoId, GenerarEspaciosRequest request) {
         Plano plano = requirePlano(planoId);
+        accesoParqueaderoService.verificarAcceso(email, plano.getParqueaderoId());
+        Long parqueaderoId = plano.getParqueaderoId();
 
         int filas = request.getFilas() != null && request.getFilas() > 0 ? request.getFilas() : plano.getFilas();
-        int columnas = request.getColumnas() != null && request.getColumnas() > 0 ? request.getColumnas() : plano.getColumnas();
+        int columnas = request.getColumnas() != null && request.getColumnas() > 0
+                ? request.getColumnas() : plano.getColumnas();
         if (filas <= 0 || columnas <= 0) {
             throw new IllegalArgumentException("Debes indicar filas y columnas mayores a cero para generar los espacios.");
         }
@@ -116,29 +145,34 @@ public class PlanoService {
         Integer piso = request.getPiso() != null ? request.getPiso() : plano.getPiso();
 
         List<EspacioResponse> creados = new ArrayList<>();
-
+        Map<String, Integer> generadosPorTipo = new HashMap<>();
         for (int f = 1; f <= filas; f++) {
             for (int c = 1; c <= columnas; c++) {
-                String numero = buildNumero(prefijo, f, c);
-                if (espacioRepository.existsByNumero(numero)) {
+                String numero = buildNumero(prefijo, f, c).toUpperCase(Locale.ROOT);
+                if (espacioRepository.existsByParqueaderoIdAndNumeroIgnoreCase(parqueaderoId, numero)) {
                     continue;
                 }
+                String tipo = request.getTipo() == null
+                        ? null
+                        : request.getTipo().trim().toUpperCase(Locale.ROOT);
+                int generados = generadosPorTipo.merge(
+                        tipo == null ? "" : tipo, 1, Integer::sum);
+                parqueaderoService.validarCupo(parqueaderoId, tipo, generados);
 
                 Espacio espacio = Espacio.builder()
+                        .parqueaderoId(parqueaderoId)
                         .numero(numero)
-                        .tipo(request.getTipo())
+                        .tipo(tipo)
                         .estado(estado)
                         .piso(piso != null ? piso : 1)
                         .planoId(plano.getId())
                         .fila(f)
                         .columna(c)
                         .build();
-
                 creados.add(mapEspacio(espacioRepository.save(espacio)));
             }
         }
 
-        // Refleja la cuadrícula usada en el plano
         plano.setFilas(filas);
         plano.setColumnas(columnas);
         planoRepository.save(plano);
@@ -147,14 +181,13 @@ public class PlanoService {
     }
 
     @Transactional(readOnly = true)
-    public List<EspacioResponse> listarEspacios(Long planoId) {
-        requirePlano(planoId);
+    public List<EspacioResponse> listarEspacios(String email, Long planoId) {
+        Plano plano = requirePlano(planoId);
+        accesoParqueaderoService.verificarAcceso(email, plano.getParqueaderoId());
         return espacioRepository.findByPlanoId(planoId).stream()
                 .map(this::mapEspacio)
                 .collect(Collectors.toList());
     }
-
-    // ---------- Helpers ----------
 
     private Plano requirePlano(Long id) {
         return planoRepository.findById(id)
@@ -169,6 +202,7 @@ public class PlanoService {
     private PlanoResponse mapToResponse(Plano plano) {
         return PlanoResponse.builder()
                 .id(plano.getId())
+                .parqueaderoId(plano.getParqueaderoId())
                 .nombre(plano.getNombre())
                 .descripcion(plano.getDescripcion())
                 .imagenUrl(plano.getImagenUrl())
@@ -185,6 +219,7 @@ public class PlanoService {
     private EspacioResponse mapEspacio(Espacio e) {
         return EspacioResponse.builder()
                 .id(e.getId())
+                .parqueaderoId(e.getParqueaderoId())
                 .numero(e.getNumero())
                 .tipo(e.getTipo())
                 .estado(e.getEstado())

@@ -17,6 +17,8 @@ import java.math.BigDecimal;
 @Builder
 public class TarifaRequest {
 
+    private Long parqueaderoId;
+
     @NotBlank(message = "El nombre es obligatorio")
     @Size(max = 100, message = "El nombre no puede tener más de 100 caracteres")
     private String nombre;

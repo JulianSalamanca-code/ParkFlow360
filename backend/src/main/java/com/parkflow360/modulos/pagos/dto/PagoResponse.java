@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 @Builder
 public class PagoResponse {
     private Long id;
+    private Long parqueaderoId;
     private Long vehiculoId;
     private Long espacioId;
     private Long tarifaId;

@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 @Builder
 public class IngresoResponse {
     private Long id;
+    private Long parqueaderoId;
     private String folio;
     private String placa;
     private String categoria;

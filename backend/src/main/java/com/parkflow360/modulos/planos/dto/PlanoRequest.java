@@ -14,6 +14,8 @@ import lombok.NoArgsConstructor;
 @Builder
 public class PlanoRequest {
 
+    private Long parqueaderoId;
+
     @NotBlank(message = "El nombre del plano es obligatorio")
     @Size(max = 100, message = "El nombre no puede tener más de 100 caracteres")
     private String nombre;

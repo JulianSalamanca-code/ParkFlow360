@@ -9,7 +9,15 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -21,44 +29,52 @@ public class PlanoController {
     private final PlanoService planoService;
 
     @GetMapping
-    public ResponseEntity<List<PlanoResponse>> listarTodos() {
-        return ResponseEntity.ok(planoService.listarTodos());
+    public ResponseEntity<List<PlanoResponse>> listarTodos(Authentication auth) {
+        return ResponseEntity.ok(planoService.listarTodos(auth.getName()));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<PlanoResponse> obtenerPorId(@PathVariable Long id) {
-        return ResponseEntity.ok(planoService.obtenerPorId(id));
+    public ResponseEntity<PlanoResponse> obtenerPorId(
+            @PathVariable Long id,
+            Authentication auth) {
+        return ResponseEntity.ok(planoService.obtenerPorId(auth.getName(), id));
     }
 
     @PostMapping
-    public ResponseEntity<PlanoResponse> crear(@Valid @RequestBody PlanoRequest request) {
-        return new ResponseEntity<>(planoService.crear(request), HttpStatus.CREATED);
+    public ResponseEntity<PlanoResponse> crear(
+            Authentication auth,
+            @Valid @RequestBody PlanoRequest request) {
+        return new ResponseEntity<>(planoService.crear(auth.getName(), request), HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<PlanoResponse> actualizar(
             @PathVariable Long id,
+            Authentication auth,
             @Valid @RequestBody PlanoRequest request) {
-        return ResponseEntity.ok(planoService.actualizar(id, request));
+        return ResponseEntity.ok(planoService.actualizar(auth.getName(), id, request));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminar(@PathVariable Long id) {
-        planoService.eliminar(id);
+    public ResponseEntity<Void> eliminar(@PathVariable Long id, Authentication auth) {
+        planoService.eliminar(auth.getName(), id);
         return ResponseEntity.noContent().build();
     }
 
-    /** Genera en bloque los espacios del plano (cuadrícula). */
     @PostMapping("/{id}/generar-espacios")
     public ResponseEntity<List<EspacioResponse>> generarEspacios(
             @PathVariable Long id,
+            Authentication auth,
             @Valid @RequestBody GenerarEspaciosRequest request) {
-        return new ResponseEntity<>(planoService.generarEspacios(id, request), HttpStatus.CREATED);
+        return new ResponseEntity<>(
+                planoService.generarEspacios(auth.getName(), id, request),
+                HttpStatus.CREATED);
     }
 
-    /** Espacios ubicados en un plano (para el mapa de ocupación). */
     @GetMapping("/{id}/espacios")
-    public ResponseEntity<List<EspacioResponse>> listarEspacios(@PathVariable Long id) {
-        return ResponseEntity.ok(planoService.listarEspacios(id));
+    public ResponseEntity<List<EspacioResponse>> listarEspacios(
+            @PathVariable Long id,
+            Authentication auth) {
+        return ResponseEntity.ok(planoService.listarEspacios(auth.getName(), id));
     }
 }

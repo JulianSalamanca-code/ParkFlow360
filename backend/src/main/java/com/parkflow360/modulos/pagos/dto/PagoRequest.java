@@ -18,6 +18,8 @@ import java.math.BigDecimal;
 @Builder
 public class PagoRequest {
 
+    private Long parqueaderoId;
+
     private Long vehiculoId;
 
     private Long espacioId;

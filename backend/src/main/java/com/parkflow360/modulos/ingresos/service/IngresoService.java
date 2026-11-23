@@ -8,6 +8,9 @@ import com.parkflow360.modulos.ingresos.dto.IngresoResponse;
 import com.parkflow360.modulos.ingresos.dto.VerificarIngresoRequest;
 import com.parkflow360.modulos.ingresos.entity.Ingreso;
 import com.parkflow360.modulos.ingresos.repository.IngresoRepository;
+import com.parkflow360.modulos.pagos.entity.Factura;
+import com.parkflow360.modulos.pagos.entity.Pago;
+import com.parkflow360.modulos.pagos.repository.FacturaRepository;
 import com.parkflow360.modulos.pagos.repository.PagoRepository;
 import com.parkflow360.modulos.pagos.service.FacturaService;
 import com.parkflow360.modulos.tarifas.entity.Tarifa;
@@ -17,6 +20,7 @@ import com.parkflow360.security.repository.UsuarioRepository;
 import com.parkflow360.modulos.vehiculos.entity.Vehiculo;
 import com.parkflow360.modulos.vehiculos.repository.VehiculoRepository;
 import com.parkflow360.shared.service.AccesoParqueaderoService;
+import com.parkflow360.shared.service.ToleranciaSalidaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,6 +45,7 @@ public class IngresoService {
 
     private final IngresoRepository ingresoRepository;
     private final PagoRepository pagoRepository;
+    private final FacturaRepository facturaRepository;
     private final EspacioRepository espacioRepository;
     private final UsuarioRepository usuarioRepository;
     private final VehiculoRepository vehiculoRepository;
@@ -48,6 +53,7 @@ public class IngresoService {
     private final AccesoParqueaderoService accesoParqueaderoService;
     private final FacturaService facturaService;
     private final CreditoService creditoService;
+    private final ToleranciaSalidaService toleranciaSalidaService;
 
     @Transactional(readOnly = true)
     public List<IngresoResponse> listarTodos(String email) {
@@ -175,6 +181,10 @@ public class IngresoService {
         return mapToResponse(ingreso);
     }
 
+    /**
+     * F8: el guardia solo autoriza la salida si el cobro fue confirmado en pagaduría
+     * y la tolerancia configurada por la empresa sigue vigente (RN-13).
+     */
     @Transactional
     public IngresoResponse registrarSalida(String email, Long id) {
         Ingreso ingreso = ingresoRepository.findByIdForUpdate(id)
@@ -184,15 +194,42 @@ public class IngresoService {
         if (!"ACTIVO".equalsIgnoreCase(ingreso.getEstado())) {
             throw new IllegalArgumentException("Solo se puede registrar la salida de un ingreso activo.");
         }
+        validarPagoParaSalida(ingreso);
 
         ingreso.setEstado("FINALIZADO");
         ingreso.setFechaSalida(LocalDateTime.now());
         ingreso = ingresoRepository.save(ingreso);
 
         marcarEspacio(ingreso.getEspacioId(), "LIBRE");
-        facturaService.ajustarAlSalir(ingreso);
 
         return mapToResponse(ingreso);
+    }
+
+    private void validarPagoParaSalida(Ingreso ingreso) {
+        Factura factura = facturaRepository.findByIngresoId(ingreso.getId()).orElse(null);
+        if (factura == null || !"PAGADA".equalsIgnoreCase(factura.getEstado())
+                || !pagoRepository.existsByIngresoIdAndEstadoPago(ingreso.getId(), "CONFIRMADO")) {
+            throw new IllegalArgumentException(
+                    "El conductor debe pagar en pagaduría antes de salir del parqueadero.");
+        }
+
+        Pago pago = pagoRepository.findByIngresoId(ingreso.getId()).stream()
+                .filter(p -> "CONFIRMADO".equals(p.getEstadoPago()))
+                .findFirst()
+                .orElse(null);
+        LocalDateTime fechaPago = factura.getFechaPago() != null
+                ? factura.getFechaPago()
+                : (pago != null ? pago.getFecha() : null);
+        LocalDateTime fechaLimite = toleranciaSalidaService.calcularFechaLimite(
+                fechaPago, ingreso.getParqueaderoId());
+        if (fechaLimite == null) {
+            throw new IllegalArgumentException(
+                    "No se pudo verificar el pago; solicita la confirmación en pagaduría.");
+        }
+        if (LocalDateTime.now().isAfter(fechaLimite)) {
+            throw new IllegalArgumentException(
+                    "La tolerancia de salida venció; debe cancelar el tiempo adicional en pagaduría.");
+        }
     }
 
     /**

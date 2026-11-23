@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { OperacionesService } from '../services/operaciones.service';
 import {
@@ -13,7 +14,7 @@ type EmpresaView = 'resumen' | 'parqueaderos' | 'reportes' | 'configuracion';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink],
   template: `
     <section class="page">
       <header class="page-header">
@@ -28,6 +29,7 @@ type EmpresaView = 'resumen' | 'parqueaderos' | 'reportes' | 'configuracion';
         <span class="material-symbols-outlined">progress_activity</span> Cargando información...
       </div>
 
+      <div *ngIf="successMessage" class="alert alert-success" data-testid="empresa-success" role="status">{{ successMessage }}</div>
       <div *ngIf="!loading && errorMessage" class="alert alert-danger" data-testid="empresa-error" role="alert">
         <span>{{ errorMessage }}</span>
         <button class="btn btn-secondary btn-sm" type="button" (click)="load()">Reintentar</button>
@@ -90,7 +92,21 @@ type EmpresaView = 'resumen' | 'parqueaderos' | 'reportes' | 'configuracion';
               <div><span class="label">Razón social</span><strong>{{ configuracion?.razonSocial }}</strong></div>
               <div><span class="label">Correo de contacto</span><strong>{{ configuracion?.correoContacto }}</strong></div>
               <div><span class="label">Zona horaria</span><strong>{{ configuracion?.zonaHoraria }}</strong></div>
-              <p class="text-muted">La edición de datos se habilitará al conectar el servicio de empresas.</p>
+              <form class="tolerancia-form" (ngSubmit)="guardarConfiguracion()">
+                <label for="tolerancia-salida">Tolerancia de salida (minutos)</label>
+                <div class="tolerancia-controls">
+                  <input id="tolerancia-salida" class="form-control" type="number" min="0" max="240" step="1"
+                         name="toleranciaSalidaMinutos" [(ngModel)]="toleranciaInput" required
+                         data-testid="empresa-tolerancia" />
+                  <button class="btn btn-primary" type="submit"
+                          [disabled]="savingConfiguracion || configuracion?.empresaId == null
+                            || !esToleranciaValida || toleranciaInput === configuracion?.toleranciaSalidaMinutos"
+                          data-testid="empresa-guardar-tolerancia">
+                    {{ savingConfiguracion ? 'Guardando...' : 'Guardar tolerancia' }}
+                  </button>
+                </div>
+                <small class="text-muted">Aplica a todos los parqueaderos de la empresa. El contador se reinicia cuando el cajero confirma el pago.</small>
+              </form>
             </article>
           </ng-container>
         </ng-container>
@@ -119,6 +135,11 @@ type EmpresaView = 'resumen' | 'parqueaderos' | 'reportes' | 'configuracion';
     .state p { color: var(--pf-muted); }
     .empty { border-style: dashed; }
     .alert { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .alert-success { background: var(--pf-available-bg); border-color: var(--pf-available-border); color: var(--pf-available-text); }
+    .tolerancia-form { display: grid; gap: 8px; }
+    .tolerancia-form label { font-size: 13px; font-weight: 600; }
+    .tolerancia-controls { display: flex; align-items: center; gap: 10px; }
+    .tolerancia-controls .form-control { max-width: 130px; }
     .settings { max-width: 720px; display: grid; gap: 20px; }
     .settings div { display: grid; gap: 5px; }
     .settings .label { color: var(--pf-muted); font-size: 11px; font-weight: 700; text-transform: uppercase; }
@@ -129,14 +150,23 @@ export class EmpresaComponent {
   readonly view: EmpresaView;
   loading = true;
   errorMessage = '';
+  successMessage = '';
   resumen: EmpresaResumen | null = null;
   parqueaderos: ParqueaderoOperativo[] = [];
   reportes: ReporteOperativo[] = [];
   configuracion: ConfiguracionEmpresa | null = null;
+  toleranciaInput = 30;
+  savingConfiguracion = false;
 
   constructor(route: ActivatedRoute, private operaciones: OperacionesService) {
     this.view = route.snapshot.data['view'] as EmpresaView;
     this.load();
+  }
+
+  get esToleranciaValida(): boolean {
+    return Number.isInteger(this.toleranciaInput)
+      && this.toleranciaInput >= 0
+      && this.toleranciaInput <= 240;
   }
 
   get pageTitle(): string {
@@ -152,6 +182,7 @@ export class EmpresaComponent {
   load(): void {
     this.loading = true;
     this.errorMessage = '';
+    this.successMessage = '';
     const onError = (): void => {
       this.loading = false;
       this.errorMessage = 'No se pudo cargar la información para este usuario o parqueadero.';
@@ -178,10 +209,38 @@ export class EmpresaComponent {
         break;
       case 'configuracion':
         this.operaciones.getConfiguracion().subscribe({
-          next: value => { this.configuracion = value; this.loading = false; },
+          next: value => {
+            this.configuracion = value;
+            this.toleranciaInput = value.toleranciaSalidaMinutos;
+            this.loading = false;
+          },
           error: onError
         });
         break;
     }
+  }
+
+  guardarConfiguracion(): void {
+    const empresaId = this.configuracion?.empresaId;
+    if (empresaId == null || !this.esToleranciaValida) {
+      this.errorMessage = 'Ingresa una tolerancia entre 0 y 240 minutos.';
+      return;
+    }
+
+    this.savingConfiguracion = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+    this.operaciones.guardarConfiguracion(empresaId, this.toleranciaInput).subscribe({
+      next: value => {
+        this.configuracion = value;
+        this.toleranciaInput = value.toleranciaSalidaMinutos;
+        this.savingConfiguracion = false;
+        this.successMessage = 'Tolerancia de salida actualizada para todos los parqueaderos.';
+      },
+      error: () => {
+        this.savingConfiguracion = false;
+        this.errorMessage = 'No se pudo guardar la tolerancia de salida. Intenta nuevamente.';
+      }
+    });
   }
 }

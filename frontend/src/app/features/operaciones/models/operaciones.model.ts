@@ -25,21 +25,25 @@ export interface ReporteOperativo {
 }
 
 export interface ConfiguracionEmpresa {
+  readonly empresaId?: number;
   readonly razonSocial: string;
   readonly correoContacto: string;
   readonly zonaHoraria: string;
+  readonly toleranciaSalidaMinutos: number;
 }
 
 export type EstadoPagoOperativo = 'PENDIENTE' | 'CONFIRMADO';
 
 export interface PagoOperativo {
   readonly id: number;
+  readonly ingresoId?: number;
   readonly referencia: string;
   readonly placa?: string;
   readonly cliente?: string;
   readonly monto: number;
   readonly fecha: string;
   readonly estado: EstadoPagoOperativo;
+  readonly esDiferencia?: boolean;
 }
 
 export interface IngresoOperativo {
@@ -49,6 +53,25 @@ export interface IngresoOperativo {
   readonly espacio?: string;
   readonly fechaIngreso: string;
   readonly estado: 'ESPERANDO' | 'ACTIVO';
+  readonly novedad?: string;
+  readonly estadoPago?: string;
+  readonly puedeSalir?: boolean;
+  readonly fechaLimiteSalida?: string;
+  readonly minutosTolerancia?: number;
+  readonly valorActual?: number;
+  readonly faltante?: number;
+}
+
+export interface EstadoPagoOperativoResponse {
+  readonly ingresoId?: number;
+  readonly estado: string;
+  readonly alDia: boolean;
+  readonly puedeSalir: boolean;
+  readonly fechaPago?: string | null;
+  readonly minutosTolerancia: number;
+  readonly fechaLimiteSalida?: string | null;
+  readonly valorActual?: number | null;
+  readonly faltante?: number | null;
 }
 
 export interface OcupacionOperativa {

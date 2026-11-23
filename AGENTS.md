@@ -15,12 +15,12 @@
 |------|------------|
 | Backend | Java 17, Spring Boot 3.2.5, Maven (sin wrapper), Lombok, Bean Validation |
 | Seguridad | Spring Security (stateless), JJWT 0.12.5, Google OAuth2 con flujo manual |
-| Datos | PostgreSQL 15, Spring Data JPA, Flyway (`V1`–`V16` existentes) |
+| Datos | PostgreSQL 15, Spring Data JPA, Flyway (`V1`–`V20` existentes) |
 | Frontend | Angular 22 (standalone, sin NgModules), TypeScript ~6.0.3, RxJS 7.8, zone.js 0.16 |
 | Pruebas | Cypress 16.2 (E2E); Testcontainers declarado en el backend |
 | Despliegue | Node 22 en Netlify (usa pnpm), Render (backend), Supabase (DB) |
 
-Las funcionalidades y migraciones previstas (V17 en adelante) están en `docs/01-especificaciones/ESPECIFICACIONES_PARKFLOW360.md`. No asumas que ya existen en el código: verifica siempre.
+Las migraciones `V17`–`V20` y el flujo objetivo están en `docs/01-especificaciones/ESPECIFICACIONES_PARKFLOW360.md`. Verifica siempre el código antes de asumir un endpoint, rol o campo.
 
 ## 3. Estructura del repositorio
 
@@ -100,8 +100,8 @@ Puertos: frontend 4200, backend 8080, PostgreSQL 5432.
 - **Servicios**: `@Service` + `@RequiredArgsConstructor` (inyección por constructor), `@Transactional` (`readOnly = true` en consultas) y mapeo manual a `Response` mediante `mapToResponse` (no se usa MapStruct).
 - **Controllers**: `@RestController`, `@RequestMapping("/api/...")`, respuestas `ResponseEntity`; `201` al crear y `204` al eliminar.
 - **Excepciones**: usa `NoSuchElementException` (404) o `IllegalArgumentException` (400). No crees otro mecanismo: `GlobalExceptionHandler` ya devuelve `{timestamp, status, error, message, path}`.
-- **Migraciones**: `src/main/resources/db/migration/Vn__descripcion_snake_case.sql`. La última existente es `V16`; nunca reescribas una migración aplicada, agrega la siguiente.
-- **Seguridad y configuración**: JWT Bearer stateless con claim `rol`; reglas centralizadas en `SecurityConfig`; CORS desde `app.cors.allowed-origins`. Toda configuración sensible se lee desde variables de entorno en `application.yml` (los valores por defecto sirven solo para desarrollo local). Roles **actuales** en código: `ADMIN` y `USUARIO`. Roles del modelo objetivo (pendientes de implementar): `PLATAFORMA` (renombra `ADMIN`), `EMPRESA`, `CAJERO_PAGOS`, `GUARDIA` y `USUARIO`, con filtrado de datos por parqueadero.
+- **Migraciones**: `src/main/resources/db/migration/Vn__descripcion_snake_case.sql`. La última existente es `V20__tolerancia_salida.sql`; nunca reescribas una migración aplicada, agrega la siguiente (`V21` o superior).
+- **Seguridad y configuración**: JWT Bearer stateless con claim `rol`; reglas centralizadas en `SecurityConfig`; CORS desde `app.cors.allowed-origins`. Toda configuración sensible se lee desde variables de entorno en `application.yml` (los valores por defecto sirven solo para desarrollo local). Roles vigentes: `PLATAFORMA` (acepta `ADMIN` como alias), `EMPRESA`, `CAJERO_PAGOS`, `GUARDIA` y `USUARIO`, con filtrado de datos por parqueadero en backend.
 
 ## 6. Convenciones del frontend
 
@@ -113,16 +113,19 @@ Puertos: frontend 4200, backend 8080, PostgreSQL 5432.
 - Usa `data-testid` en los elementos interactuados por Cypress y reutiliza los comandos custom de `cypress/support/commands.ts`.
 - TypeScript estricto (`strict`, `strictTemplates`): evita `any` e imports sin usar en código nuevo.
 
-## 7. Reglas de negocio confirmadas (a implementar)
+## 7. Reglas de negocio confirmadas (vigentes)
 
-Detalle completo, criterios de aceptación y tabla de alcance en `docs/01-especificaciones/ESPECIFICACIONES_PARKFLOW360.md`. **Hoy no están implementadas**: no asumas que existen tablas, endpoints ni campos nuevos.
+Detalle completo, criterios de aceptación y tabla de alcance en `docs/01-especificaciones/ESPECIFICACIONES_PARKFLOW360.md`. Verifica siempre el código antes de asumir un endpoint, tabla o campo nuevo.
 
-- **Saldo y cobro automático**: el usuario recarga saldo; al generarse una factura (al salir o al expirar una reserva), si el saldo alcanza se debita y se crea un `Pago` confirmado; si no alcanza, la factura queda pendiente.
+- **Recibo y cobro en pagaduría**: el guardia registra la llegada y se abre una factura con 1 unidad de tarifa. `reservar` no factura. El cajero confirma el cobro con `POST /api/facturas/{id}/pagar`: si el ingreso está `ACTIVO` se recalcula el valor con la hora actual y se debita **solo el faltante**, reutilizando el pago confirmado. Sin saldo suficiente, la factura queda `PENDIENTE` y se puede recargar/reintentar o pedir crédito.
+- **Tolerancia de salida (RN-13)**: la empresa fija un único valor de 0–240 minutos (por defecto 30) mediante `PUT /api/empresas/{id}/configuracion`; todos sus parqueaderos lo heredan. Se cuenta desde `fecha_pago` y se reinicia con cada cobro. Dentro de la tolerancia no se cobra extra aunque se cruce la hora; si vence, se bloquea la salida y se cobra en pagaduría solo la diferencia.
+- **Salida del guardia**: `PUT /api/ingresos/{id}/salida` solo la ejecuta `GUARDIA` (o `PLATAFORMA`), nunca el usuario. Requiere factura `PAGADA`, pago `CONFIRMADO` y tolerancia vigente. No vuelve a ajustar la factura dentro del plazo. Mensajes exactos: `"El conductor debe pagar en pagaduría antes de salir del parqueadero."` y `"La tolerancia de salida venció; debe cancelar el tiempo adicional en pagaduría."`
+- **Tipos de tarifa**: `HORA` cobra por horas transcurridas; `DIA`, `SEMANA`, `MES` y `MOMENTO` cobran un valor único aunque pasen horas. No añadas lógica horaria para tarifas planas.
 - **Crédito**: cubre solo el faltante, máximo uno pendiente por usuario, sin intereses, con vencimiento a 3 días desde que se otorga. La deuda vencida bloquea únicamente nuevas reservas (403 en `POST /api/ingresos/reservar`).
 - **Hora de espera**: la reserva tiene un límite de 1 hora para la llegada. El guardia registra la llegada; si es tardía se factura 1 hora y la estancia continúa. Si expira sin llegada, se cancela, se libera el espacio y se factura 1 hora solo cuando la tarifa es `HORA`. El cobro es idempotente por ingreso.
-- **Roles objetivo**: `PLATAFORMA`, `EMPRESA`, `CAJERO_PAGOS`, `GUARDIA`, `USUARIO`. El cajero se crea con cada parqueadero y solo gestiona pagos de ese parqueadero; el guardia verifica datos, marca llegadas y consulta estado de pago; el usuario puede vincularse a varios parqueaderos por identificador y solo ve los suyos.
+- **Roles vigentes**: `PLATAFORMA`, `EMPRESA`, `CAJERO_PAGOS`, `GUARDIA`, `USUARIO`. El cajero se crea con cada parqueadero y solo ve cobros de ese parqueadero; el guardia verifica datos, marca llegadas, consulta estado de pago y autoriza salidas; la empresa ve reportes solo de sus parqueaderos; el usuario puede vincularse a varios parqueaderos por identificador y solo ve los suyos.
 - **Datos**: los parqueaderos tienen identificador único, capacidad y tipos de vehículo con cupo fijo o ilimitado; el `numero` de espacio es único por parqueadero; el filtrado se hace en backend desde la vinculación.
 
 ---
 
-Pendiente para una siguiente entrega: pruebas, despliegue, flujo de trabajo y deuda técnica conocida.
+Pendiente para una siguiente entrega: CI, despliegue, flujo de trabajo y deuda técnica conocida.

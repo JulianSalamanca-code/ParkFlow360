@@ -17,5 +17,6 @@ public class EmpresaResponse {
     private String nombre;
     private String identificador;
     private boolean activo;
+    private int toleranciaSalidaMinutos;
     private LocalDateTime fechaCreacion;
 }

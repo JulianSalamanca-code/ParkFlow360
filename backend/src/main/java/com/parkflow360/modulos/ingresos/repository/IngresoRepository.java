@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -31,4 +32,9 @@ public interface IngresoRepository extends JpaRepository<Ingreso, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT i FROM Ingreso i WHERE i.id = :id")
     Optional<Ingreso> findByIdForUpdate(@Param("id") Long id);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT i FROM Ingreso i WHERE i.estado = 'RESERVADO' "
+            + "AND i.fechaLimiteLlegada IS NOT NULL AND i.fechaLimiteLlegada <= :ahora")
+    List<Ingreso> findReservasVencidasParaExpirar(@Param("ahora") LocalDateTime ahora);
 }

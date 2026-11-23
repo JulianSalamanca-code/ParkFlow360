@@ -85,6 +85,19 @@ public class FacturaService {
      */
     @Transactional
     public FacturaResponse generarYCobrar(Ingreso ingreso) {
+        return generarYCobrar(ingreso, null);
+    }
+
+    /**
+     * RN-09/RN-11: cobra una sola unidad de la tarifa por la hora de espera o el no-show.
+     * La factura es única por ingreso, por lo que no se duplica si la salida la reutiliza.
+     */
+    @Transactional
+    public FacturaResponse generarYCobrarHoraDeEspera(Ingreso ingreso) {
+        return generarYCobrar(ingreso, calcularValorHora(ingreso));
+    }
+
+    private FacturaResponse generarYCobrar(Ingreso ingreso, BigDecimal valorHora) {
         Optional<Factura> existente = facturaRepository.findByIngresoId(ingreso.getId());
         if (existente.isPresent()) {
             return mapToResponse(existente.get());
@@ -93,7 +106,7 @@ public class FacturaService {
         Factura factura = facturaRepository.save(Factura.builder()
                 .ingresoId(ingreso.getId())
                 .usuarioId(ingreso.getUsuarioId())
-                .valor(calcularValor(ingreso))
+                .valor(valorHora != null ? valorHora : calcularValor(ingreso))
                 .estado(PENDIENTE)
                 .build());
 
@@ -199,7 +212,21 @@ public class FacturaService {
         facturaRepository.save(factura);
     }
 
-    /** RN-03: tarifas HORA cobran por horas iniciadas desde fechaEntrada; las demás, una sola vez. */
+    /** Una unidad de la tarifa: una hora si es tarifa HORA, el valor único en los demás tipos. */
+    private BigDecimal calcularValorHora(Ingreso ingreso) {
+        BigDecimal tarifaValor = ingreso.getTarifaValor();
+        if (tarifaValor == null && ingreso.getTarifaId() != null) {
+            tarifaValor = tarifaRepository.findById(ingreso.getTarifaId())
+                    .map(Tarifa::getValor)
+                    .orElse(null);
+        }
+        if (tarifaValor == null) {
+            throw new IllegalArgumentException("No se pudo determinar el valor de la factura del ingreso.");
+        }
+        return tarifaValor;
+    }
+
+    /** RN-03: tarifas HORA cobran por horas desde la llegada; las demás, una sola vez. */
     private BigDecimal calcularValor(Ingreso ingreso) {
         BigDecimal tarifaValor = ingreso.getTarifaValor();
         boolean esHora = false;
@@ -219,9 +246,10 @@ public class FacturaService {
             return tarifaValor;
         }
 
-        LocalDateTime inicio = ingreso.getFechaEntrada() != null
-                ? ingreso.getFechaEntrada()
-                : LocalDateTime.now();
+        LocalDateTime inicio = ingreso.getFechaLlegada();
+        if (inicio == null) {
+            inicio = ingreso.getFechaEntrada() != null ? ingreso.getFechaEntrada() : LocalDateTime.now();
+        }
         LocalDateTime fin = ingreso.getFechaSalida() != null
                 ? ingreso.getFechaSalida()
                 : LocalDateTime.now();

@@ -9,6 +9,8 @@ import com.parkflow360.modulos.ingresos.entity.Ingreso;
 import com.parkflow360.modulos.ingresos.repository.IngresoRepository;
 import com.parkflow360.modulos.pagos.repository.PagoRepository;
 import com.parkflow360.modulos.pagos.service.FacturaService;
+import com.parkflow360.modulos.tarifas.entity.Tarifa;
+import com.parkflow360.modulos.tarifas.repository.TarifaRepository;
 import com.parkflow360.security.entity.Usuario;
 import com.parkflow360.security.repository.UsuarioRepository;
 import com.parkflow360.shared.service.AccesoParqueaderoService;
@@ -19,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
@@ -26,10 +29,18 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class IngresoService {
 
+    private static final Map<String, String> MODALIDAD_POR_TIPO = Map.of(
+            "HORA", "POR HORAS",
+            "DIA", "POR DÍA",
+            "SEMANA", "POR SEMANA",
+            "MES", "POR MES",
+            "MOMENTO", "POR MOMENTO");
+
     private final IngresoRepository ingresoRepository;
     private final PagoRepository pagoRepository;
     private final EspacioRepository espacioRepository;
     private final UsuarioRepository usuarioRepository;
+    private final TarifaRepository tarifaRepository;
     private final AccesoParqueaderoService accesoParqueaderoService;
     private final FacturaService facturaService;
     private final CreditoService creditoService;
@@ -100,6 +111,7 @@ public class IngresoService {
                     "Este vehículo ya tiene una reserva o parqueo activo. Debes finalizarlo antes de reservar de nuevo.");
         }
 
+        LocalDateTime fechaReserva = LocalDateTime.now();
         Ingreso ingreso = Ingreso.builder()
                 .parqueaderoId(parqueaderoId)
                 .folio("TMP-" + System.nanoTime())
@@ -110,11 +122,13 @@ public class IngresoService {
                 .espacioNumero(request.getEspacioNumero())
                 .tarifaId(request.getTarifaId())
                 .tarifaValor(request.getTarifaValor())
-                .modalidad(request.getModalidad())
+                .modalidad(resolverModalidad(request.getTarifaId()))
                 .operador(usuario.getNombre() != null ? usuario.getNombre() : usuario.getEmail())
                 .novedad(request.getNovedad())
                 .estado("RESERVADO")
                 .usuarioId(usuario.getId())
+                .fechaReserva(fechaReserva)
+                .fechaLimiteLlegada(fechaReserva.plusHours(1))
                 .build();
 
         ingreso = ingresoRepository.save(ingreso);
@@ -140,7 +154,7 @@ public class IngresoService {
                 .espacioNumero(request.getEspacioNumero())
                 .tarifaId(request.getTarifaId())
                 .tarifaValor(request.getTarifaValor())
-                .modalidad(request.getModalidad())
+                .modalidad(resolverModalidad(request.getTarifaId()))
                 .operador(request.getOperador())
                 .novedad(request.getNovedad())
                 .estado("ACTIVO")
@@ -173,6 +187,59 @@ public class IngresoService {
         facturaService.generarYCobrar(ingreso);
 
         return mapToResponse(ingreso);
+    }
+
+    /**
+     * RN-09/RN-11: registra la llegada del guardia. Dentro del límite no genera cargo;
+     * fuera de él factura una hora y deja la estancia activa.
+     */
+    @Transactional
+    public IngresoResponse registrarLlegada(String email, Long id) {
+        Ingreso ingreso = ingresoRepository.findByIdForUpdate(id)
+                .orElseThrow(() -> new NoSuchElementException("Ingreso no encontrado con id: " + id));
+        accesoParqueaderoService.verificarAcceso(email, ingreso.getParqueaderoId());
+
+        if ("CANCELADO".equalsIgnoreCase(ingreso.getEstado())) {
+            throw new IllegalArgumentException(
+                    "La reserva ya fue cancelada por no-show; la hora de espera ya fue facturada. Realiza una nueva reserva.");
+        }
+        if (!"RESERVADO".equalsIgnoreCase(ingreso.getEstado())) {
+            throw new IllegalArgumentException("Solo se puede registrar la llegada de una reserva vigente.");
+        }
+
+        LocalDateTime ahora = LocalDateTime.now();
+        LocalDateTime limite = ingreso.getFechaLimiteLlegada();
+        boolean llegadaTardia = limite != null && ahora.isAfter(limite);
+
+        ingreso.setFechaLlegada(ahora);
+        ingreso.setEstado("ACTIVO");
+        ingreso = ingresoRepository.save(ingreso);
+        marcarEspacio(ingreso.getEspacioId(), "OCUPADO");
+
+        if (llegadaTardia) {
+            facturaService.generarYCobrarHoraDeEspera(ingreso);
+        }
+
+        return mapToResponse(ingreso);
+    }
+
+    /**
+     * RN-10/RN-11: cancela las reservas vencidas, libera el espacio y factura una hora
+     * únicamente para tarifas por horas. El bloqueo pesimista evita dobles cobros.
+     */
+    @Transactional
+    public int expirarReservasVencidas(LocalDateTime ahora) {
+        List<Ingreso> vencidas = ingresoRepository.findReservasVencidasParaExpirar(ahora);
+        for (Ingreso ingreso : vencidas) {
+            ingreso.setEstado("CANCELADO");
+            ingreso.setFechaSalida(ahora);
+            ingresoRepository.save(ingreso);
+            marcarEspacio(ingreso.getEspacioId(), "LIBRE");
+            if (esTarifaHora(ingreso)) {
+                facturaService.generarYCobrarHoraDeEspera(ingreso);
+            }
+        }
+        return vencidas.size();
     }
 
     @Transactional
@@ -218,6 +285,27 @@ public class IngresoService {
             throw new IllegalArgumentException("No se puede eliminar una estancia que tiene un pago asociado.");
         }
         ingresoRepository.deleteById(id);
+    }
+
+    private boolean esTarifaHora(Ingreso ingreso) {
+        return ingreso.getTarifaId() != null
+                && tarifaRepository.findById(ingreso.getTarifaId())
+                        .map(tarifa -> "HORA".equalsIgnoreCase(tarifa.getTipo()))
+                        .orElse(false);
+    }
+
+    /** RN-12: la modalidad se deriva del tipo de tarifa, no de un valor fijo enviado por el cliente. */
+    private String resolverModalidad(Long tarifaId) {
+        if (tarifaId == null) {
+            return "SIN TARIFA";
+        }
+        return tarifaRepository.findById(tarifaId)
+                .map(Tarifa::getTipo)
+                .map(tipo -> {
+                    String clave = tipo == null ? "" : tipo.trim().toUpperCase();
+                    return MODALIDAD_POR_TIPO.getOrDefault(clave, clave.isEmpty() ? "SIN TARIFA" : clave);
+                })
+                .orElse("SIN TARIFA");
     }
 
     private Long resolverParqueadero(String email, IngresoRequest request) {
@@ -287,6 +375,9 @@ public class IngresoService {
                 .estadoPago(pago != null ? pago.getEstadoPago() : null)
                 .fechaEntrada(ingreso.getFechaEntrada())
                 .fechaSalida(ingreso.getFechaSalida())
+                .fechaReserva(ingreso.getFechaReserva())
+                .fechaLimiteLlegada(ingreso.getFechaLimiteLlegada())
+                .fechaLlegada(ingreso.getFechaLlegada())
                 .build();
     }
 }

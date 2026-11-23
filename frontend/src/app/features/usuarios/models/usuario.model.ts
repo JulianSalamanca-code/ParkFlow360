@@ -1,7 +1,9 @@
+import { Rol } from '../../../core/auth/roles';
+
 export interface Usuario {
   id: number;
   email: string;
-  rol: string;
+  rol: Rol;
   nombre: string;
   fechaCreacion: string;
 }
@@ -9,6 +11,6 @@ export interface Usuario {
 export interface UsuarioRequest {
   email: string;
   password?: string;
-  rol: string;
+  rol: Rol;
   nombre: string;
 }

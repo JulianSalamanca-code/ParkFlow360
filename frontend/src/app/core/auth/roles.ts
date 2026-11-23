@@ -1,9 +1,8 @@
 /**
  * Roles canónicos de ParkFlow360.
  *
- * El modelo objetivo define cinco roles. Mientras el backend migra V17,
- * se acepta `ADMIN` como alias transitorio de `PLATAFORMA` para no invalidar
- * los tokens vigentes.
+ * V17 normalizó la base de datos y los tokens a estos cinco valores. `ADMIN`
+ * se conserva únicamente como alias de entrada para sesiones antiguas.
  */
 export type Rol =
   | 'PLATAFORMA'
@@ -37,6 +36,15 @@ const ROLE_LABELS: Readonly<Record<Rol, string>> = {
   CAJERO_PAGOS: 'Cajero de pagos',
   GUARDIA: 'Guardia',
   USUARIO: 'Usuario'
+};
+
+/** Descripciones usadas en los formularios de alta y edición de usuarios. */
+export const ROLE_DESCRIPTIONS: Readonly<Record<Rol, string>> = {
+  PLATAFORMA: 'acceso total a todas las empresas',
+  EMPRESA: 'administra sus parqueaderos y reportes',
+  CAJERO_PAGOS: 'confirma los cobros de su parqueadero',
+  GUARDIA: 'controla accesos y salidas de su parqueadero',
+  USUARIO: 'reserva y gestiona sus vehículos y pagos'
 };
 
 /**

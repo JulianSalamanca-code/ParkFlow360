@@ -4,6 +4,15 @@ import { RouterLink } from '@angular/router';
 import { UsuarioService } from '../../services/usuario.service';
 import { Usuario } from '../../models/usuario.model';
 import { ToastService } from '../../../../shared/services/toast.service';
+import { Rol, normalizeRol, roleLabel } from '../../../../core/auth/roles';
+
+const BADGE_BY_ROL: Readonly<Partial<Record<Rol, string>>> = {
+  PLATAFORMA: 'badge-available',
+  EMPRESA: 'badge-available',
+  CAJERO_PAGOS: 'badge-neutral',
+  GUARDIA: 'badge-neutral',
+  USUARIO: 'badge-warning'
+};
 
 @Component({
   selector: 'app-usuario-list',
@@ -28,12 +37,24 @@ import { ToastService } from '../../../../shared/services/toast.service';
           <div class="value">{{ usuarios.length }}</div>
         </div>
         <div class="metric metric-available">
-          <div class="label">Administradores</div>
-          <div class="value">{{ contarPorRol('ADMIN') }}</div>
+          <div class="label">Plataforma</div>
+          <div class="value" data-testid="contador-PLATAFORMA">{{ contarPorRol('PLATAFORMA') }}</div>
+        </div>
+        <div class="metric metric-available">
+          <div class="label">Empresa</div>
+          <div class="value" data-testid="contador-EMPRESA">{{ contarPorRol('EMPRESA') }}</div>
+        </div>
+        <div class="metric">
+          <div class="label">Cajeros</div>
+          <div class="value" data-testid="contador-CAJERO_PAGOS">{{ contarPorRol('CAJERO_PAGOS') }}</div>
+        </div>
+        <div class="metric">
+          <div class="label">Guardias</div>
+          <div class="value" data-testid="contador-GUARDIA">{{ contarPorRol('GUARDIA') }}</div>
         </div>
         <div class="metric metric-warning">
-          <div class="label">Clientes</div>
-          <div class="value">{{ contarPorRol('USUARIO') }}</div>
+          <div class="label">Usuarios</div>
+          <div class="value" data-testid="contador-USUARIO">{{ contarPorRol('USUARIO') }}</div>
         </div>
       </div>
 
@@ -54,8 +75,8 @@ import { ToastService } from '../../../../shared/services/toast.service';
                 <td><strong>{{ usuario.nombre }}</strong></td>
                 <td>{{ usuario.email }}</td>
                 <td>
-                  <span class="badge" [ngClass]="usuario.rol === 'ADMIN' ? 'badge-available' : 'badge-warning'">
-                    {{ usuario.rol }}
+                  <span class="badge" data-testid="rol-badge" [ngClass]="claseRol(usuario.rol)">
+                    {{ etiquetaRol(usuario.rol) }}
                   </span>
                 </td>
                 <td class="mono">{{ usuario.fechaCreacion | date:'short' }}</td>
@@ -96,8 +117,17 @@ export class UsuarioListComponent implements OnInit {
     });
   }
 
-  contarPorRol(rol: string): number {
-    return this.usuarios.filter(u => u.rol?.toUpperCase() === rol).length;
+  contarPorRol(rol: Rol): number {
+    return this.usuarios.filter(u => normalizeRol(u.rol) === rol).length;
+  }
+
+  etiquetaRol(rol: string): string {
+    return roleLabel(rol) || 'Sin rol';
+  }
+
+  claseRol(rol: string): string {
+    const normalizado = normalizeRol(rol);
+    return (normalizado && BADGE_BY_ROL[normalizado]) || 'badge-neutral';
   }
 
   eliminar(id: number): void {

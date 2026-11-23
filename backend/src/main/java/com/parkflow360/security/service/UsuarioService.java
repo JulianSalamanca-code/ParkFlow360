@@ -89,7 +89,7 @@ public class UsuarioService {
         return UsuarioResponse.builder()
                 .id(usuario.getId())
                 .email(usuario.getEmail())
-                .rol(usuario.getRol())
+                .rol(Roles.normalizar(usuario.getRol()))
                 .nombre(usuario.getNombre())
                 .fechaCreacion(usuario.getFechaCreacion())
                 .build();

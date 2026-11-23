@@ -1,12 +1,13 @@
 package com.parkflow360.security.service;
 
+import com.parkflow360.security.JwtService;
+import com.parkflow360.security.Roles;
 import com.parkflow360.security.dto.GoogleLoginRequest;
 import com.parkflow360.security.dto.GoogleUserInfo;
 import com.parkflow360.security.dto.LoginRequest;
 import com.parkflow360.security.dto.LoginResponse;
 import com.parkflow360.security.entity.Usuario;
 import com.parkflow360.security.repository.UsuarioRepository;
-import com.parkflow360.security.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -71,12 +72,13 @@ public class AuthService {
     }
 
     private LoginResponse buildResponse(Usuario usuario) {
-        String token = jwtService.generateToken(usuario.getEmail(), usuario.getRol(), usuario.getNombre());
+        String rol = Roles.normalizar(usuario.getRol());
+        String token = jwtService.generateToken(usuario.getEmail(), rol, usuario.getNombre());
         return LoginResponse.builder()
                 .token(token)
                 .tipo("Bearer")
                 .email(usuario.getEmail())
-                .rol(usuario.getRol())
+                .rol(rol)
                 .nombre(usuario.getNombre())
                 .build();
     }

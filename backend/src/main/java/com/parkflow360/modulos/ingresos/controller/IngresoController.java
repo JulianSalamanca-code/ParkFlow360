@@ -76,6 +76,13 @@ public class IngresoController {
         return ResponseEntity.ok(ingresoService.registrarSalida(auth.getName(), id));
     }
 
+    @PutMapping("/{id}/llegada")
+    public ResponseEntity<IngresoResponse> registrarLlegada(
+            @PathVariable Long id,
+            Authentication auth) {
+        return ResponseEntity.ok(ingresoService.registrarLlegada(auth.getName(), id));
+    }
+
     @PutMapping("/{id}/liberar")
     public ResponseEntity<IngresoResponse> liberar(
             @PathVariable Long id,

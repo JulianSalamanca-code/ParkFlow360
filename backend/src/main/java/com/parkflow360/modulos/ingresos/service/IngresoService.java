@@ -189,6 +189,40 @@ public class IngresoService {
         return mapToResponse(ingreso);
     }
 
+    /**
+     * RN-09/RN-11: registra la llegada del guardia. Dentro del límite no genera cargo;
+     * fuera de él factura una hora y deja la estancia activa.
+     */
+    @Transactional
+    public IngresoResponse registrarLlegada(String email, Long id) {
+        Ingreso ingreso = ingresoRepository.findByIdForUpdate(id)
+                .orElseThrow(() -> new NoSuchElementException("Ingreso no encontrado con id: " + id));
+        accesoParqueaderoService.verificarAcceso(email, ingreso.getParqueaderoId());
+
+        if ("CANCELADO".equalsIgnoreCase(ingreso.getEstado())) {
+            throw new IllegalArgumentException(
+                    "La reserva ya fue cancelada por no-show; la hora de espera ya fue facturada. Realiza una nueva reserva.");
+        }
+        if (!"RESERVADO".equalsIgnoreCase(ingreso.getEstado())) {
+            throw new IllegalArgumentException("Solo se puede registrar la llegada de una reserva vigente.");
+        }
+
+        LocalDateTime ahora = LocalDateTime.now();
+        LocalDateTime limite = ingreso.getFechaLimiteLlegada();
+        boolean llegadaTardia = limite != null && ahora.isAfter(limite);
+
+        ingreso.setFechaLlegada(ahora);
+        ingreso.setEstado("ACTIVO");
+        ingreso = ingresoRepository.save(ingreso);
+        marcarEspacio(ingreso.getEspacioId(), "OCUPADO");
+
+        if (llegadaTardia) {
+            facturaService.generarYCobrarHoraDeEspera(ingreso);
+        }
+
+        return mapToResponse(ingreso);
+    }
+
     @Transactional
     public IngresoResponse liberar(String email, Long id) {
         Ingreso ingreso = requireIngreso(id);

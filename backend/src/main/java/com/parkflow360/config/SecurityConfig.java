@@ -37,6 +37,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/ingresos/mios", "/api/ingresos/reservar").hasRole("USUARIO")
                 .requestMatchers("/api/pagos/online", "/api/pagos/mios").hasRole("USUARIO")
                 .requestMatchers("/api/saldos/**").hasAnyRole("USUARIO", "PLATAFORMA")
+                .requestMatchers("/api/facturas/**").hasAnyRole("USUARIO", "CAJERO_PAGOS", "PLATAFORMA")
                 .requestMatchers("/api/creditos/**").hasAnyRole("USUARIO", "CAJERO_PAGOS", "PLATAFORMA")
 
                 // ---------- Vinculación y catálogo compartido ----------
@@ -52,8 +53,8 @@ public class SecurityConfig {
                         "/api/ingresos/*/estado-pago")
                     .hasAnyRole("GUARDIA", "CAJERO_PAGOS", "PLATAFORMA")
 
-                // ---------- Cajero: solo pagos y facturas ----------
-                .requestMatchers("/api/pagos/**", "/api/facturas/**")
+                // ---------- Cajero: solo pagos ----------
+                .requestMatchers("/api/pagos/**")
                     .hasAnyRole("CAJERO_PAGOS", "PLATAFORMA")
 
                 // ---------- Empresa: sus parqueaderos ----------

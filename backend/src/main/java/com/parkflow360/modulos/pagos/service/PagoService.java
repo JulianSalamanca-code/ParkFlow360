@@ -29,6 +29,7 @@ public class PagoService {
     private final IngresoRepository ingresoRepository;
     private final UsuarioRepository usuarioRepository;
     private final AccesoParqueaderoService accesoParqueaderoService;
+    private final FacturaService facturaService;
 
     @Transactional(readOnly = true)
     public List<PagoResponse> listarTodos(String email) {
@@ -93,8 +94,8 @@ public class PagoService {
         Ingreso ingreso = requireIngresoForPayment(request.getIngresoId());
         accesoParqueaderoService.verificarAcceso(email, ingreso.getParqueaderoId());
         validarReferencias(request, ingreso);
-        if (pagoRepository.existsByIngresoId(ingreso.getId())) {
-            throw new IllegalArgumentException("El ingreso ya tiene un pago registrado.");
+        if (pagoRepository.existsByIngresoIdAndEstadoPago(ingreso.getId(), "CONFIRMADO")) {
+            throw new IllegalArgumentException("El ingreso ya tiene un pago confirmado registrado.");
         }
 
         Long parqueaderoId = request.getParqueaderoId() != null
@@ -112,7 +113,11 @@ public class PagoService {
                 .estadoPago(normalizarEstadoPago(request.getEstadoPago()))
                 .build();
 
-        return mapToResponse(pagoRepository.save(pago));
+        PagoResponse respuesta = mapToResponse(pagoRepository.save(pago));
+        if ("CONFIRMADO".equals(pago.getEstadoPago())) {
+            facturaService.marcarPagadaPorIngreso(ingreso.getId());
+        }
+        return respuesta;
     }
 
     @Transactional
@@ -138,8 +143,8 @@ public class PagoService {
             Ingreso ingreso = requireIngresoForPayment(request.getIngresoId());
             accesoParqueaderoService.verificarAcceso(email, ingreso.getParqueaderoId());
             validarReferencias(request, ingreso);
-            if (pagoRepository.existsByIngresoId(ingreso.getId())) {
-                throw new IllegalArgumentException("El ingreso ya tiene un pago registrado.");
+            if (pagoRepository.existsByIngresoIdAndEstadoPago(ingreso.getId(), "CONFIRMADO")) {
+                throw new IllegalArgumentException("El ingreso ya tiene un pago confirmado registrado.");
             }
             pago.setParqueaderoId(ingreso.getParqueaderoId());
             pago.setVehiculoId(ingreso.getVehiculoId());
@@ -157,7 +162,11 @@ public class PagoService {
             pago.setEstadoPago(normalizarEstadoPago(request.getEstadoPago()));
         }
 
-        return mapToResponse(pagoRepository.save(pago));
+        PagoResponse respuesta = mapToResponse(pagoRepository.save(pago));
+        if ("CONFIRMADO".equals(pago.getEstadoPago()) && pago.getIngresoId() != null) {
+            facturaService.marcarPagadaPorIngreso(pago.getIngresoId());
+        }
+        return respuesta;
     }
 
     @Transactional
